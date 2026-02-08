@@ -1,0 +1,90 @@
+GPS - Chùa Linh Ứng
+Problem Alignment
+● Visitors lack engaging, multilingual guidance tailored to their preferred language.
+● Tourists often have questions during visits but lack instant access to
+knowledgeable support.
+
+High Level Approach
+● Build a wep app for mobile devices, compatible across major browsers and
+operating systems (OS).
+● Enable users to tap on Points of Interest (POIs) for multilingual text/audio
+guidance.
+● Integrate GPS to display the visitor’s live location on the site map.
+● Embed an AI-powered chatbot to answer visitor questions in natural language.
+
+Narrative
+● A tourist arrives at Linh Ứng pagoda, scans a QR code at the entrance, and is
+prompted to pay for access.
+● Upon payment (either online or offline), the app opens and shows a live map with
+nearby POIs.
+● As the tourist explores, they tap on POIs to hear audio guides and read
+descriptions in their preferred language.
+● If they have questions, they ask the built-in chatbot, which responds instantly with
+relevant info.
+
+Goals
+● Provide an automatic and immersive narration experience for visitors at Linh Ứng.
+● Integrate GPS technology to automatically play content corresponding to the
+user's current location.
+● Support multiple languages, including Vietnamese, making it friendly for
+international tourists and independent travelers (no tour guide needed).
+● Built-in RAG chatbot system to answer visitor questions in natural language.
+
+Solution Alignment
+
+Key Features
+1. A navigation app that integrates GPS technology to detect the user's current
+location, highlighting POIs in the proximity.
+2. Route recommendations for users, consisting of a number of POIs (customizable)
+and directions to go from one to another.
+3. A data pipeline that automatically translates text descriptions of all POIs into 15+
+different languages, and transcribes them into audios. These are shown to users
+as they tap on the POIs on the map.
+4. A database that stores all data generated from the above feature, along with
+other POI-related information, such as POI’s coordinates, range of proximity and
+thumbnail images.
+5. An admin dashboard that allows staff to create sessions and modify data.
+6. A monitoring dashboard to observe system’s health and usage information in realtime.
+Future considerations:
+1. Cache most recent questions and answers for faster performance
+2. Monitoring: real-time logs track user activities
+
+Key Flows
+● Operational flow
+
+● Payment processing flow
+
+Key Logic
+1. POI information retrieval
+The whole application database, including all information about every POIs, is loaded
+onto frontend side once the user finishes the authorization process. The frontend NEVER
+sends any request to fetch data afterwards.
+2. Multilingual Content Delivery
+All content (text and audio) is pre-translated into 15+ languages. User selects their
+preferred language using a small circle icon on the top right corner. Language
+preference dynamically controls displayed content and audio playback.
+
+Launch Plan
+TARGET DATE
+
+MILESTONE
+
+DESCRIPTION
+
+2025-05-16
+
+Pilot
+
+Preliminary testing onsite
+
+Appendix
+Changelog
+DATE
+
+Open Questions
+
+FAQs
+
+DESCRIPTION
+
+

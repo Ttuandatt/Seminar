@@ -1,0 +1,192 @@
+﻿Course Cast
+Focused Use Cases
+
+
+Version 2.0
+
+
+ 
+
+Revision History
+DateVersionDescriptionAuthor11-14-071.0Focused Use Cases, Use Case Diagram, Activity DiagramsXXXXXX12-5-072.0Update XXXXXX
+
+
+
+
+Table of Contents
+UC1	4
+UC2	7
+UC3	11
+UC4	14
+UC5	17
+
+
+Use Case Number:  UC1Use Case Name:Maintain Planned Course WorkActor (s):Student, AdvisorMaturity: FocusedSummary:Students, or an Advisor aiding a student, will create and maintain their student preferences for future semesters.  
+Basic Course of Events:Actor Action
+System Response
+1. Perform {Login Authentication}
+2. System displays welcome page with main features for actor to choose from.3. The use case begins when the Student actor selects to maintain planned coursework. A1. 
+4. The system displays the student's program of study and also returns any previously planned course preferences.
+5. The Student and Advisor actors select the future courses, term, day and time. (Repeat as many times as necessary.) A2
+6. The Actor selects to save the information. A3, A4
+
+7. The system validates the planned coursework entered by the Actor. {Validate Planned Courses}8. The system updates the students planned coursework in the database and informs the actor that the information was updated successfully.
+The use case ends.Alternative Paths:A1. Actor ActionSystem Response1. The Advisor actor enters the student's UNFID for the appropriate student.2. The system validates that the UNFID. E23. The Advisor actor selects to maintain planned coursework.Return to step 4 of the Basic Course of Events.A2. An actor has the ability to review catalog information for a particular course when selected.
+A3. The actor has the ability to "Cancel" changes to return the information to the previously saved version.  Returns to step 8 of Basic Course of Events. 
+A4. The actor has the ability to "Reset" information which removes all planned coursework for a student. Returns to step 8 of Basic Course of Events.Exception Paths:E1. At {Validate Planned Courses} if errors (prerequisites not met, more than six courses selected for a term, planning a course that the student has already passed), the system indicates the courses where there are errors.
+Returns to Basic Flow Step 4.
+
+E2.   If the system cannot find the UNFID in stored data, the system informs the user that their UNFID cannot be found and the actor is returned to step 1 of Alternate Path 1 (A1).Extension Points:Validate Planned Courses
+Review of the planned courses compares against courses the student has already taken, currently registered for or future planned courses to verify that the student has met the necessary prerequisites or the prerequisite is planned. (See Business Rule 2.1) E1Triggers:Actor wishes to input student preferences for future semesters.Assumptions:The Advisor will not make any changes without first consulting the Student.Preconditions:None.
+Post Conditions:The updated student preferences are saved to stored data.
+Reference: Business Rules2.1, 2.7, 2.8, 2.9 2.10
+Author(s):XXXXX
+Date:11-14-07
+Activity Diagram:   Next Page
+
+
+
+
+Use Case Number:  UC2Use Case Name:Generate Course OfferingsActor (s):Advisor, Administration RepresentativeMaturity: FocusedSummary:Administration will generate a course offering for a future semester based off of student preferences.
+Basic Course of Events:Actor Action
+System Response1. Perform {Login Authentication}
+2. System displays welcome page with main features for actor to choose from.3. The Advisor or Administration Representative actor selects to generate a course offering.
+4. The system requests the semester and year for which the course offering will be generated.
+5. The actor inputs the semester and year for which the course offering will be generated.
+6. The system validates the entered semester and year.
+E1, E2
+7. The system calculates the course offering for the selected semester based on student preferences. 
+
+The calculation assigns weights to: number of students who have planned a course, the seniority of the student, differentiation between major requirements versus elective requirements, and whether the course is used in multiple tracks.
+8. Based on the calculations and the students' day and time preferences, the system displays this course offering along with its course information.
+9. The system generates the student preferences statistics for the parameters selected by the actor.  It will include: course information, subtotals of time and day, and totals.
+10. The actor views the generated course offering. 
+A1
+Alternative Paths:A1.  From this point the actor can select to print the generated course offering.  After that is completed the actor is returned to the same point in the flow of events.Exception Paths:E1.  If the actor enters the semester in an incorrect format the system prompts the user and requests another semester. Control returns to step 4 of the Basic Course of Events.
+
+E2.  If the actor enters a semester that has already occurred, the system prompts the user and requests another semester. Control returns to step 4 of the Basic Course of Events.Extension Points:None
+Triggers:Actor wishes to generate a course offering.
+Assumptions:Student preferences have been entered into the system.
+Preconditions:The actor possesses the correct authority level.
+Post Conditions:A course offering will be generated.
+Reference: Business Rules:2.3, 2.4, 2.5, 2.6, 2.7, 2.10
+Author(s):XXXXX
+Date:11-14-07
+
+
+
+Activity Diagram:
+
+
+
+Use Case Number:  UC3Use Case Name:Generate Statistics ReportActor (s):Advisor, Administration RepresentativeMaturity: FocusedSummary:Advisors or an Administration Representative will generate a Statistics Report based on student preferences.
+Basic Course of Events:
+
+Actor ActionSystem Response1. Perform {Login Authentication}.2. System displays welcome page with main features for actor to choose from.3. The Advisor or Administration Representative actor selects to generate Statistics Report.
+4. The system directs them to enter parameters. Parameters are: Semester, Year, Time and/or Day.
+5. The user enters the parameters. 6. The system generates the student preferences statistics based on information stored in the database for the parameters selected by the actor.  It will include: course information, subtotals of time, day or both, and totals. 
+6. The actor views the administrative report. The use case ends here.
+A1Alternative Paths:A1.  From this point the actor can select to print the generated Statistics Report.  The use case ends here.Exception Paths:None
+Extension Points:None
+Triggers:The actor wishes to generate Statistics Report.
+Assumptions:Student preferences have been entered into the system.
+Preconditions:None
+Post Conditions:A Statistics Report will be generated.
+Reference: Business RulesNone
+Author(s):XXXXXX
+Date:11-14-07
+Activity Diagram:
+
+
+
+Use Case Number:  UC4Use Case Name:Generate Student ReportActor (s):Student, AdvisorMaturity: FocusedSummary:Actors will be able to generate a report summarizing student course history and future student preferences.Basic Course of Events:Actor ActionSystem Response1. Perform {Login Authentication}
+
+
+2.  System displays welcome page with main features for actor to choose from.
+3. The Student actor selects to generate the student report consisting of specific student information and the student's course preferences.
+A1.
+4. The system displays a summary of the student information and future student preferences.
+E1
+5. The use case ends at this point.
+A2
+
+Alternative Paths:A1.Actor ActionSystem Response1. The Advisor actor enters the student's UNFID for the appropriate student.2. The system validates that the UNFID. E23. The Advisor actor selects to generate the student report consisting of specific student information and the student's course preferences.Return to step 4 of the Basic Course of Events.A2.
+The actor can print the summary report. The use case ends at this point.Exception Paths:E1.  The system is unable to retrieve and display the student's information. The error is displayed to the user.
+
+E2.   If the system cannot find the UNFID in stored data, the system informs the user that their UNFID cannot be found and the actor is returned to step 1 of Alternate Path 1 (A1).
+Extension Points:None
+Triggers:The actor wishes to generate student report.
+Assumptions:Student preferences have been entered into the system.
+Preconditions:None
+Post Conditions:A student report may be generated.
+Reference: Business Rules:None
+Reference: RisksNone
+Author(s):XXXXXX
+Date:
+11-14-07Activity Diagram:
+`
+
+Use Case Number:  UC5Use Case Name:Login AuthenticationActor (s):Student, Advisor, Administration RepresentativeMaturity: FocusedSummary:All actors will log in to Course Cast.  Features are available to the actor according to User Type i.e. Student, Advisor, Administration Representative.
+Basic Course of Events:Actor Action
+System Response1. The actor types their UNFID and their Password.
+2. The system will retrieve the actor's name and User Type from the database for the supplied UNFID and Password thus beginning a Session.
+E1, E2
+3. Feature availability reflects the user type.
+
+Students have access to:
+
+Student Information
+Course Planning
+Log Off
+
+
+Advisor features:
+
+Student Information
+Course Planning
+Course Offerings
+Statistics
+Log Off
+
+Administration Representative features:
+Course Offerings
+Statistics
+Log Off
+4. The system redirects the actor to the Home page.
+Alternative Paths:None
+Exception Paths:E1.  If the system cannot find the UNFID in the database, the system informs the user that their UNFID cannot be found and the actor is returned to the beginning of the course of events.  As in other UNF systems, there is no limit to the number of times a user may attempt to log in to Course Cast.
+
+E2.  If the system finds the UNFID in the database but the actor supplied Password does not match the Password in the database for the UNFID, the system informs the user that their Password is incorrect and the actor is returned to the beginning of the course of events.  As in other UNF systems, there is no limit to the number of times a user may attempt to log in to Course Cast.
+Extension Points:None
+Triggers:The actor is visiting the website but has not yet begun a Session.
+
+The actor's Session has timed out as a result of inactivity.
+
+The actor has ended a Session by selecting Log Off.
+Assumptions:None
+Preconditions:The actor is visiting Course Cast but does not have an active Session.  Therefore the actor has been redirected to the Log On page.
+Post Conditions:The actor has an active Session.  
+
+The actor is visiting the Home page.
+
+The actor has the appropriate features available.
+Reference: Business Rules2.7, 2.8, 2.9, 2.10Author(s):XXXXXXDate:11-14-07Activity Diagram:
+
+
+
+
+School of Computing
+
+
+
+
+
+
+Course Cast  Version:           2.0Use Cases  Date:  12-5-07
+
+ConfidentialSchool of Computing, 2026Page 19
+
+
+
+
+

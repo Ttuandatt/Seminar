@@ -1,0 +1,27 @@
+BACKEND DESIGN
+Sub-system:
+1. Navigation app
+2. Chatbot
+App:
+● Web app, FastAPI backend
+● MongoDB on Azure (nghiên cứu service ở tier cao hơn để cải thiện scalability)
+● Redis caching: LRU cho dữ liệu được query gần nhất
+● Container app: nghiên cứu số rep và config phù hợp
+Chatbot:
+● Azure AI Search
+● Tự chuẩn bị data cho 10 POI
+● Redis caching các cặp câu hỏi và câu trả lời gần nhất (dự kiến phase 2)
+Data:
+● Dùng lại data cho 10 POI ở trên
+● Data preprocessing pipeline: Frontend -> Azure Blob storage -> Azure AI Search. Schedule
+mỗi ngày
+● Dịch thuyết minh và generate audio ra 15 ngôn ngữ khác nhau
+Route:
+● Adjacency matrix cho từng điểm custom trong bản đồ
+● Database nhỏ để chứa các điểm
+● Thuật toán tìm đường đi ngắn nhất
+Monitoring (Grafana + Prometheus + Pushgateway):
+● Các metric mặc định của Grafana
+Database
+
+

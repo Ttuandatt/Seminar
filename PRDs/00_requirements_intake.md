@@ -2,8 +2,8 @@
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
 > **Mã tài liệu:** REQ-INTAKE-001  
-> **Phiên bản:** 2.0  
-> **Trạng thái:** Bản nháp (Đã cải thiện)  
+> **Phiên bản:** 2.1  
+> **Trạng thái:** Bản nháp (Đã cải thiện + Merged)  
 > **Ngày tạo:** 2026-02-07  
 > **Cập nhật:** 2026-02-08
 
@@ -424,7 +424,33 @@ EPIC 6: Phân tích & Báo cáo
 | Mất kết nối internet giữa chừng? | |
 | Battery sắp hết? | |
 
-### 7.3 Thiết kế Audio/Media
+#### 7.2.4 State Machine - Trạng thái User Session
+
+> **Mục đích:** Xác định các trạng thái và điều kiện chuyển đổi của user khi tham quan
+
+| Câu hỏi | Lựa chọn | Trả lời |
+|---------|----------|---------|
+| **Các trạng thái của user session?** | ☐ IDLE (chưa vào vùng nào) ☐ ENTERING (đang đi vào) ☐ IN_ZONE (đang trong vùng) ☐ TRANSITIONING (đang chuyển) ☐ PAUSED (tạm dừng) ☐ COMPLETED (đã nghe xong) | |
+| **Điều kiện chuyển ENTERING → IN_ZONE?** | ☐ Dwell time đủ ☐ Signal strength đủ ☐ Ngay lập tức | |
+| **Điều kiện chuyển IN_ZONE → TRANSITIONING?** | ☐ Ra khỏi vùng ☐ Vào vùng mới ☐ Cả hai | |
+| **Xử lý khi quay lại kiosk đã nghe?** | ☐ Resume vị trí cũ ☐ Bắt đầu lại ☐ Hỏi người dùng | |
+| **Session timeout sau bao lâu inactive?** | ___ phút | |
+| **Lưu session state ở đâu?** | ☐ Client-side only ☐ Server-side ☐ Hybrid (sync định kỳ) | |
+
+#### 7.2.5 Location Service Client
+
+> **Mục đích:** Xác định cách xử lý vị trí phía client
+
+| Câu hỏi | Lựa chọn | Trả lời |
+|---------|----------|---------|
+| **Location permission flow?** | ☐ Khi mở app ☐ Khi cần (just-in-time) ☐ Trong onboarding | |
+| **Background location tracking?** | ☐ Bắt buộc ☐ Tùy chọn ☐ Không | |
+| **Xử lý Battery optimization (Doze mode)?** | ☐ Request whitelist ☐ Giảm update frequency ☐ Dừng khi background | |
+| **Location processing ở đâu?** | ☐ Client-side (compute locally) ☐ Server-side (gửi lên server) ☐ Hybrid | |
+| **Geofencing API?** | ☐ Native geofencing API ☐ Custom implementation ☐ Third-party library | |
+| **Smoothing algorithm cho GPS?** | ☐ Kalman filter ☐ Moving average ☐ Không smoothing | |
+
+
 
 | Câu hỏi | Lựa chọn | Trả lời |
 |---------|----------|---------|
@@ -463,7 +489,41 @@ EPIC 6: Phân tích & Báo cáo
 | **Cần real-time updates không?** | ☐ Có ☐ Không | |
 | **Công nghệ real-time (nếu cần)** | ☐ WebSocket ☐ Server-Sent Events ☐ Long Polling | |
 
-### 7.6 Ứng dụng Client
+#### 7.5.1 API Endpoints cốt lõi
+
+> **Mục đích:** Liệt kê các endpoints chính cần implement
+
+| # | Endpoint | Purpose | Real-time? |
+|---|----------|---------|------------|
+| 1 | `GET /kiosks` hoặc `GET /pois` | Danh sách tất cả POIs | ☐ Có ☐ Không |
+| 2 | `GET /kiosks/:id` hoặc `GET /pois/:id` | Chi tiết POI + content | ☐ Có ☐ Không |
+| 3 | `GET /kiosks/nearby?lat=&lng=` | Tìm POIs gần vị trí | ☐ Có ☐ Không |
+| 4 | `POST /sessions` | Bắt đầu tour session | ☐ Có ☐ Không |
+| 5 | `PUT /sessions/:id/location` | Cập nhật vị trí user | ☐ Có ☐ Không |
+| 6 | `GET /sessions/:id/current-kiosk` | POI hiện tại dựa trên vị trí | ☐ Có ☐ Không |
+| 7 | `POST /analytics/events` | Track user events | ☐ Có ☐ Không |
+| 8 | `GET /tours` | Danh sách tours | ☐ Có ☐ Không |
+| 9 | `GET /tours/:id` | Chi tiết tour + POIs | ☐ Có ☐ Không |
+| 10 | Endpoint khác cần thêm? | | |
+
+#### 7.5.2 Error Handling & Recovery
+
+> **Mục đích:** Xác định chiến lược xử lý lỗi và khôi phục
+
+| Câu hỏi | Lựa chọn | Trả lời |
+|---------|----------|---------|
+| **Retry policy cho failed requests?** | ☐ Không retry ☐ Fixed delay (___s) ☐ Exponential backoff | |
+| **Số lần retry tối đa?** | ☐ 1 ☐ 3 ☐ 5 ☐ Vô hạn | |
+| **Circuit breaker pattern?** | ☐ Có ☐ Không | |
+| **Graceful degradation scenarios?** | | |
+| - Location service down | ☐ Manual QR ☐ Tìm thủ công ☐ Thông báo lỗi | |
+| - Audio service down | ☐ Chỉ text ☐ Thông báo lỗi | |
+| - Database down | ☐ Dùng cached data ☐ Thông báo lỗi | |
+| **Error reporting to users?** | ☐ Chi tiết ☐ Thân thiện (không kỹ thuật) ☐ Silent | |
+| **Error tracking service?** | ☐ Sentry ☐ Bugsnag ☐ Rollbar ☐ Tự xây | |
+| **Timeout cho API calls?** | ___ giây | |
+
+
 
 | Câu hỏi | Lựa chọn | Trả lời |
 |---------|----------|---------|
