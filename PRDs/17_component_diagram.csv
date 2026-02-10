@@ -1,0 +1,106 @@
+﻿#  Component Diagram
+
+Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
+
+1. System Architecture Overview
+[Diagram]
+
+2. Client Layer
+
+  2.1 Web Dashboard (Admin + Shop Owner)
+[Diagram]
+Tech Stack:
+Component,Technology,Version
+Framework,React,18.x
+Build Tool,Vite,5.x
+Language,TypeScript,5.x
+Styling,Tailwind CSS,3.x
+UI Library,shadcn/ui,latest
+Maps,Mapbox GL JS,3.x
+State,React Context + hooks,-
+HTTP Client,Axios,1.x
+Router,React Router,6.x
+
+  2.2 Tourist Mobile App
+[Diagram]
+Tech Stack:
+Component,Technology,Version
+Framework,React Native,0.73+
+Platform,Expo,SDK 50+
+Language,TypeScript,5.x
+Navigation,React Navigation,6.x
+Maps,react-native-maps,latest
+Audio,react-native-track-player,4.x
+Storage,AsyncStorage,latest
+HTTP Client,Axios,1.x
+
+3. Backend Layer (NestJS)
+[Diagram]
+
+  3.1 Module Dependencies
+[Diagram]
+
+  3.2 API Route Structure
+Prefix,Controller,Guard,Description
+`/auth/*`,AuthController,None (public),"Login, Register"
+`/admin/*`,Admin*Controller,JWT + RolesGuard('admin'),Admin CRUD operations
+`/shop-owner/*`,ShopOwner*Controller,JWT + RolesGuard('shop_owner'),Shop Owner operations
+`/public/*`,Public*Controller,None (public),Tourist read-only APIs
+`/upload/*`,UploadController,JWT,Media upload
+
+4. Data Layer
+
+  4.1 Database Schema (PostgreSQL + PostGIS)
+[Diagram]
+
+  4.2 Database Indexes
+Table,Index,Type,Purpose
+pois,`idx_pois_geom`,GiST (PostGIS),Spatial queries (nearby)
+pois,`idx_pois_owner_id`,B-tree,Shop Owner data isolation
+pois,`idx_pois_status`,B-tree,Filter by status
+tour_pois,`idx_tour_pois_tour_id`,B-tree,Tour → POIs lookup
+users,`idx_users_email`,B-tree UNIQUE,Login lookup
+view_history,`idx_views_user_poi`,B-tree,User history
+
+5. External Services
+[Diagram]
+
+  5.1 Service Details
+Service,Provider,Usage,Rate Limits
+**Map Tiles**,Mapbox,"Hiển thị bản đồ, geocoding",50K loads/month (free)
+**Object Storage**,AWS S3,"Images (JPEG/PNG), Audio (MP3/WAV)",No limit
+**CDN**,CloudFront,Phân phối media cho Tourist app,No limit
+**Database**,PostgreSQL 16,Dữ liệu chính + PostGIS geo queries,Self-managed
+**Cache**,Redis 7,"JWT blacklist, session, API cache",Self-managed
+
+6. Deployment Architecture
+"┌─────────────────────────────────────────────────────────────────┐
+│                        PRODUCTION                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐        │
+│  │   Vercel     │     │   Docker    │     │   Expo      │        │
+│  │  (Web App)   │     │ (NestJS API)│     │  (Mobile)   │        │
+│  │  React+Vite  │     │  Port 3000  │     │  iOS/Android│        │
+│  └──────┬──────┘     └──────┬──────┘     └─────────────┘        │
+│         │                    │                                    │
+│         │        ┌───────────┤                                    │
+│         │        │           │                                    │
+│         │   ┌────┴────┐ ┌───┴─────┐   ┌───────────┐            │
+│         │   │PostgreSQL│ │  Redis  │   │  AWS S3   │            │
+│         │   │ +PostGIS │ │  Cache  │   │ +CloudFront│            │
+│         │   └─────────┘ └─────────┘   └───────────┘            │
+│         │                                                        │
+│         └──────────── Mapbox API ────────────────────            │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘"
+
+7. Communication Protocols
+From,To,Protocol,Format,Auth
+Web Dashboard → API,REST,HTTPS,JSON,JWT Bearer
+Tourist App → API,REST,HTTPS,JSON,JWT Bearer (optional)
+API → PostgreSQL,TCP,PostgreSQL wire protocol,SQL (Prisma),Connection string
+API → Redis,TCP,Redis protocol,Key-Value,Password
+API → S3,HTTPS,AWS SDK,Binary + JSON,IAM credentials
+Web → Mapbox,HTTPS,Mapbox GL JS,Vector tiles,API Key
+Mobile → Maps,HTTPS,react-native-maps,Vector tiles,API Key

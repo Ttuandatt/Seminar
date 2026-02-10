@@ -1,0 +1,79 @@
+﻿#  Sequence Diagrams
+
+Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
+
+Danh sách Diagrams
+ID,Diagram,Actor,Ref UC
+SD-01,Admin Login,Admin,UC-01
+SD-02,Shop Owner Register + Login,Shop Owner,"UC-02, UC-03"
+SD-03,Admin Create POI,Admin,UC-11
+SD-04,Shop Owner Create POI,Shop Owner,UC-40
+SD-05,Create Tour,Admin,UC-21
+SD-06,Tourist View Map + Auto-trigger,"Tourist, System","UC-30, UC-51"
+SD-07,Tourist Follow Tour,Tourist,UC-33
+SD-08,Overlap Zone Handling,System,UC-52
+SD-09,Quên mật khẩu (Forgot Password),"Admin, Shop Owner",UC-04
+SD-10,Chỉnh sửa POI (Edit POI),Admin,UC-12
+SD-11,Xóa POI (Delete POI + Cascade),Admin,UC-13
+SD-12,Tourist Lưu POI yêu thích,Tourist,UC-36
+SD-13,Shop Owner Xem Analytics,Shop Owner,UC-41
+SD-14,Tourist Chuyển đổi ngôn ngữ,Tourist,UC-34
+
+SD-01: Admin Login
+[Diagram]
+
+SD-02: Shop Owner Register + Login
+[Diagram]
+
+SD-03: Admin Create POI
+[Diagram]
+
+SD-04: Shop Owner Create POI
+[Diagram]
+
+SD-05: Create Tour
+[Diagram]
+
+SD-06: Tourist View Map + Auto-trigger
+[Diagram]
+
+SD-07: Tourist Follow Tour
+[Diagram]
+
+SD-08: Overlap Zone Handling
+[Diagram]
+
+SD-09: Quên mật khẩu (Forgot Password)
+[Diagram]
+
+SD-10: Chỉnh sửa POI (Edit POI)
+[Diagram]
+
+SD-11: Xóa POI (Delete POI + Cascade)
+[Diagram]
+
+SD-12: Tourist Lưu POI yêu thích
+[Diagram]
+
+SD-13: Shop Owner Xem Analytics
+[Diagram]
+
+SD-14: Tourist Chuyển đổi ngôn ngữ
+[Diagram]
+
+Summary
+Diagram,Actors,Lifelines,Messages,Complexity
+SD-01,Admin,4,14,Medium
+SD-02,Shop Owner,4,22,High
+SD-03,Admin,6,24,High
+SD-04,Shop Owner,5,12,Medium
+SD-05,Admin,5,16,Medium
+SD-06,Tourist,5,18,High
+SD-07,Tourist,5,20,High
+SD-08,Tourist,3,12,Medium
+SD-09,Admin/Shop Owner,5,28,High
+SD-10,Admin,6,26,High
+SD-11,Admin,6,18,High
+SD-12,Tourist,4,20,Medium
+SD-13,Shop Owner,5,18,High
+SD-14,Tourist,5,18,Medium

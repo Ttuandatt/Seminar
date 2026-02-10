@@ -1,9 +1,9 @@
 # 📋 Executive Summary
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.0  
+> **Phiên bản:** 2.0  
 > **Ngày tạo:** 2026-02-08  
-> **Trạng thái:** Draft
+> **Cập nhật:** 2026-02-10
 
 ---
 
@@ -12,8 +12,9 @@
 ### 1.1 Mô tả ngắn gọn
 
 **GPS Tours** là hệ thống thuyết minh du lịch tự động, bao gồm:
-- **Admin Dashboard (Web)**: Quản lý POIs (Points of Interest) và Tours
-- **Tourist App (Mobile/PWA)**: Ứng dụng cho du khách với audio guide tự động theo vị trí GPS
+- **Admin Dashboard (Web)**: Quản lý toàn bộ POIs, Tours, Users
+- **Shop Owner Dashboard (Web)**: Chủ quán quản lý POI(s) của mình
+- **Tourist App (Mobile)**: Ứng dụng cho du khách với audio guide tự động theo vị trí GPS
 
 ### 1.2 Vision Statement
 
@@ -36,15 +37,23 @@
 
 ### 3.1 Admin Dashboard
 - CRUD POIs và Tours
+- Quản lý Users (Admin, Shop Owner)
 - Đặt POI trên bản đồ (click hoặc nhập tọa độ)
 - Upload hình ảnh và audio
 - Quản lý nội dung đa ngôn ngữ (VN/EN)
 
-### 3.2 Tourist App
+### 3.2 Shop Owner Dashboard
+- Quản lý POI(s) của mình (Create, Edit)
+- Upload hình ảnh và audio giới thiệu
+- Xem analytics (lượt xem, audio plays)
+
+### 3.3 Tourist App
 - Hiển thị POIs trên bản đồ
 - Tự động phát audio khi đến POI (GPS trigger)
 - Chọn ngôn ngữ (VN/EN)
 - Chế độ Offline
+- Optional Login: đăng ký/đăng nhập để lưu favorites + sync history
+- QR Code fallback khi GPS không chính xác
 
 ---
 
@@ -55,11 +64,14 @@
 | Component | Priority | Phase |
 |-----------|----------|-------|
 | Admin Dashboard (Web) | P0 | MVP |
-| Tourist App (Mobile/PWA) | P0 | MVP |
+| Shop Owner Dashboard (Web) | P1 | MVP |
+| Tourist App (Mobile) | P0 | MVP |
 | Backend API (RESTful) | P0 | MVP |
 | Quản lý nội dung cơ bản | P0 | MVP |
 | Đa ngôn ngữ (VN/EN) | P1 | MVP |
 | Chế độ Offline | P1 | MVP |
+| Optional Login (Tourist) | P1 | MVP |
+| QR Code Management | P1 | MVP |
 
 ### ❌ Ngoài phạm vi (Out of Scope)
 
@@ -80,6 +92,7 @@
 | Scrum Master | Facilitate team, remove blockers |
 | Dev Team | Implementation |
 | Content Team | Tạo nội dung POI, audio |
+| **Shop Owners** | **Quản lý thông tin quán của mình** |
 | QA Team | Testing & validation |
 
 ---

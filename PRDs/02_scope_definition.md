@@ -1,8 +1,9 @@
 # 📋 Scope Definition
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.0  
-> **Ngày tạo:** 2026-02-08
+> **Phiên bản:** 2.0  
+> **Ngày tạo:** 2026-02-08  
+> **Cập nhật:** 2026-02-10
 
 ---
 
@@ -50,11 +51,24 @@
 | AD-007 | Tạo Tour | P0 | CRUD Tour |
 | AD-008 | Thêm POIs vào Tour | P0 | Select multiple POIs |
 | AD-009 | Sắp xếp POIs | P1 | Drag & drop |
+| AD-010 | POI Draft/Publish | P1 | Status workflow (Draft → Published) |
+| AD-011 | Password Reset | P1 | Forgot password via email |
+| AD-012 | Preview POI | P1 | Preview as Tourist before publish |
 | AD-013 | Upload hình ảnh | P0 | Multiple images/POI |
 | AD-014 | Upload audio | P0 | Audio file/POI |
 | AD-015 | Nội dung đa ngôn ngữ | P1 | VN/EN |
+### 2.2 Shop Owner Dashboard
 
-### 2.2 Tourist App
+| ID | Feature | Priority | Description |
+|----|---------|----------|-------------|
+| SO-001 | Đăng ký Shop Owner | P1 | Self-registration với thông tin quán |
+| SO-002 | Đăng nhập Shop Owner | P1 | Login với email/password |
+| SO-003 | Quản lý POI của mình | P1 | CRUD POI(s) thuộc sở hữu |
+| SO-004 | Upload media | P1 | Ảnh + audio giới thiệu quán |
+| SO-005 | Xem analytics | P1 | Lượt xem, audio plays của POI(s) mình |
+| SO-006 | Cập nhật profile | P1 | Thông tin shop owner |
+
+### 2.3 Tourist App (Mobile)
 
 | ID | Feature | Priority | Description |
 |----|---------|----------|-------------|
@@ -66,18 +80,27 @@
 | TA-006 | Quét QR fallback | P1 | Manual trigger |
 | TA-007 | Chọn ngôn ngữ | P0 | VN/EN switch |
 | TA-008 | Điều khiển audio | P0 | Play/Pause/Seek |
+| TA-009 | Onboarding flow | P1 | First-time user guide |
 | TA-010 | Chọn Tour | P1 | Tour selection |
+| TA-011 | Đăng ký/Đăng nhập | P1 | Chọn role (Tourist/Shop Owner) khi register |
 | TA-012 | Chế độ Offline | P1 | Cached data |
+| TA-013 | Favorites | P1 | Save/unsave POIs |
+| TA-014 | View History | P1 | Xem lịch sử POIs đã xem |
 
-### 2.3 Backend
+### 2.4 Backend
 
 | ID | Feature | Priority | Description |
 |----|---------|----------|-------------|
 | BE-001 | RESTful API | P0 | CRUD operations |
-| BE-002 | Authentication | P0 | JWT tokens |
+| BE-002 | Admin Authentication | P0 | JWT tokens (Admin) |
 | BE-003 | File storage | P0 | S3/Azure Blob |
 | BE-004 | PostgreSQL + PostGIS | P0 | Geospatial queries |
+| BE-005 | Tourist Auth (Optional) | P1 | JWT + Social Login (Google/Facebook/Apple) |
+| BE-005b | Shop Owner Auth | P1 | JWT + Email-based registration |
 | BE-006 | CDN | P1 | Media delivery |
+| BE-007 | QR Code Management | P1 | Generate, validate, track scans |
+| BE-008 | Trigger Logging | P1 | GPS/QR trigger event logging |
+| BE-009 | Password Reset | P1 | Email-based reset flow |
 | BE-010 | Rate limiting | P1 | API protection |
 
 ---
@@ -103,12 +126,10 @@
 |---------|----------|-------|
 | Content versioning | P2 | Version history, rollback |
 | Batch operations | P2 | Bulk CRUD |
-| Analytics dashboard | P2 | User statistics |
+| Analytics dashboard | P2 | User statistics, export CSV |
 | Audio speed control | P2 | 0.5x-2x |
 | Pre-download content | P2 | Offline Tour download |
 | Push notifications | P3 | Future |
-| User accounts | P3 | Optional registration |
-| Favorites | P3 | Save POIs |
 
 ---
 
@@ -128,11 +149,11 @@
 | Priority | Admin | Tourist | Backend | Total |
 |----------|-------|---------|---------|-------|
 | **P0** | 10 | 7 | 5 | **22** |
-| **P1** | 4 | 4 | 2 | **10** |
+| **P1** | 7 | 8 | 6 | **21** |
 | **P2** | 4 | 2 | 3 | **9** |
-| **P3** | 0 | 5 | 0 | **5** |
+| **P3** | 0 | 1 | 0 | **1** |
 
-**MVP Core:** 22 P0 features + 10 P1 features = **32 features**
+**MVP Core:** 22 P0 features + 21 P1 features = **43 features**
 
 ---
 
@@ -156,7 +177,8 @@
 |------------|-------------|
 | **Frontend** | React, TypeScript, Vite, Tailwind CSS |
 | **Mobile** | React Native / PWA |
-| **Backend** | FastAPI (Python) hoặc Node.js |
+| **Backend** | NestJS (Node.js + TypeScript) |
+| **ORM** | Prisma |
 | **Database** | PostgreSQL + PostGIS |
 | **Maps** | Google Maps hoặc Mapbox |
 | **Hosting** | Azure / AWS / GCP |

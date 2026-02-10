@@ -1,0 +1,59 @@
+﻿#  Activity Diagrams
+
+Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
+
+Danh sách Diagrams
+ID,Diagram,Actor,Ref UC,Ref FR
+AD-01,Admin Login Flow,Admin,UC-01,FR-101
+AD-02,POI Management (CRUD),Admin,UC-10~15,FR-201~207
+AD-03,Tour Creation Flow,Admin,UC-21,FR-301~302
+AD-04,Tourist Journey,Tourist,UC-30~33,FR-501~504
+AD-05,Location Detection + Auto-trigger,System,"UC-50, UC-51",FR-502
+AD-06,Shop Owner Registration + POI Management,Shop Owner,"UC-02, UC-40",FR-701~704
+AD-07,Forgot Password Flow,"Admin, Shop Owner",UC-04,FR-103
+AD-08,Upload Media Flow,"Admin, Shop Owner",UC-14,"FR-205, FR-401"
+AD-09,Delete POI (Cascade),Admin,UC-13,FR-204
+AD-10,Tourist Favorites & History,Tourist,"UC-35, UC-36","FR-506, FR-507"
+
+AD-01: Admin Login Flow
+[Diagram]
+
+AD-02: POI Management (CRUD)
+[Diagram]
+
+AD-03: Tour Creation Flow
+[Diagram]
+
+AD-04: Tourist Journey
+[Diagram]
+
+AD-05: Location Detection + Auto-trigger
+[Diagram]
+
+AD-06: Shop Owner Registration + POI Management
+[Diagram]
+
+AD-07: Forgot Password Flow
+[Diagram]
+
+AD-08: Upload Media Flow
+[Diagram]
+
+AD-09: Delete POI (Cascade)
+[Diagram]
+
+AD-10: Tourist Favorites & History
+[Diagram]
+
+Summary
+Diagram,Nodes,Decisions,Paths,Complexity
+AD-01,14,4,5,Medium
+AD-02,28,8,9,High
+AD-03,16,4,4,Medium
+AD-04,36,11,13,Very High
+AD-05,20,5,7,High
+AD-06,32,9,11,Very High
+AD-07,22,6,7,High
+AD-08,28,9,10,High
+AD-09,16,4,5,Medium
+AD-10,24,7,8,High

@@ -21,45 +21,28 @@ def remove_emojis(text):
         u"\U0001F4A1"
         u"\U00002705"
         u"\U0000274C"
-        u"\U00002610"  # checkbox empty
-        u"\U00002611"  # checkbox checked
+        u"\U00002610"
+        u"\U00002611"
         "]+", flags=re.UNICODE)
     result = emoji_pattern.sub('', text)
-    # Also remove common text checkboxes
     result = re.sub(r'☐|☑|✅|❌|✓|✗', '', result)
     return result.strip()
 
 def parse_markdown_to_csv(md_content):
-    """Parse markdown content to structured data for CSV"""
+    """Parse markdown content preserving structure"""
     lines = md_content.split('\n')
     data = []
     
-    current_h1 = ""
     current_h2 = ""
     current_h3 = ""
-    content_buffer = []
+    current_h4 = ""
     in_table = False
     table_lines = []
-    
-    def flush_content():
-        nonlocal content_buffer
-        if content_buffer:
-            # Join text content
-            text = ' '.join(content_buffer)
-            text = remove_emojis(text)
-            if text.strip():
-                section = current_h3 or current_h2 or current_h1 or "General"
-                data.append({
-                    'type': 'text',
-                    'section': remove_emojis(section),
-                    'content': text
-                })
-            content_buffer = []
+    in_code_block = False
     
     def flush_table():
         nonlocal table_lines, in_table
         if table_lines and len(table_lines) > 1:
-            section = current_h3 or current_h2 or current_h1 or "General"
             rows = []
             for line in table_lines:
                 if re.match(r'^[\|\s\-:]+$', line):
@@ -69,103 +52,176 @@ def parse_markdown_to_csv(md_content):
                 if cells:
                     rows.append(cells)
             if rows:
-                data.append({
-                    'type': 'table',
-                    'section': remove_emojis(section),
-                    'rows': rows
-                })
+                data.append({'type': 'table', 'rows': rows})
         table_lines = []
         in_table = False
     
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Skip metadata and empty lines
-        if stripped.startswith('>') or stripped.startswith('---') or not stripped:
+        # Track code blocks
+        if stripped.startswith('```'):
+            if not in_code_block:
+                # Starting a code block
+                in_code_block = True
+                code_block_type = stripped.replace('```', '').strip()  # e.g., 'gherkin', 'python', ''
+                code_block_content = []
+            else:
+                # Ending a code block
+                in_code_block = False
+                if code_block_type in ['mermaid', 'plantuml', 'diagram']:
+                    data.append({'type': 'text', 'content': '[Diagram]'})
+                elif code_block_type in ['gherkin', '', 'text']:
+                    # Preserve gherkin/plain text content
+                    content = '\n'.join(code_block_content)
+                    if content.strip():
+                        data.append({'type': 'text', 'content': content})
+                else:
+                    # Other code blocks (python, etc.) - show as code
+                    content = '\n'.join(code_block_content)
+                    if content.strip():
+                        data.append({'type': 'text', 'content': f'[Code: {code_block_type}]\n{content}'})
+                code_block_content = []
+            continue
+        
+        if in_code_block:
+            code_block_content.append(line)
+            continue  # Collect code block content
+        
+        # Skip metadata
+        if stripped.startswith('>') or stripped == '---':
             if in_table:
                 flush_table()
             continue
         
-        # Headers
-        if stripped.startswith('# ') and not stripped.startswith('## '):
-            flush_content()
+        # Empty line
+        if not stripped:
             if in_table:
                 flush_table()
-            current_h1 = stripped.replace('# ', '')
-            current_h2 = ""
-            current_h3 = ""
-        elif stripped.startswith('## '):
-            flush_content()
+            continue
+        
+        # Headers - H2 (## )
+        if stripped.startswith('## '):
             if in_table:
                 flush_table()
-            current_h2 = stripped.replace('## ', '')
+            current_h2 = remove_emojis(stripped.replace('## ', ''))
             current_h3 = ""
+            current_h4 = ""
+            data.append({'type': 'h2', 'content': current_h2})
+            
+        # Headers - H3 (### )
         elif stripped.startswith('### '):
-            flush_content()
             if in_table:
                 flush_table()
-            current_h3 = stripped.replace('### ', '')
+            current_h3 = remove_emojis(stripped.replace('### ', ''))
+            current_h4 = ""
+            data.append({'type': 'h3', 'content': current_h3})
+            
+        # Headers - H4 (#### )
+        elif stripped.startswith('#### '):
+            if in_table:
+                flush_table()
+            current_h4 = remove_emojis(stripped.replace('#### ', ''))
+            data.append({'type': 'h4', 'content': current_h4})
+            
         # Table detection
         elif '|' in stripped:
-            flush_content()
             if not in_table:
                 if i + 1 < len(lines) and '|' in lines[i+1] and '-' in lines[i+1]:
                     in_table = True
                     table_lines = [stripped]
                 else:
-                    # Single line with |, treat as text
-                    content_buffer.append(stripped)
+                    data.append({'type': 'text', 'content': remove_emojis(stripped)})
             else:
                 table_lines.append(stripped)
-        else:
+                
+        # Bold headers like **Goals:**
+        elif stripped.startswith('**') and stripped.endswith(':**'):
             if in_table:
                 flush_table()
-            # Regular content (text, lists)
-            if stripped.startswith('- ') or stripped.startswith('* '):
-                content_buffer.append(stripped[2:])
-            elif stripped:
-                content_buffer.append(stripped)
+            header = remove_emojis(stripped.replace('**', '').replace(':', ''))
+            data.append({'type': 'subheader', 'content': header})
+            
+        # Numbered list like 1. 2. 3.
+        elif re.match(r'^\d+\.', stripped):
+            content = remove_emojis(re.sub(r'^\d+\.\s*', '', stripped))
+            data.append({'type': 'numbered', 'content': content})
+            
+        # Bullet list
+        elif stripped.startswith('- ') or stripped.startswith('* '):
+            content = remove_emojis(stripped[2:])
+            data.append({'type': 'bullet', 'content': content})
+            
+        # Regular text
+        elif stripped:
+            data.append({'type': 'text', 'content': remove_emojis(stripped)})
     
-    # Flush remaining
-    flush_content()
+    # Flush remaining table
     if in_table:
         flush_table()
     
     return data
 
 def create_csv(data, output_path):
-    """Create CSV from parsed data"""
+    """Create CSV from parsed data with proper structure"""
     with open(output_path, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         
-        current_section = ""
         for item in data:
-            # Write section header if changed
-            if item['section'] != current_section:
-                if current_section:
-                    writer.writerow([])  # Empty row between sections
-                writer.writerow([item['section']])
-                current_section = item['section']
-            
-            if item['type'] == 'text':
+            if item['type'] == 'h2':
+                writer.writerow([])
                 writer.writerow([item['content']])
+            elif item['type'] == 'h3':
+                writer.writerow([])
+                writer.writerow(['  ' + item['content']])
+            elif item['type'] == 'h4':
+                writer.writerow(['    ' + item['content']])
+            elif item['type'] == 'subheader':
+                writer.writerow([item['content'] + ':'])
+            elif item['type'] == 'bullet':
+                writer.writerow(['  - ' + item['content']])
+            elif item['type'] == 'numbered':
+                writer.writerow(['  ' + item['content']])
             elif item['type'] == 'table':
                 for row in item['rows']:
                     writer.writerow(row)
+            elif item['type'] == 'text':
+                writer.writerow([item['content']])
         
     print(f"CSV saved: {output_path}")
 
 def main():
-    md_path = Path(r"d:\IT\Projects\Seminar\docs\02_scope_definition.md")
-    output_path = md_path.parent / "02_scope_definition.csv"
+    files = [
+        ("00_requirements_intake", r"d:\IT\Projects\Seminar\PRDs"),
+        ("01_executive_summary", r"d:\IT\Projects\Seminar\PRDs"),
+        ("02_scope_definition", r"d:\IT\Projects\Seminar\PRDs"),
+        ("03_user_personas_roles", r"d:\IT\Projects\Seminar\PRDs"),
+        ("04_user_stories", r"d:\IT\Projects\Seminar\PRDs"),
+        ("05_functional_requirements", r"d:\IT\Projects\Seminar\PRDs"),
+        ("06_acceptance_criteria", r"d:\IT\Projects\Seminar\PRDs"),
+        ("07_non_functional_requirements", r"d:\IT\Projects\Seminar\PRDs"),
+        ("08_data_requirements", r"d:\IT\Projects\Seminar\PRDs"),
+        ("09_api_specifications", r"d:\IT\Projects\Seminar\PRDs"),
+        ("10_ui_ux_specifications", r"d:\IT\Projects\Seminar\PRDs"),
+        ("11_business_rules", r"d:\IT\Projects\Seminar\PRDs"),
+        ("12_technical_constraints", r"d:\IT\Projects\Seminar\PRDs"),
+        ("13_dependencies_risks", r"d:\IT\Projects\Seminar\PRDs"),
+        ("14_usecase_diagram", r"d:\IT\Projects\Seminar\PRDs"),
+        ("15_sequence_diagrams", r"d:\IT\Projects\Seminar\PRDs"),
+        ("16_activity_diagrams", r"d:\IT\Projects\Seminar\PRDs"),
+        ("17_component_diagram", r"d:\IT\Projects\Seminar\PRDs"),
+    ]
+    for name, folder in files:
+        md_path = Path(folder) / f"{name}.md"
+        output_path = Path(r"d:\IT\Projects\Seminar\PRDs") / f"{name}.csv"
     
-    with open(md_path, 'r', encoding='utf-8') as f:
-        md_content = f.read()
+        with open(md_path, 'r', encoding='utf-8') as f:
+            md_content = f.read()
     
-    data = parse_markdown_to_csv(md_content)
-    print(f"Found {len(data)} content blocks")
+        data = parse_markdown_to_csv(md_content)
+        print(f"[{name}] Found {len(data)} content blocks")
     
-    create_csv(data, output_path)
+        create_csv(data, output_path)
     print("Done!")
 
 if __name__ == "__main__":

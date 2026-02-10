@@ -110,6 +110,7 @@
 | Hạng mục | Priority | Phase | Ghi chú |
 |----------|----------|-------|---------|
 | Admin Dashboard (Web) | P0 / P1 / P2 / P3 | MVP / Post | |
+| Shop Owner Dashboard (Web) | P0 / P1 / P2 / P3 | MVP / Post | |
 | Tourist App (Mobile/PWA) | P0 / P1 / P2 / P3 | MVP / Post | |
 | Backend API | P0 / P1 / P2 / P3 | MVP / Post | |
 | Quản lý nội dung | P0 / P1 / P2 / P3 | MVP / Post | |
@@ -990,7 +991,22 @@ Một User Story được coi là "Done" khi:
 | Q011 | Nhà cung cấp bản đồ (Google Maps/Mapbox)? | Tech Lead | | ☐ Mở ☐ Đã trả lời | |
 | Q012 | Backend sử dụng công nghệ gì? | Backend | | ☐ Mở ☐ Đã trả lời | |
 
-### 12.3 Câu hỏi thiết kế
+### 12.3 Câu hỏi về Shop Owner
+
+| ID | Câu hỏi | Giao cho | Hạn | Trạng thái | Trả lời |
+|----|---------|----------|-----|------------|---------|
+| Q015 | Shop Owner có thể tự đăng ký tài khoản không? | PO | | ☑ Đã trả lời | Có — chọn role khi đăng ký (Tourist/Shop Owner) |
+| Q016 | Mỗi Shop Owner quản lý bao nhiêu POI? | PO | | ☑ Đã trả lời | Nhiều POIs (chuỗi quán) |
+| Q017 | Shop Owner có cần Admin duyệt trước khi POI lên app không? | PO | | ☐ Mở ☐ Đã trả lời | |
+| Q018 | Shop Owner có xem được analytics của POI mình không? | PO | | ☐ Mở ☐ Đã trả lời | |
+| Q019 | Shop Owner có thể tạo/quản lý Tour không? | PO | | ☑ Đã trả lời | Không — chỉ Admin |
+| Q020 | Có cần xác minh thông tin Shop Owner (giấy phép kinh doanh)? | PO | | ☐ Mở ☐ Đã trả lời | |
+| Q021 | Shop Owner có thể thêm giờ mở cửa, menu, giá vào POI không? | PO | | ☐ Mở ☐ Đã trả lời | |
+| Q022 | Có phân biệt loại POI (quán ăn vs điểm tham quan) không? | PO | | ☑ Đã trả lời | Không |
+| Q023 | Shop Owner có được xóa POI không hay chỉ Admin? | PO | | ☐ Mở ☐ Đã trả lời | |
+| Q024 | Khi Shop Owner đăng ký, cần những thông tin gì? (Tên quán, địa chỉ, sđt...) | PO | | ☐ Mở ☐ Đã trả lời | |
+
+### 12.4 Câu hỏi thiết kế
 
 | ID | Câu hỏi | Giao cho | Hạn | Trạng thái | Trả lời |
 |----|---------|----------|-----|------------|---------|
@@ -1027,6 +1043,7 @@ Một User Story được coi là "Done" khi:
 |-----------|------|---------|----------|
 | 1.0 | 2026-02-07 | AI Assistant | Bản nháp đầu tiên |
 | 2.0 | 2026-02-08 | AI Assistant | Thêm Glossary, Success Metrics, Out of Scope, DoD. Chuyển từ MoSCoW sang P0-P3. Thêm Backend features. |
+| 2.1 | 2026-02-10 | AI Assistant | Thêm Shop Owner role, business analysis questions (Q015-Q024). Cập nhật scope. |
 
 ---
 

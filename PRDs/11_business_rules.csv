@@ -1,0 +1,153 @@
+﻿# Business Rules
+
+Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
+
+Rule Type Legend
+Type,Ký hiệu,Mô tả,Ví dụ
+**Constraint**,"Ràng buộc dữ liệu, validation","""Password ≥ 8 ký tự"""
+**Computation**,"Tính toán, chuyển đổi giá trị","""Hash password bằng bcrypt"""
+**Trigger**,Hành động tự động khi sự kiện xảy ra,"""Lock account sau 5 lần sai"""
+**Inference**,"Suy luận, quyết định logic","""Chọn POI gần nhất nếu overlap"""
+
+1. Authentication Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-101,Username Format,Constraint,Username entered,"Validate: 3-50 chars, alphanumeric + email","Return 400 + ""Invalid username format""",FR-101
+BR-102,Password Hashing,Computation,User created / password changed,Hash with bcrypt (cost factor 12),— (server-side only),FR-101
+BR-103,Login Lockout,Trigger,5 failed login attempts in 15 min,Lock account for 15 minutes,"Return 423 + ""Account locked, try after {time}""",FR-101
+BR-104,Access Token Expiry,Constraint,Token created,Expires in 15 minutes,Return 401 + trigger auto-refresh,FR-102
+BR-105,Refresh Token Expiry,Constraint,Token created,Expires in 7 days,Return 401 + redirect to login,FR-102
+BR-106,Auto-Refresh,Trigger,Access token < 5 min remaining,Auto-refresh using refresh token,If refresh fails → force logout,FR-102
+BR-107,Session Invalidation,Trigger,User logs out,Invalidate refresh token,—,FR-102
+BR-108,Reset Link Expiry,Constraint,Reset link created,Expire after 1 hour,"Return 400 + ""Reset link expired""",FR-103
+BR-109,Single-use Reset,Trigger,Reset link used,Invalidate immediately (set used_at),"Return 400 + ""Link already used""",FR-103
+BR-110,Password History,Constraint,Password changed,Cannot reuse last 3 passwords,"Return 422 + ""Cannot reuse recent passwords""",FR-103
+
+2. POI Management Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-201,Unique POI Name,Constraint,Create/Update POI,Name must be unique (case-insensitive),"Return 409 + ""POI name already exists""",FR-201
+BR-202,Required Fields,Constraint,Create POI,"Require: name_vi, description_vi, lat, lng, category",Return 400 + list missing fields,FR-201
+BR-203,Coordinate Validation,Constraint,Set location,"Latitude: -90 to 90, Longitude: -180 to 180","Return 400 + ""Invalid coordinates""",FR-201
+BR-204,Coordinate Bounds,Constraint,Set location,Must be within configured region bounds,"Return 422 + ""Location outside service area""",FR-204
+BR-205,Edit Active Only,Constraint,Edit POI,Cannot edit deleted POIs,"Return 422 + ""Cannot edit deleted POI""",FR-202
+BR-206,Delete Confirmation,Inference,Delete POI,Require confirmation dialog,Show confirm modal trước khi gọi API,FR-203
+BR-207,Tour Warning on Delete,Inference,Delete POI in Tour,Show warning with affected Tour names,Show warning + list Tours bị ảnh hưởng,FR-203
+BR-208,Soft Delete,Trigger,Delete POI,"Set deleted_at timestamp, don't remove data",— (server-side),FR-203
+BR-209,Hide Deleted,Constraint,Display POIs,Exclude deleted POIs from all lists,— (query filter),FR-203
+BR-210,Image Limits,Constraint,Upload images,"Max 10 images, each ≤5MB, jpg/png/webp","Return 400 + ""File too large / wrong type / max reached""",FR-205
+BR-211,Audio Limits,Constraint,Upload audio,"Max 50MB, mp3/wav format","Return 400 + ""File too large / wrong format""",FR-205
+BR-212,Auto Compress,Computation,Image >2MB,Compress to target ≤2MB,If compress fails → keep original,FR-205
+BR-213,Thumbnail Generation,Computation,Image uploaded,Generate 200×200 thumbnail,If generation fails → use original as thumb,FR-205
+BR-214,Metadata Storage,Computation,Media uploaded,"Store size, dimensions, duration",—,FR-205
+BR-215,Trigger Radius Range,Constraint,Set radius,Must be 5-100 meters,"Return 400 + ""Radius must be 5-100m""",FR-201
+BR-216,Default Trigger Radius,Computation,"Create POI, no radius specified",Default to 15 meters,—,FR-201
+BR-217,Default Draft Status,Trigger,POI created,Status = DRAFT by default,—,FR-207
+BR-218,Publish Requirements,Constraint,Publish POI,Must have name + description + location,"Return 422 + ""Missing required fields for publish""",FR-207
+BR-219,Unpublish Warning,Inference,Unpublish POI in Tour,Show warning with affected Tours,Show warning modal + list Tours,FR-207
+
+3. Tour Management Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-301,POI in Multiple Tours,Constraint,Add POI to Tour,Allow (M:N relationship),—,FR-302
+BR-302,Minimum POIs,Constraint,Publish Tour,Require at least 2 POIs,"Return 422 + ""Tour must have ≥2 POIs""",FR-302
+BR-303,Order Determines Route,Inference,Display Tour,POI order = suggested route,—,FR-302
+BR-304,Active POIs Only,Constraint,Add to Tour,Only active (published) POIs can be added,"Return 422 + ""POI is not published""",FR-302
+BR-305,Cascade POI Remove,Trigger,POI deleted/unpublished,"Remove from all Tours, reorder remaining",Notify Admin về Tours bị ảnh hưởng,FR-302
+BR-306,Draft Status,Trigger,Create Tour,New Tours start as DRAFT,—,FR-301
+BR-307,Estimated Duration,Computation,Tour POIs changed,Sum of audio durations + estimated walking time,"If no audio → show ""N/A""",FR-301
+
+4. Map & Audio Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-401,Show Active Only,Constraint,Display on map,Only status=ACTIVE POIs visible,—,FR-401
+BR-402,Center on User,Trigger,Map loads,Center on user's current location,If no GPS → center on default area,FR-401
+BR-403,Offline Fallback,Inference,No internet,Show cached POI data,"Show ""Offline"" badge + cached data",FR-602
+BR-404,Background Audio,Constraint,Screen locked,Continue audio playback,—,FR-403
+BR-405,Pause on Call,Trigger,Incoming call,Pause audio automatically,—,FR-403
+BR-406,Resume After Call,Trigger,Call ends,Resume audio playback,—,FR-403
+
+5. Location & Trigger Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-501,Permission Request,Trigger,GPS needed,Request permission just-in-time với lý do,If denied → switch to QR-only mode,FR-505
+BR-502,Update Frequency,Constraint,GPS tracking active,Update every 5-10 seconds,If battery low → reduce to 30s,FR-501
+BR-503,High Accuracy,Constraint,Location request,Use HIGH_ACCURACY mode,Fallback to BALANCED nếu indoor,FR-501
+BR-504,Background Tracking,Constraint,App in background,Continue GPS tracking,Respect OS background limits,FR-501
+BR-506,Hysteresis (Cooldown),Constraint,Just triggered POI,No re-trigger for 5 minutes,—,FR-502
+BR-507,Overlap Resolution,Inference,Multiple POIs in range,Trigger closest POI only,—,FR-502
+BR-508,User Preference,Constraint,Auto-play setting OFF,"Show notification only, don't auto-play",—,FR-502
+BR-509,QR Content,Constraint,QR scanned,Must contain valid POI ID or deep link,Return error nếu format sai,FR-503
+BR-510,QR Validation,Computation,QR scanned,Parse and validate format before processing,"Show ""Invalid QR"" nếu không parse được",FR-503
+BR-511,Invalid QR,Trigger,Unknown POI ID from QR,"Show ""POI not found"" error",Suggest nearby POIs instead,FR-503
+
+6. Language & Localization Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-601,Auto Detect,Computation,First app open,Detect device language (VI/EN),Default to VI nếu unsupported language,FR-601
+BR-602,Fallback Language,Inference,Translation missing,Show Vietnamese content,—,FR-601
+BR-603,Save Preference,Trigger,Language changed,Store in local storage,—,FR-601
+BR-604,Hot Reload,Trigger,Language switched,Reload content without app restart,Show loading indicator,FR-601
+BR-605,Missing Translation Indicator,Inference,Content in fallback lang,"Show ""(Nội dung bằng Tiếng Việt)""",—,FR-601
+
+7. Cache & Offline Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-606,Sync on Connect,Trigger,Internet restored,Sync data in background,If conflict → server wins,FR-602
+BR-607,Offline Indicator,Trigger,No internet detected,"Show ""Offline"" badge in UI",—,FR-602
+BR-608,Cache Expiry,Constraint,Cached data,Expire after 7 days,Re-fetch on next connection,FR-602
+BR-609,Download on View,Trigger,Image/audio accessed first time,Cache for offline use,If storage full → LRU eviction,FR-602
+BR-610,Cache Size Limit,Constraint,Cache grows,"Limit to 500MB, LRU eviction",Warn user before evicting,FR-602
+
+8. Analytics & Audit Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-701,Audit Admin Actions,Trigger,Admin Create/Update/Delete,"Log action, user_id, timestamp, entity",—,—
+BR-702,Track POI Views,Trigger,Tourist views POI,"Log POI ID, timestamp, session, device",Không log nếu Admin preview,FR-402
+BR-703,Track Audio Completion,Computation,Audio finishes,Calculate and log completion rate (%),—,FR-403
+BR-704,Track Geofence Enter,Trigger,User enters trigger zone,"Log POI, distance, time, action (accept/skip)",—,FR-502
+BR-705,Log All Triggers,Trigger,GPS/QR trigger fires,Log trigger_type + user_action to Trigger_Log,—,FR-502
+
+9. Tourist User Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-801,Anonymous Usage,Constraint,First app open,"Create device-based session, no login required",—,FR-504
+BR-802,Optional Login,Inference,Tourist uses app,Login only required for sync/favorites,"Show ""Login to save"" prompt",—
+BR-803,Device Data Merge,Trigger,Login after anonymous use,Merge device history + favorites to account,If conflict → keep most recent,—
+BR-804,Favorite Unique,Constraint,Add favorite,One per POI per user (unique constraint),"Return 409 + ""Already in favorites""",—
+BR-805,Social Login,Constraint,Tourist registers,"Support Google, Facebook, Apple OAuth",Fallback to email registration,—
+
+10. QR Code Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-901,QR Auto-deactivate,Trigger,POI deleted/unpublished,Set QR is_active = false,—,FR-503
+BR-902,QR Reactivate,Trigger,POI re-published,Set QR is_active = true,—,FR-503
+BR-903,QR Scan Counter,Computation,QR scanned successfully,Increment scan_count + update last_scanned_at,—,FR-503
+BR-904,QR Deep Link Format,Constraint,QR generated,Format: `https://gpstours.app/poi/{poi_id}`,—,FR-503
+
+11. Shop Owner Rules
+ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
+BR-1001,Self Registration,Constraint,Shop Owner registers,"No Admin approval needed, self-service",—,FR-701
+BR-1002,Unique Email,Constraint,Register Shop Owner,Email must be unique across all users,"Return 409 + ""Email already exists""",FR-701
+BR-1003,Data Isolation,Constraint,Shop Owner accesses POIs,Filter by owner_id = current user,"Return 403 + ""Access denied"" nếu truy cập POI người khác",FR-702
+BR-1004,No Delete Permission,Constraint,Shop Owner attempts delete,"Block delete action, only Admin can delete","Return 403 + ""Only Admin can delete POIs""",FR-702
+BR-1005,Analytics Scoping,Constraint,Shop Owner views analytics,Show only own POI(s) metrics,Return 403 nếu truy cập system analytics,FR-704
+BR-1006,Multiple POIs,Constraint,Shop Owner creates POI,Allow owning multiple POIs,—,FR-702
+
+12. Rule Type Legend
+Type,Ký hiệu,Mô tả,Số lượng
+**Constraint**,"Ràng buộc, validation, giới hạn",39
+**Computation**,"Tính toán, chuyển đổi, xử lý",12
+**Trigger**,Hành động tự động khi event xảy ra,23
+**Inference**,"Suy luận, quyết định logic",7
+
+13. Rule Priority Legend
+Priority,Meaning,Enforcement
+**High**,Critical for functionality,"Must implement, block on violation"
+**Medium**,Important for UX,"Should implement, warn on violation"
+**Low**,Nice to have,"Can defer, soft guidance"
+
+14. Rule Validation Summary
+Category,Total
+1. Authentication,4,1,3,0,**10**
+2. POI Management,10,4,2,3,**19**
+3. Tour Management,2,1,2,1,**7**
+4. Map & Audio,1,0,3,1,**6**
+5. Location & Trigger,5,1,1,1,**10**
+6. Language,0,1,2,2,**5**
+7. Cache & Offline,2,0,3,0,**5**
+8. Analytics & Audit,0,1,4,0,**5**
+9. Tourist User,2,0,1,1,**5**
+10. QR Code,1,1,2,0,**4**
+**11. Shop Owner**,**6**,**0**,**0**,**0**,**6**
+**Total**,**33**,**10**,**23**,**9**,**82**

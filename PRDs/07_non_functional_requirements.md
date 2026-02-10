@@ -1,0 +1,183 @@
+# 📊 Non-Functional Requirements
+## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
+
+> **Phiên bản:** 2.0  
+> **Ngày tạo:** 2026-02-08  
+> **Cập nhật:** 2026-02-10
+
+---
+
+## 1. Performance
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-P001 | API response time (p95) | < 500ms | P0 |
+| NFR-P002 | API response time (p99) | < 1s | P1 |
+| NFR-P003 | Page load time (FCP) | < 2s | P0 |
+| NFR-P004 | Time to Interactive (TTI) | < 3s | P1 |
+| NFR-P005 | Map render time | < 1s | P0 |
+| NFR-P006 | Audio start latency | < 500ms | P0 |
+| NFR-P007 | Image lazy loading | Yes | P1 |
+| NFR-P008 | Concurrent users supported | 1000 | P1 |
+
+---
+
+## 2. Availability & Reliability
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-A001 | Uptime SLA | > 99.5% | P0 |
+| NFR-A002 | MTTR (Mean Time To Recovery) | < 1 hour | P1 |
+| NFR-A003 | RPO (Recovery Point Objective) | < 1 hour | P1 |
+| NFR-A004 | RTO (Recovery Time Objective) | < 4 hours | P1 |
+| NFR-A005 | Backup frequency | Daily | P0 |
+| NFR-A006 | Backup retention | 30 days | P1 |
+| NFR-A007 | Health check endpoints | Yes | P0 |
+
+---
+
+## 3. Scalability
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-S001 | Horizontal scaling | Supported | P1 |
+| NFR-S002 | Max POIs per location | 500 | P1 |
+| NFR-S003 | Max Tours | 100 | P1 |
+| NFR-S004 | Max concurrent audio streams | 500 | P1 |
+| NFR-S005 | Database auto-scaling | Cloud-managed | P2 |
+
+---
+
+## 4. Security
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-SEC001 | HTTPS enforcement | All traffic | P0 |
+| NFR-SEC002 | Password hashing | bcrypt (cost 12) | P0 |
+| NFR-SEC003 | JWT token expiry | 15 min access, 7 day refresh | P0 |
+| NFR-SEC004 | Rate limiting | 100 req/min/IP (public), 200/min (Shop Owner), 300/min (Admin) | P1 |
+| NFR-SEC005 | Input validation | Server-side required | P0 |
+| NFR-SEC006 | SQL injection protection | Parameterized queries (Prisma) | P0 |
+| NFR-SEC007 | XSS protection | Sanitized output | P0 |
+| NFR-SEC008 | CORS configuration | Whitelist origins | P0 |
+| NFR-SEC009 | Audit logging | Admin + Shop Owner actions | P1 |
+| NFR-SEC010 | Dependency vulnerability scan | CI/CD integrated | P2 |
+| NFR-SEC011 | Shop Owner data isolation | owner_id filter on all queries | P0 |
+| NFR-SEC012 | Role-based access control | Admin / Shop Owner / Tourist JWT claims | P0 |
+
+---
+
+## 5. Usability
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-U001 | Mobile responsive | 320px - 1440px | P0 |
+| NFR-U002 | Touch friendly (min tap target) | 44px | P0 |
+| NFR-U003 | Error messages | User-friendly, actionable | P0 |
+| NFR-U004 | Loading indicators | All async operations | P0 |
+| NFR-U005 | Empty states | Designed with CTA | P1 |
+| NFR-U006 | Offline indicator | Visible when offline | P1 |
+| NFR-U007 | Language switch | Instant, no reload | P1 |
+
+---
+
+## 6. Accessibility
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-ACC001 | WCAG compliance | Level AA | P2 |
+| NFR-ACC002 | Color contrast ratio | 4.5:1 minimum | P2 |
+| NFR-ACC003 | Keyboard navigation | Full support | P2 |
+| NFR-ACC004 | Screen reader support | ARIA labels | P2 |
+| NFR-ACC005 | Font scalability | Up to 200% | P2 |
+
+---
+
+## 7. Compatibility
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-C001 | Admin browsers | Chrome 90+, Firefox 90+, Safari 14+, Edge 90+ | P0 |
+| NFR-C002 | Mobile OS | iOS 14+, Android 10+ | P0 |
+| NFR-C003 | Screen sizes | 320px - 2560px | P0 |
+| NFR-C004 | Tourist App | React Native (Expo) iOS + Android | P0 |
+| NFR-C005 | API backward compatibility | Deprecation notice 3 months | P2 |
+
+---
+
+## 8. Maintainability
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-M001 | Code documentation | JSDoc/Docstrings | P1 |
+| NFR-M002 | Test coverage | > 70% | P2 |
+| NFR-M003 | Linting | ESLint/Prettier enforced | P0 |
+| NFR-M004 | Type safety | TypeScript strict mode | P0 |
+| NFR-M005 | Modular architecture | Component-based | P0 |
+| NFR-M006 | CI/CD pipeline | Automated build/deploy | P1 |
+| NFR-M007 | Deployment rollback | < 5 minutes | P1 |
+
+---
+
+## 9. Localization
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-L001 | Default language | Vietnamese | P0 |
+| NFR-L002 | Supported languages (MVP) | VN, EN | P0 |
+| NFR-L003 | Timezone | Asia/Ho_Chi_Minh | P0 |
+| NFR-L004 | Date format | DD/MM/YYYY | P0 |
+| NFR-L005 | Number format | Locale-specific (1.234,56) | P1 |
+| NFR-L006 | RTL support | Not required MVP | P3 |
+
+---
+
+## 10. Data Integrity
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-D001 | Input validation | Client + Server | P0 |
+| NFR-D002 | Referential integrity | DB-enforced | P0 |
+| NFR-D003 | Transaction consistency | ACID | P0 |
+| NFR-D004 | Soft delete | All entities | P0 |
+| NFR-D005 | Audit trail | Created/Updated timestamps | P0 |
+
+---
+
+## 11. Environmental Constraints
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-E001 | GPS accuracy | ±5m outdoor | P0 |
+| NFR-E002 | Network requirement | 4G/LTE recommended | P0 |
+| NFR-E003 | Offline capable | Core features | P1 |
+| NFR-E004 | Battery consumption | < 10%/hour | P1 |
+| NFR-E005 | App size | < 50MB | P1 |
+| NFR-E006 | Memory usage | < 200MB | P1 |
+
+---
+
+## 12. Monitoring & Observability
+
+| ID | Requirement | Target | Priority |
+|----|-------------|--------|----------|
+| NFR-O001 | Application monitoring | APM tool integrated | P1 |
+| NFR-O002 | Error tracking | Sentry/Crashlytics | P1 |
+| NFR-O003 | Log aggregation | Centralized logs | P2 |
+| NFR-O004 | Alerting | Critical errors → Slack/Email | P1 |
+| NFR-O005 | Analytics | Google Analytics/Mixpanel | P2 |
+
+---
+
+## Summary by Priority
+
+| Priority | Count | Examples |
+|----------|-------|----------|
+| **P0** | 37 | Security, Core performance, Compatibility, Data isolation |
+| **P1** | 28 | Monitoring, Advanced perf, Offline |
+| **P2** | 12 | Accessibility, Analytics, Advanced NFRs |
+| **P3** | 2 | RTL, Future enhancements |
+
+---
+
+> **Reference:** `PRDs/00_requirements_intake.md` Section 8
