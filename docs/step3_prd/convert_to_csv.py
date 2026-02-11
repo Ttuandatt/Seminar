@@ -191,29 +191,32 @@ def create_csv(data, output_path):
     print(f"CSV saved: {output_path}")
 
 def main():
+    step1_dir = r"d:\IT\Projects\Seminar\docs\step1_business_idea"
+    step3_dir = r"d:\IT\Projects\Seminar\docs\step3_prd"
+
     files = [
-        ("00_requirements_intake", r"d:\IT\Projects\Seminar\PRDs"),
-        ("01_executive_summary", r"d:\IT\Projects\Seminar\PRDs"),
-        ("02_scope_definition", r"d:\IT\Projects\Seminar\PRDs"),
-        ("03_user_personas_roles", r"d:\IT\Projects\Seminar\PRDs"),
-        ("04_user_stories", r"d:\IT\Projects\Seminar\PRDs"),
-        ("05_functional_requirements", r"d:\IT\Projects\Seminar\PRDs"),
-        ("06_acceptance_criteria", r"d:\IT\Projects\Seminar\PRDs"),
-        ("07_non_functional_requirements", r"d:\IT\Projects\Seminar\PRDs"),
-        ("08_data_requirements", r"d:\IT\Projects\Seminar\PRDs"),
-        ("09_api_specifications", r"d:\IT\Projects\Seminar\PRDs"),
-        ("10_ui_ux_specifications", r"d:\IT\Projects\Seminar\PRDs"),
-        ("11_business_rules", r"d:\IT\Projects\Seminar\PRDs"),
-        ("12_technical_constraints", r"d:\IT\Projects\Seminar\PRDs"),
-        ("13_dependencies_risks", r"d:\IT\Projects\Seminar\PRDs"),
-        ("14_usecase_diagram", r"d:\IT\Projects\Seminar\PRDs"),
-        ("15_sequence_diagrams", r"d:\IT\Projects\Seminar\PRDs"),
-        ("16_activity_diagrams", r"d:\IT\Projects\Seminar\PRDs"),
-        ("17_component_diagram", r"d:\IT\Projects\Seminar\PRDs"),
+        ("00_requirements_intake", step1_dir),
+        ("01_executive_summary", step3_dir),
+        ("02_scope_definition", step3_dir),
+        ("03_user_personas_roles", step3_dir),
+        ("04_user_stories", step3_dir),
+        ("05_functional_requirements", step3_dir),
+        ("06_acceptance_criteria", step3_dir),
+        ("07_non_functional_requirements", step3_dir),
+        ("08_data_requirements", step3_dir),
+        ("09_api_specifications", step3_dir),
+        ("10_ui_ux_specifications", step3_dir),
+        ("11_business_rules", step3_dir),
+        ("12_technical_constraints", step3_dir),
+        ("13_dependencies_risks", step3_dir),
+        ("14_usecase_diagram", step3_dir),
+        ("15_sequence_diagrams", step3_dir),
+        ("16_activity_diagrams", step3_dir),
+        ("17_component_diagram", step3_dir),
     ]
     for name, folder in files:
         md_path = Path(folder) / f"{name}.md"
-        output_path = Path(r"d:\IT\Projects\Seminar\PRDs") / f"{name}.csv"
+        output_path = Path(folder) / f"{name}.csv"
     
         with open(md_path, 'r', encoding='utf-8') as f:
             md_content = f.read()
