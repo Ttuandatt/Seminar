@@ -1,0 +1,285 @@
+// GPS Tours & Phố Ẩm thực Vĩnh Khánh — Prisma Schema
+// Ref: docs/step2_lowcode/data_fields.md (11 entities, 95 fields)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  SHOP_OWNER
+  TOURIST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+enum PoiCategory {
+  MAIN
+  SUB
+}
+
+enum PoiStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum TourStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+}
+
+enum MediaLanguage {
+  VI
+  EN
+  ALL
+}
+
+enum TriggerType {
+  GPS
+  QR
+  MANUAL
+}
+
+enum UserAction {
+  ACCEPTED
+  SKIPPED
+  DISMISSED
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+}
+
+// ─────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────
+
+model User {
+  id               String     @id @default(uuid())
+  email            String     @unique
+  passwordHash     String
+  fullName         String
+  role             Role
+  status           UserStatus @default(ACTIVE)
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?
+  refreshToken     String?
+  refreshTokenId   String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Relations
+  shopOwnerProfile ShopOwner?
+  touristProfile   TouristUser?
+  createdPois      Poi[]               @relation("PoiCreator")
+  ownedPois        Poi[]               @relation("PoiOwner")
+  createdTours     Tour[]
+  passwordResets   PasswordResetToken[]
+  revokedTokens    RevokedToken[]
+
+  @@map("users")
+}
+
+model ShopOwner {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  shopName    String
+  shopAddress String?
+  phone       String?
+  avatarUrl   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("shop_owners")
+}
+
+model TouristUser {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  displayName   String?
+  languagePref  String  @default("VI")
+  autoPlayAudio Boolean @default(true)
+  pushEnabled   Boolean @default(false)
+  pushToken     String?
+  deviceId      String?
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites Favorite[]
+  history   ViewHistory[]
+
+  @@map("tourist_users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model RevokedToken {
+  id        String    @id @default(uuid())
+  tokenId   String    @unique
+  userId    String
+  type      TokenType
+  reason    String?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("revoked_tokens")
+}
+
+model Poi {
+  id            String      @id @default(uuid())
+  nameVi        String
+  nameEn        String?
+  descriptionVi String
+  descriptionEn String?
+  latitude      Float
+  longitude     Float
+  triggerRadius  Int         @default(15)
+  category      PoiCategory @default(MAIN)
+  status        PoiStatus   @default(DRAFT)
+  createdById   String
+  ownerId       String?
+  deletedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  createdBy  User        @relation("PoiCreator", fields: [createdById], references: [id])
+  owner      User?       @relation("PoiOwner", fields: [ownerId], references: [id])
+  media      PoiMedia[]
+  tourPois   TourPoi[]
+  favorites  Favorite[]
+  viewHistory ViewHistory[]
+  triggerLogs TriggerLog[]
+
+  @@map("pois")
+}
+
+model PoiMedia {
+  id              String        @id @default(uuid())
+  poiId           String
+  type            MediaType
+  language        MediaLanguage @default(ALL)
+  url             String
+  thumbnailUrl    String?
+  originalName    String?
+  sizeBytes       Int?
+  durationSeconds Int?
+  width           Int?
+  height          Int?
+  orderIndex      Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  poi Poi @relation(fields: [poiId], references: [id], onDelete: Cascade)
+
+  @@map("poi_media")
+}
+
+model Tour {
+  id                String     @id @default(uuid())
+  nameVi            String
+  nameEn            String?
+  descriptionVi     String?
+  descriptionEn     String?
+  thumbnailUrl      String?
+  estimatedDuration Int?       // minutes
+  status            TourStatus @default(DRAFT)
+  createdById       String
+  deletedAt         DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  createdBy User      @relation(fields: [createdById], references: [id])
+  tourPois  TourPoi[]
+
+  @@map("tours")
+}
+
+model TourPoi {
+  id         String @id @default(uuid())
+  tourId     String
+  poiId      String
+  orderIndex Int
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  poi  Poi  @relation(fields: [poiId], references: [id])
+
+  @@unique([tourId, poiId])
+  @@map("tour_pois")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  touristId String
+  poiId     String
+  createdAt DateTime @default(now())
+
+  tourist TouristUser @relation(fields: [touristId], references: [id], onDelete: Cascade)
+  poi     Poi         @relation(fields: [poiId], references: [id])
+
+  @@unique([touristId, poiId])
+  @@map("favorites")
+}
+
+model ViewHistory {
+  id          String      @id @default(uuid())
+  touristId   String
+  poiId       String
+  viewedAt    DateTime    @default(now())
+  audioPlayed Boolean     @default(false)
+  triggerType TriggerType @default(MANUAL)
+
+  tourist TouristUser @relation(fields: [touristId], references: [id], onDelete: Cascade)
+  poi     Poi         @relation(fields: [poiId], references: [id])
+
+  @@map("view_history")
+}
+
+model TriggerLog {
+  id             String      @id @default(uuid())
+  deviceId       String
+  poiId          String
+  triggerType    TriggerType
+  userAction     UserAction
+  userLat        Float?
+  userLng        Float?
+  distanceMeters Float?
+  createdAt      DateTime    @default(now())
+
+  poi Poi @relation(fields: [poiId], references: [id])
+
+  @@map("trigger_logs")
+}

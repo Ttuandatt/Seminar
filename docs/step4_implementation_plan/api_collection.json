@@ -1,0 +1,931 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Seminar GPS Tours API",
+        "description": "API documentation for GPS Tours App (Full Coverage)",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000/api/v1",
+            "description": "Local Server"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+    "paths": {
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "1. Auth"
+                ],
+                "summary": "Register New User",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "admin@gpstours.vn"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "admin123"
+                                    },
+                                    "fullName": {
+                                        "type": "string",
+                                        "example": "System Admin"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "ADMIN"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "1. Auth"
+                ],
+                "summary": "Login",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "admin@gpstours.vn"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "admin123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK - Token Returned"
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "1. Auth"
+                ],
+                "summary": "Refresh Token",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "refreshToken": {
+                                        "type": "string",
+                                        "example": "ey..."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK - New Tokens"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "1. Auth"
+                ],
+                "summary": "Logout",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logged Out"
+                    }
+                }
+            }
+        },
+        "/pois": {
+            "get": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Get All POIs",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of POIs"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Create POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nameVi": {
+                                        "type": "string",
+                                        "example": "Quán Ốc Oanh"
+                                    },
+                                    "nameEn": {
+                                        "type": "string",
+                                        "example": "Oc Oanh Snail"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "example": 10.762622
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "example": 106.660172
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "534 Vĩnh Khánh"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "MAIN"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "ACTIVE"
+                                    },
+                                    "triggerRadius": {
+                                        "type": "integer",
+                                        "example": 20
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI Created"
+                    }
+                }
+            }
+        },
+        "/pois/{id}": {
+            "get": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Get POI Detail",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Update POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "descriptionVi": {
+                                        "type": "string",
+                                        "example": "Updated description"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Delete POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/media/upload": {
+            "post": {
+                "tags": [
+                    "2. POIs (Admin)"
+                ],
+                "summary": "Upload Media",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "poiId": {
+                                        "type": "string",
+                                        "example": "1"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "IMAGE"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Uploaded"
+                    }
+                }
+            }
+        },
+        "/tours": {
+            "get": {
+                "tags": [
+                    "3. Tours (Admin)"
+                ],
+                "summary": "Get All Tours",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "3. Tours (Admin)"
+                ],
+                "summary": "Create Tour",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nameVi": {
+                                        "type": "string",
+                                        "example": "Food Tour Vĩnh Khánh"
+                                    },
+                                    "estimatedDuration": {
+                                        "type": "integer",
+                                        "example": 120
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "ACTIVE"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/tours/{id}": {
+            "get": {
+                "tags": [
+                    "3. Tours (Admin)"
+                ],
+                "summary": "Get Tour Detail",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "3. Tours (Admin)"
+                ],
+                "summary": "Delete Tour",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/tours/{id}/pois": {
+            "post": {
+                "tags": [
+                    "3. Tours (Admin)"
+                ],
+                "summary": "Set POIs for Tour",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "poiIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/pois/nearby": {
+            "get": {
+                "tags": [
+                    "4. Public"
+                ],
+                "summary": "Get Nearby POIs",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "example": 10.762
+                        }
+                    },
+                    {
+                        "name": "lng",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "example": 106.660
+                        }
+                    },
+                    {
+                        "name": "radius",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/tours": {
+            "get": {
+                "tags": [
+                    "4. Public"
+                ],
+                "summary": "Get Public Tours",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/pois/{id}": {
+            "get": {
+                "tags": [
+                    "4. Public"
+                ],
+                "summary": "Get POI Detail (Public)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/public/tours/{id}": {
+            "get": {
+                "tags": [
+                    "4. Public"
+                ],
+                "summary": "Get Tour Detail (Public)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/shop-owner/profile": {
+            "get": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "My Profile",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/shop-owner/pois": {
+            "get": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "My POIs",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "Create POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nameVi": {
+                                        "type": "string",
+                                        "example": "Quán Bún Mắm Tùng"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "144 Vĩnh Khánh"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/shop-owner/pois/{id}": {
+            "patch": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "Update My POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "Delete My POI",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/shop-owner/stats": {
+            "get": {
+                "tags": [
+                    "5. Shop Owner"
+                ],
+                "summary": "Shop Analytics",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/tourist/profile": {
+            "get": {
+                "tags": [
+                    "6. Tourist"
+                ],
+                "summary": "Get Profile",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "6. Tourist"
+                ],
+                "summary": "Update Profile",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "displayName": {
+                                        "type": "string",
+                                        "example": "John Travel"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            }
+        },
+        "/tourist/history": {
+            "get": {
+                "tags": [
+                    "6. Tourist"
+                ],
+                "summary": "Get History",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/tourist/favorites": {
+            "post": {
+                "tags": [
+                    "6. Tourist"
+                ],
+                "summary": "Add Favorite",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "poiId": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/tourist/favorites/{id}": {
+            "delete": {
+                "tags": [
+                    "6. Tourist"
+                ],
+                "summary": "Remove Favorite",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/overview": {
+            "get": {
+                "tags": [
+                    "7. Analytics"
+                ],
+                "summary": "Analytics Overview",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -52,7 +52,7 @@
 | POI | longitude | Decimal(11,8) | Yes | -180 to 180 | GPS lng |
 | POI | trigger_radius | Integer | Yes | 5-100m | Default: 15m (BR-19) |
 | POI | category | Enum | Yes | MAIN, SUB | POI type |
-| POI | status | Enum | Yes | DRAFT, PUBLISHED, ARCHIVED | Default: DRAFT (BR-15) |
+| POI | status | Enum | Yes | DRAFT, ACTIVE, ARCHIVED | Default: DRAFT (BR-15); Admin có thể đặt ACTIVE ngay khi tạo nếu đủ dữ liệu |
 | POI | owner_id | UUID | No | FK → Shop_Owner | NULL if Admin-created |
 | POI | created_by | UUID | Yes | FK → Admin/User | Creator |
 | POI | created_at | Timestamp | Yes | Auto | — |

@@ -265,11 +265,14 @@ latitude: 16.0544
 longitude: 108.2022
 triggerRadius: 15
 category: "MAIN"
+status: "ACTIVE" // optional, default DRAFT
 images[]: (file)
 images[]: (file)
 audioVi: (file)
 audioEn: (file)
 ```
+
+> **Rule:** Nếu không gửi `status` thì POI tạo mới mặc định `DRAFT`. Admin có thể đặt `ACTIVE` ngay khi tạo nếu nội dung đạt chuẩn QC.
 
 **Response (201):**
 ```json
