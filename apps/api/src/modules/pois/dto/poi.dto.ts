@@ -7,6 +7,7 @@ import {
     Min,
     Max,
     MinLength,
+    IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PoiCategory, PoiStatus } from '@prisma/client';
@@ -51,6 +52,10 @@ export class CreatePoiDto {
     @IsOptional()
     @IsEnum(PoiStatus)
     status?: PoiStatus;
+
+    @IsOptional()
+    @IsUUID()
+    ownerId?: string | null;
 }
 
 export class UpdatePoiDto {
@@ -95,6 +100,10 @@ export class UpdatePoiDto {
     @IsOptional()
     @IsEnum(PoiStatus)
     status?: PoiStatus;
+
+    @IsOptional()
+    @IsUUID()
+    ownerId?: string | null;
 }
 
 export class QueryPoiDto extends PaginationDto {

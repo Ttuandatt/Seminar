@@ -38,6 +38,17 @@ export class PoisService {
                 take: query.limit,
                 include: {
                     media: { where: { type: 'IMAGE' }, take: 1 },
+                    owner: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            shopOwnerProfile: {
+                                select: {
+                                    shopName: true,
+                                },
+                            },
+                        },
+                    },
                     _count: { select: { tourPois: true, viewHistory: true } },
                 },
                 orderBy: { createdAt: 'desc' },
@@ -62,7 +73,17 @@ export class PoisService {
             include: {
                 media: { orderBy: { orderIndex: 'asc' } },
                 createdBy: { select: { id: true, fullName: true } },
-                owner: { select: { id: true, fullName: true } },
+                owner: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        shopOwnerProfile: {
+                            select: {
+                                shopName: true,
+                            },
+                        },
+                    },
+                },
             },
         });
         if (!poi) throw new NotFoundException('POI not found');
