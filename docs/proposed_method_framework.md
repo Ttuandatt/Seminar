@@ -64,10 +64,13 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 │                                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  TOOLS LAYER                                                                │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
-│  │ AI Studio  │  │  Claude/   │  │   Cursor   │  │  GitHub    │            │
-│  │ Gemini     │  │  ChatGPT   │  │   Copilot  │  │  Actions   │            │
-│  └────────────┘  └────────────┘  └────────────┘  └────────────┘            │
+│  ┌───────────────┬──────────────┬──────────────┬──────────────┬──────────┐ │
+│  │ Perplexity /  │ Google AI     │ Claude /     │ VS Code +    │ Prisma & │ │
+│  │ market intel  │ Studio / v0   │ ChatGPT /    │ GitHub       │ Swagger  │ │
+│  │ (Step 1)      │ (Step 2)      │ Copilot      │ Copilot      │ / Actions│ │
+│  │               │               │ (Steps 3-5)  │ (POC/Refactor│ (Steps   │ │
+│  │               │               │              │ + Delivery)  │ 5-6)     │ │
+│  └───────────────┴──────────────┴──────────────┴──────────────┴──────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -85,12 +88,13 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 - Constraints (budget, timeline, team)
 
 **Output:**
-- `requirements_intake.md`:
+- `docs/step1_business_idea/00_requirements_intake.(md/csv)`
   - Problem statement
   - Target users
   - MVP scope (in/out)
   - Success metrics
-  - Constraints
+  - Constraints, assumptions, risks
+  - Interview QA snapshots
 
 **Công cụ:** Perplexity (research), ChatGPT/Claude (brainstorm)
 
@@ -101,14 +105,14 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 **Mục tiêu:** Phác thảo hệ thống ở mức "low-code" - chốt nhanh phạm vi trước khi chi tiết
 
 **Input:**
-- `requirements_intake.md` từ Step 1
+- `docs/step1_business_idea/00_requirements_intake.(md/csv)` đã được chốt ở Step 1
 
 **Output:**
-- `screens.md` - Danh sách màn hình với states
-- `user_flows.md` - Luồng thao tác (happy path + edge cases)
-- `business_rules.md` - Quy tắc nghiệp vụ có ID
-- `data_fields.md` - Cấu trúc dữ liệu cơ bản
-- `ui_mockups/` - Phác thảo giao diện (optional)
+- `docs/step2_lowcode/screens.md` - Danh sách màn hình với states
+- `docs/step2_lowcode/user_flows.md` - Luồng thao tác (happy path + edge cases)
+- `docs/step2_lowcode/business_rules.md` - Quy tắc nghiệp vụ có ID
+- `docs/step2_lowcode/data_fields.md` - Cấu trúc dữ liệu cơ bản
+- `docs/step2_lowcode/ui_mockups/` - Phác thảo giao diện (optional)
 
 **Công cụ:** Google AI Studio, Figma, v0.dev
 
@@ -116,23 +120,25 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 
 ### Step 3: PRD (BA Role)
 
-**Mục tiêu:** Chuẩn hóa yêu cầu thành tài liệu "buildable"
+**Mục tiêu:** Chuẩn hóa yêu cầu thành bộ tài liệu buildable duy trì làm Single Source of Truth
 
 **Input:**
-- Tất cả outputs từ Step 2
+- Outputs Step 2 (screens, flows, rules, data)
+- `docs/step1_business_idea/*` và intake notes
 
 **Output:**
-- `PRD.md`:
-  - User Stories (INVEST format)
-  - Functional Requirements
-  - Acceptance Criteria (Given-When-Then)
-  - Non-Functional Requirements
-  - Data Requirements
-  - API Contracts
-  - Dependencies & Risks
-  - Open Questions
+- Bộ PRD đa tệp (`docs/step3_prd/*.md`):
+  - `01_executive_summary` → Goals, stakeholders
+  - `02_scope_definition` → In/Out scope
+  - `03_user_personas_roles` → Personas
+  - `04_user_stories` + `06_acceptance_criteria` → INVEST + GWT
+  - `05_functional_requirements`, `07_non_functional_requirements`
+  - `08_data_requirements`, `09_api_specifications`, `10_ui_ux_specifications`
+  - `11_business_rules`, `12_technical_constraints`, `13_dependencies_risks`
+  - `14-17` diagrams (use case, sequence, activity, component)
+- Updated `appendix/open_questions.md` với owner + due date
 
-**Công cụ:** Claude, ChatGPT
+**Công cụ:** Claude/ChatGPT (drafting), Mermaid/PlantUML, Markdown templates
 
 ---
 
@@ -141,18 +147,18 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 **Mục tiêu:** Triển khai bản chạy được end-to-end
 
 **Input:**
-- `PRD.md` từ Step 3
+- Bộ `docs/step3_prd/*.md` (user stories, FR, AC, APIs, UI spec, diagrams)
 - UI mockups từ Step 2
 
 **Output:**
-- Working prototype với:
+- Working prototype trong `apps/admin` + `apps/api` branches với:
   - Core features implemented
   - API integration (real hoặc mock)
   - Basic UI states (loading, empty, error)
-- `implementation_notes.md`
-- Smoke test results
+- `docs/step4_implementation_plan/implementation_plan.md` (implementation notes)
+- `docs/step4_implementation_plan/api_testing_guide.md` + `api_collection.json` (smoke/API tests)
 
-**Công cụ:** Cursor, Copilot, Claude
+**Công cụ:** VS Code + GitHub Copilot, Nest CLI, Vite dev server, Swagger/Postman
 
 ---
 
@@ -161,17 +167,17 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 **Mục tiêu:** Chuyển từ "chạy được" sang "maintainable"
 
 **Input:**
-- POC code từ Step 4
+- POC code từ Step 4 (`apps/*` branches) + notes tại `docs/step4_implementation_plan/*`
 
 **Output:**
 - Refactored codebase:
   - UI-logic separation
   - Reusable components/hooks
   - Consistent naming/structure
-- `refactoring_log.md`
+- Refactoring notes cập nhật trong `docs/step4_implementation_plan/implementation_plan.md` (section Refactoring Log)
 - Updated tests
 
-**Công cụ:** IDE, ESLint, Prettier
+**Công cụ:** VS Code, ESLint/Prettier, Jest, Prisma migrate, architectural review checklist
 
 ---
 
@@ -183,11 +189,12 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 - Refactored code từ Step 5
 
 **Output:**
-- Clean Git history
-- Pull Request với description
-- CI/CD passing
-- Updated README
-- Changelog
+- Clean Git history & tagged release
+- Pull Request mô tả what/why/how-to-test + demo link
+- CI/CD passing (lint/test/build/migrate)
+- Swagger `/api/docs` enabled & linked trong README
+- Prisma migrations + seed scripts cập nhật
+- Updated README + CHANGELOG + deployment checklist
 
 **Công cụ:** GitHub, GitHub Actions
 
@@ -207,6 +214,8 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 
 **Pass criteria:** Tất cả items checked
 
+**If fail:** Quay lại Step 1 (PO + BA) cập nhật `00_requirements_intake.*`, làm rõ scope với stakeholders, sau đó đặt lại cuộc họp phê duyệt trước khi tiếp tục.
+
 ---
 
 ### Gate 2: Design Review (sau Step 2)
@@ -220,6 +229,8 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 | ☐ | Data fields đủ cho UI? |
 
 **Pass criteria:** ≥80% items checked
+
+**If fail:** Quay lại Step 2 (BA + UX) để bổ sung screen list, flows, rules hoặc data fields. Mọi thay đổi phải được note vào `docs/step2_lowcode/*` trước khi tái review Gate 2.
 
 ---
 
@@ -236,6 +247,8 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 
 **Pass criteria:** Tất cả items checked
 
+**If fail:** BA cập nhật `docs/step3_prd/*` và làm việc với stakeholder/tech lead để giải quyết open questions hoặc gaps. Khi các mục thiếu được bổ sung, thực hiện lại Gate 3.
+
 ---
 
 ### Gate 4: Demo Pass (sau Step 4)
@@ -249,6 +262,8 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 | ☐ | Demo cho stakeholder thành công? |
 
 **Pass criteria:** ≥80% items checked
+
+**If fail:** Dev team quay lại Step 4, sửa các issue trong POC (API, error state, smoke test) và chạy lại demo trước khi hẹn kiểm tra Gate 4.
 
 ---
 
@@ -264,6 +279,25 @@ Vibe Coding = Tăng tốc phát triển với AI + Kiểm soát chất lượng
 | ☐ | Tests pass (nếu có)? |
 
 **Pass criteria:** Tất cả items checked
+
+**If fail:** Tech lead tiếp tục Step 5 cho đến khi đạt chuẩn (refactor, lint/test/build). Mọi debt phát hiện phải log vào `refactoring_log.md` và chứng minh đã xử lý trước lần review kế tiếp.
+
+---
+
+### Gate 6: Release Readiness (sau Step 6)
+
+| Check | Criteria |
+|-------|----------|
+| ☐ | PR merged via approved review + passing CI? |
+| ☐ | Semantic version/tag created? |
+| ☐ | Swagger `/api/docs` và README cập nhật? |
+| ☐ | Prisma migrate/seed tested trên môi trường staging? |
+| ☐ | Deployment/runbook checklist hoàn tất? |
+| ☐ | Monitoring/rollback plan được ghi nhận? |
+
+**Pass criteria:** ≥80% items checked (no critical gaps)
+
+**If fail:** DevOps/owners quay lại Step 6 để hoàn tất checklist release (CI, migrations, docs, monitoring). Không được deploy cho tới khi các tiêu chí được tick lại và reviewer xác nhận.
 
 ---
 
