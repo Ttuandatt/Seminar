@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import api from '../../lib/api';
+import { authService } from '../../services/auth.service';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
@@ -17,21 +19,23 @@ const LoginPage = () => {
         setError('');
 
         try {
-            const response = await api.post('/auth/login', { email, password });
-            const { accessToken, refreshToken } = response.data;
-
-            if (accessToken && refreshToken) {
-                localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', refreshToken);
-                // Clean up any stale query data before navigating
-                // (Optional: queryClient.clear() if accessible, but reload/nav handles it usually)
-                navigate('/admin/dashboard');
-            } else {
+            const response = await authService.login({ email, password });
+            if (!response.accessToken || !response.refreshToken) {
                 setError('Login succeeded but tokens are missing.');
+                return;
             }
-        } catch (err: any) {
-            console.error('Login error:', err);
-            const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+
+            localStorage.setItem('accessToken', response.accessToken);
+            localStorage.setItem('refreshToken', response.refreshToken);
+            login(response);
+            navigate('/admin/dashboard', { replace: true });
+        } catch (error: unknown) {
+            console.error('Login error:', error);
+            const message =
+                typeof error === 'object' && error !== null && 'response' in error
+                    ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
+                    : undefined;
+            const msg = message || 'Login failed. Please check your credentials.';
             setError(Array.isArray(msg) ? msg[0] : msg);
         } finally {
             setLoading(false);

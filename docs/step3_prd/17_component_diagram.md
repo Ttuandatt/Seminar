@@ -354,7 +354,7 @@ erDiagram
         float longitude
         geometry geom "PostGIS POINT"
         int trigger_radius "meters"
-        enum type "MAIN|SUB"
+        enum type "DINING|STREET_FOOD|CAFES_DESSERTS|BARS_NIGHTLIFE|MARKETS_SPECIALTY|CULTURAL_LANDMARKS|EXPERIENCES_WORKSHOPS|OUTDOOR_SCENIC"
         enum status "draft|published|archived"
         timestamp created_at
         timestamp updated_at

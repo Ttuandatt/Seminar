@@ -2,26 +2,54 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-    Plus, Search, Eye, Edit, Trash2, Star, ChevronLeft, ChevronRight, Loader2, AlertCircle, MapPin
+    Plus, Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, AlertCircle, MapPin
 } from 'lucide-react';
-import { poiService } from '../../services/poi.service';
+import { poiService, POI_CATEGORY_OPTIONS, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
 
 const statusColors: Record<string, string> = {
+    ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
     PUBLISHED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
     DRAFT: 'bg-amber-50 text-amber-700 ring-amber-600/20',
     ARCHIVED: 'bg-slate-50 text-slate-600 ring-slate-500/20',
 };
 
+const statusLabels: Record<string, string> = {
+    ACTIVE: 'Active',
+    PUBLISHED: 'Published',
+    DRAFT: 'Draft',
+    ARCHIVED: 'Archived',
+};
+
+const statusFilterOptions = [
+    { label: 'All statuses', value: 'ALL' },
+    { label: 'Active', value: 'ACTIVE' },
+    { label: 'Draft', value: 'DRAFT' },
+    { label: 'Archived', value: 'ARCHIVED' },
+];
+
+const categoryFilterOptions = [
+    { label: 'All categories', value: 'ALL' },
+    ...POI_CATEGORY_OPTIONS,
+];
+
 const POIListPage = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [categoryFilter, setCategoryFilter] = useState<'ALL' | PoiCategory>('ALL');
     const limit = 10;
 
     // Fetch POIs
     const { data, isLoading, isError, error } = useQuery({
-        queryKey: ['pois', page, search],
-        queryFn: () => poiService.getAll({ page, limit, search }),
+        queryKey: ['pois', page, search, statusFilter, categoryFilter],
+        queryFn: () => poiService.getAll({
+            page,
+            limit,
+            search: search || undefined,
+            status: statusFilter === 'ALL' ? undefined : statusFilter,
+            category: categoryFilter === 'ALL' ? undefined : categoryFilter,
+        }),
         placeholderData: (prev) => prev,
     });
 
@@ -61,8 +89,10 @@ const POIListPage = () => {
         );
     }
 
-    const pois = data?.data || [];
-    const meta = data?.meta || { page: 1, limit: 10, total: 0, lastPage: 1 };
+    const pois = data?.data ?? [];
+    const pagination = data?.pagination ?? { page: 1, limit, total: 0, totalPages: 1 };
+    const startIndex = pois.length === 0 ? 0 : ((page - 1) * limit) + 1;
+    const endIndex = pois.length === 0 ? 0 : startIndex + pois.length - 1;
 
     return (
         <div className="space-y-6">
@@ -82,7 +112,7 @@ const POIListPage = () => {
             </div>
 
             {/* Filters Bar */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                     <input
@@ -92,6 +122,26 @@ const POIListPage = () => {
                         placeholder="Search POIs by name..."
                         className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                        className="w-full sm:w-44 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+                    >
+                        {statusFilterOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+                        className="w-full sm:w-44 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+                    >
+                        {categoryFilterOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
@@ -103,7 +153,8 @@ const POIListPage = () => {
                             <tr className="border-b border-slate-100 bg-slate-50/50">
                                 <th className="px-6 py-3.5 font-medium text-slate-500">POI</th>
                                 <th className="px-6 py-3.5 font-medium text-slate-500">Category</th>
-                                <th className="px-6 py-3.5 font-medium text-slate-500">Rating</th>
+                                <th className="px-6 py-3.5 font-medium text-slate-500">Owner</th>
+                                <th className="px-6 py-3.5 font-medium text-slate-500">Tours</th>
                                 <th className="px-6 py-3.5 font-medium text-slate-500">Views</th>
                                 <th className="px-6 py-3.5 font-medium text-slate-500">Status</th>
                                 <th className="px-6 py-3.5 font-medium text-slate-500 text-right">Actions</th>
@@ -143,30 +194,37 @@ const POIListPage = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-slate-900">{poi.nameVi}</p>
-                                                    <p className="text-xs text-slate-500 truncate max-w-[200px]">{poi.address}</p>
+                                                    {poi.nameEn && (
+                                                        <p className="text-xs text-slate-400">{poi.nameEn}</p>
+                                                    )}
+                                                    <p className="text-xs text-slate-500 truncate max-w-[220px]">
+                                                        {poi.latitude?.toFixed(4)}, {poi.longitude?.toFixed(4)}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                                                {poi.category}
+                                                {POI_CATEGORY_LABELS[poi.category] || poi.category}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1">
-                                                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                                                <span className="font-medium text-slate-700">{poi.rating || 'N/A'}</span>
-                                            </div>
+                                            <span className="text-sm text-slate-600">
+                                                {poi.owner?.shopOwnerProfile?.shopName || poi.owner?.fullName || '—'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-sm font-medium text-slate-700">{poi._count?.tourPois ?? 0}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5">
                                                 <Eye className="h-3.5 w-3.5 text-slate-400" />
-                                                <span className="text-slate-600">{poi.views}</span>
+                                                <span className="text-slate-600">{poi._count?.viewHistory ?? 0}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${statusColors[poi.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                {poi.status}
+                                                {statusLabels[poi.status] || poi.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -194,12 +252,12 @@ const POIListPage = () => {
                 </div>
 
                 {/* Pagination */}
-                {meta.lastPage > 1 && (
+                {pagination.totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-6 py-3">
                         <p className="text-sm text-slate-500">
-                            Showing <span className="font-medium">{((page - 1) * limit) + 1}</span>-
-                            <span className="font-medium">{Math.min(page * limit, meta.total)}</span> of
-                            <span className="font-medium">{meta.total}</span> POIs
+                            Showing <span className="font-medium">{startIndex}</span>-
+                            <span className="font-medium">{endIndex}</span> of
+                            <span className="font-medium">{pagination.total}</span> POIs
                         </p>
                         <div className="flex items-center gap-1">
                             <button
@@ -209,10 +267,10 @@ const POIListPage = () => {
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
-                            <span className="text-sm font-medium px-2">Page {page} of {meta.lastPage}</span>
+                            <span className="text-sm font-medium px-2">Page {page} of {pagination.totalPages}</span>
                             <button
-                                onClick={() => setPage(p => Math.min(meta.lastPage, p + 1))}
-                                disabled={page === meta.lastPage}
+                                onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                                disabled={page === pagination.totalPages}
                                 className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-slate-600 transition-colors disabled:opacity-50"
                             >
                                 <ChevronRight className="h-4 w-4" />

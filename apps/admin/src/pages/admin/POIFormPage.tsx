@@ -14,7 +14,10 @@ import {
     Image as ImageIcon,
     Headphones,
 } from 'lucide-react';
-import { poiService } from '../../services/poi.service';
+import { poiService, type POI, type POIMedia, type SavePOIPayload, POI_CATEGORY_OPTIONS } from '../../services/poi.service';
+import { merchantService, type Merchant } from '../../services/merchant.service';
+import MapPicker from '../../components/forms/MapPicker';
+import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -23,7 +26,14 @@ const languageTabs = [
     { code: 'EN' as const, label: 'English' },
 ];
 
-const isAudioMedia = (media: any) => {
+type MediaResource = POIMedia & {
+    mime?: string | null;
+    mimetype?: string | null;
+    lang?: string | null;
+    title?: string | null;
+};
+
+const isAudioMedia = (media: MediaResource) => {
     if (!media) return false;
     const mimetype = media.mime || media.mimetype;
     if (mimetype && typeof mimetype === 'string') {
@@ -35,7 +45,7 @@ const isAudioMedia = (media: any) => {
     return /(mp3|wav|m4a|aac)$/i.test(media.url || '');
 };
 
-const getMediaLabel = (media: any) => media?.language || media?.lang || 'N/A';
+const getMediaLabel = (media: MediaResource) => media?.language || media?.lang || 'N/A';
 
 const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
@@ -46,21 +56,24 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
     const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
+    const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
+
     const [formData, setFormData] = useState({
         name: '',
         nameEn: '',
         description: '',
         descriptionEn: '',
-        category: 'MAIN',
+        category: defaultCategory,
         address: '',
         latitude: '',
         longitude: '',
         triggerRadius: 15,
         status: 'DRAFT' as WorkflowStatus,
+        ownerId: '',
     });
 
     // Media State
-    const [existingMedia, setExistingMedia] = useState<any[]>([]);
+    const [existingMedia, setExistingMedia] = useState<MediaResource[]>([]);
     const [imageQueue, setImageQueue] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [audioQueue, setAudioQueue] = useState<{ file: File; language: 'VI' | 'EN' }[]>([]);
@@ -69,11 +82,17 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         EN: useRef<HTMLInputElement>(null),
     } as const;
 
+    const [owners, setOwners] = useState<Merchant[]>([]);
+    const [ownersLoading, setOwnersLoading] = useState(false);
+    const [currentOwnerInfo, setCurrentOwnerInfo] = useState<{ id: string; label: string } | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
+
     useEffect(() => {
         if (id) {
             setFetching(true);
             poiService.getOne(id)
-                .then((poi: any) => {
+                .then((poi: POI) => {
                     // Extract address from description if present
                     let address = '';
                     let description = poi.descriptionVi || '';
@@ -83,7 +102,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         description = description.replace(addressMatch[0], '');
                     }
 
-                        setFormData({
+                    setFormData({
                         name: poi.nameVi,
                         nameEn: poi.nameEn || '',
                         description: description,
@@ -94,10 +113,16 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         longitude: poi.longitude.toString(),
                         triggerRadius: poi.triggerRadius,
                         status: poi.status,
+                        ownerId: poi.owner?.id || '',
                     });
 
-                    if (poi.media) {
-                        setExistingMedia(poi.media);
+                    setExistingMedia((poi.media as MediaResource[]) || []);
+
+                    if (poi.owner) {
+                        const ownerLabel = poi.owner.shopOwnerProfile?.shopName || poi.owner.fullName;
+                        setCurrentOwnerInfo(ownerLabel ? { id: poi.owner.id, label: ownerLabel } : null);
+                    } else {
+                        setCurrentOwnerInfo(null);
                     }
                 })
                 .catch((err) => {
@@ -107,6 +132,38 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 .finally(() => setFetching(false));
         }
     }, [id]);
+
+    useEffect(() => {
+        let isMounted = true;
+        setOwnersLoading(true);
+        merchantService.getAll({ page: 1, limit: 100 })
+            .then((res) => {
+                if (!isMounted) return;
+                setOwners(res.data || []);
+            })
+            .catch((err) => {
+                console.error('Failed to fetch merchants:', err);
+            })
+            .finally(() => {
+                if (isMounted) setOwnersLoading(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const previews = audioQueue.map(({ file, language }) => ({
+            url: URL.createObjectURL(file),
+            label: `${language} audio (${file.name})`,
+            pending: true,
+        }));
+        setPendingAudioPreviews(previews);
+        return () => {
+            previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+        };
+    }, [audioQueue]);
 
     // Handle File Selection with Previews
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,9 +212,27 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         try {
             await poiService.deleteMedia(id!, mediaId);
             setExistingMedia(existingMedia.filter(m => m.id !== mediaId));
-        } catch (err) {
+        } catch (error) {
+            console.error('Failed to delete media:', error);
             alert('Failed to delete media');
         }
+    };
+
+    const handleMapCoordinateChange = (lat: number, lng: number) => {
+        if (readOnly) return;
+        setFormData((prev) => ({
+            ...prev,
+            latitude: lat.toString(),
+            longitude: lng.toString(),
+        }));
+    };
+
+    const handleAddressSuggestion = (address: string) => {
+        if (readOnly) return;
+        setFormData((prev) => ({
+            ...prev,
+            address,
+        }));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -176,7 +251,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setError('');
 
         try {
-            const payload: any = {
+            const payload: SavePOIPayload = {
                 nameVi: formData.name,
                 nameEn: formData.nameEn,
                 descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
@@ -186,6 +261,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 category: formData.category,
                 triggerRadius: Number(formData.triggerRadius) || 15,
                 status: nextStatus,
+                ownerId: formData.ownerId || null,
             };
 
             let poiId = id;
@@ -225,9 +301,13 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
             alert(`POI ${isEditMode ? 'updated' : 'created'} successfully!`);
             navigate('/admin/pois');
-        } catch (err: any) {
-            console.error('Save POI error:', err);
-            const msg = err.response?.data?.message || 'Failed to save POI.';
+        } catch (error: unknown) {
+            console.error('Save POI error:', error);
+            const message =
+                typeof error === 'object' && error !== null && 'response' in error
+                    ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
+                    : undefined;
+            const msg = message || 'Failed to save POI.';
             setError(Array.isArray(msg) ? msg.join(', ') : msg);
         } finally {
             setLoading(false);
@@ -235,11 +315,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     };
 
     const handlePreview = () => {
-        if (!id) {
-            alert('Vui lòng lưu POI trước khi xem preview.');
+        if (!formData.name || !formData.description) {
+            alert('Vui lòng nhập tối thiểu tên và mô tả tiếng Việt để xem preview.');
             return;
         }
-        alert('Preview tourist experience sẽ được bổ sung ở sprint tới.');
+        setIsPreviewOpen(true);
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -269,22 +349,28 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         return `http://localhost:3000${url}`;
     };
 
+    const parseCoordinate = (value: string) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    };
+
+    const latitudeValue = parseCoordinate(formData.latitude);
+    const longitudeValue = parseCoordinate(formData.longitude);
+
     const mapPreview = (() => {
-        const lat = parseFloat(formData.latitude);
-        const lng = parseFloat(formData.longitude);
-        if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+        if (typeof latitudeValue !== 'number' || typeof longitudeValue !== 'number') return null;
         const delta = 0.005;
         const bbox = [
-            (lng - delta).toFixed(6),
-            (lat - delta).toFixed(6),
-            (lng + delta).toFixed(6),
-            (lat + delta).toFixed(6),
+            (longitudeValue - delta).toFixed(6),
+            (latitudeValue - delta).toFixed(6),
+            (longitudeValue + delta).toFixed(6),
+            (latitudeValue + delta).toFixed(6),
         ].join('%2C');
 
         return {
-            embedUrl: `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`,
-            externalUrl: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`,
-            coordsLabel: `${lat.toFixed(6)},${lng.toFixed(6)}`,
+            embedUrl: `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitudeValue},${longitudeValue}`,
+            externalUrl: `https://www.openstreetmap.org/?mlat=${latitudeValue}&mlon=${longitudeValue}#map=16/${latitudeValue}/${longitudeValue}`,
+            coordsLabel: `${latitudeValue.toFixed(6)},${longitudeValue.toFixed(6)}`,
         };
     })();
 
@@ -295,7 +381,31 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);
 
+    const ownerSelectOptions = owners
+        .map((owner) => ({
+            id: owner.id,
+            label: owner.shopOwnerProfile?.shopName || owner.fullName || 'Unnamed owner',
+        }))
+        .filter((option) => Boolean(option.label));
+
+    if (currentOwnerInfo && !ownerSelectOptions.find((option) => option.id === currentOwnerInfo.id)) {
+        ownerSelectOptions.push(currentOwnerInfo);
+    }
+
+    ownerSelectOptions.sort((a, b) => a.label.localeCompare(b.label));
+
+    const existingImageUrls = imageMedia.map((media) => getImageUrl(media.url));
+    const previewImageUrls = [...existingImageUrls, ...previewUrls];
+
+    const existingAudioSources = audioMedia.map((media) => ({
+        url: getImageUrl(media.url),
+        label: `${getMediaLabel(media)} audio`,
+    }));
+
+    const audioPreviewSources = [...existingAudioSources, ...pendingAudioPreviews];
+
     return (
+        <>
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <button onClick={() => navigate(-1)} className="rounded-lg p-2 hover:bg-slate-100 transition-colors">
@@ -389,8 +499,9 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     disabled={readOnly}
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 disabled:opacity-60"
                                 >
-                                    <option value="MAIN">Main</option>
-                                    <option value="SUB">Secondary</option>
+                                    {POI_CATEGORY_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -405,6 +516,24 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                                 <p className="text-xs text-slate-400 mt-1">Được tự động chèn vào phần mở đầu mô tả.</p>
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Owner (shop)</label>
+                            <select
+                                name="ownerId"
+                                value={formData.ownerId}
+                                onChange={handleChange}
+                                disabled={readOnly}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500 disabled:opacity-60"
+                            >
+                                <option value="">Admin managed POI</option>
+                                {ownerSelectOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>{option.label}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-400 mt-1">
+                                {ownersLoading ? 'Đang tải danh sách shop owner...' : 'Chọn shop owner để POI hiển thị trong dashboard của họ.'}
+                            </p>
                         </div>
                     </div>
 
@@ -467,27 +596,23 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 <span>100m</span>
                             </div>
                         </div>
-                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
-                            {mapPreview ? (
-                                <div className="space-y-3">
-                                    <iframe
-                                        title="OpenStreetMap preview"
-                                        src={mapPreview.embedUrl}
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        className="h-64 w-full rounded-lg border border-slate-200"
-                                    />
-                                    <a
-                                        href={mapPreview.externalUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-500"
-                                    >
-                                        View on OpenStreetMap ↗
-                                    </a>
-                                </div>
-                            ) : (
-                                <p>Nhập tọa độ hợp lệ để xem preview bản đồ.</p>
+                        <div>
+                            <MapPicker
+                                latitude={latitudeValue}
+                                longitude={longitudeValue}
+                                triggerRadius={formData.triggerRadius}
+                                onCoordinateChange={handleMapCoordinateChange}
+                                onAddressSelect={handleAddressSuggestion}
+                            />
+                            {mapPreview && (
+                                <a
+                                    href={mapPreview.externalUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-2 inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-500"
+                                >
+                                    Mở trên OpenStreetMap ↗
+                                </a>
                             )}
                         </div>
                     </div>
@@ -722,6 +847,28 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 </aside>
             </div>
         </div>
+        {isPreviewOpen && (
+            <POIPreviewModal
+                open={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                poi={{
+                    nameVi: formData.name || 'POI chưa đặt tên',
+                    nameEn: formData.nameEn,
+                    descriptionVi: formData.description || 'Chưa có mô tả',
+                    descriptionEn: formData.descriptionEn,
+                    category: formData.category,
+                    triggerRadius: formData.triggerRadius,
+                    status: formData.status,
+                    address: formData.address,
+                }}
+                images={previewImageUrls}
+                audioSources={audioPreviewSources}
+                mapPreview={mapPreview}
+                latitude={latitudeValue}
+                longitude={longitudeValue}
+            />
+        )}
+        </>
     );
 };
 

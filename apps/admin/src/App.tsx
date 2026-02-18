@@ -16,6 +16,8 @@ import ShopOwnerRegisterPage from './pages/owner/ShopOwnerRegisterPage';
 import ShopOwnerDashboardPage from './pages/owner/ShopOwnerDashboardPage';
 import ShopOwnerAnalyticsPage from './pages/owner/ShopOwnerAnalyticsPage';
 import ShopOwnerProfilePage from './pages/owner/ShopOwnerProfilePage';
+import ProtectedRoute from './components/routing/ProtectedRoute';
+import ProfilePage from './pages/admin/ProfilePage';
 
 function App() {
   return (
@@ -33,7 +35,14 @@ function App() {
         </Route>
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<DashboardLayout />}>
+        <Route
+          path="/admin"
+          element={(
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          )}
+        >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="pois" element={<POIListPage />} />
@@ -45,6 +54,7 @@ function App() {
           <Route path="tours/:id" element={<TourFormPage readOnly />} />
           <Route path="tours/:id/edit" element={<TourFormPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="merchants" element={<MerchantListPage />} />
           <Route path="merchants/new" element={<MerchantFormPage />} />
           <Route path="merchants/:id" element={<MerchantFormPage readOnly />} />

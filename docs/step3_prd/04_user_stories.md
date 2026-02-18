@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.2  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10  
+> **Cập nhật:** 2026-02-18  
 > **Format:** INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 
 ---
@@ -119,6 +119,20 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 | **So that** | tôi có thể quản lý quyền truy cập hệ thống |
 | **Priority** | P2 |
 | **Story Points** | 5 |
+
+---
+
+### US-106: Quản lý thông tin cá nhân
+| Field | Value |
+|-------|-------|
+| **As a** | Super Admin / Admin / Shop Owner |
+| **I want to** | xem và chỉnh sửa thông tin cá nhân của mình (họ tên, địa chỉ, ngày sinh, cửa hàng, vai trò) |
+| **So that** | hồ sơ luôn chính xác và đồng bộ giữa các hệ thống |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+| **Refs** | FR-104 |
+
+**Acceptance Criteria:** See AC-104
 
 ---
 

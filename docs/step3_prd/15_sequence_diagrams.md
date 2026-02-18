@@ -271,7 +271,7 @@ sequenceDiagram
     API-->>App: POI list [{id, name, lat, lng, type, distance}, ...]
 
     App->>Map: Render map centered at Tourist position
-    App->>Map: Add markers (🔴 MAIN, 🟡 SUB)
+    App->>Map: Add markers using category palette (Dining 🔴, Street Food 🟠, Cafes 🟡, Bars 🟣, Markets 🟤, Cultural 🔵, Experiences 🟢, Outdoor ⚪)
     Map-->>Tourist: Bản đồ với POI markers
 
     Note over Tourist, DB: === GPS Tracking Loop ===
@@ -375,7 +375,7 @@ sequenceDiagram
     App->>Algo: resolveOverlap([POI_A: 8m, POI_B: 12m, POI_C: 14m])
     
     Algo->>Algo: Sort by priority rules
-    Note right of Algo: Rule 1: Distance ASC<br/>Rule 2: Type MAIN > SUB<br/>Rule 3: Not recently viewed
+    Note right of Algo: Rule 1: Distance ASC<br/>Rule 2: Category priority (Dining→Street Food→Cafes→Nightlife→Markets→Cultural→Experiences→Outdoor)<br/>Rule 3: Not recently viewed
 
     alt POI_A gần nhất + chưa xem
         Algo-->>App: Winner = POI_A

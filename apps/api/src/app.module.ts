@@ -12,6 +12,7 @@ import { TouristModule } from './modules/tourist/tourist.module';
 import { ShopOwnerModule } from './modules/shop-owner/shop-owner.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
+import { ProfileModule } from './modules/profile/profile.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MerchantsModule } from './modules/merchants/merchants.module';
     ShopOwnerModule,
     AnalyticsModule,
     MerchantsModule,
+    ProfileModule,
   ],
 })
 export class AppModule { }

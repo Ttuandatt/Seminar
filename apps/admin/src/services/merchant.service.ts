@@ -9,14 +9,33 @@ export interface ShopOwnerProfile {
     avatarUrl?: string;
 }
 
+export type MerchantStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED';
+
 export interface Merchant {
     id: string;
     email: string;
     fullName: string;
     role: string;
-    status: string;
+    status: MerchantStatus;
     createdAt: string;
     shopOwnerProfile?: ShopOwnerProfile;
+}
+
+export interface CreateMerchantPayload {
+    email: string;
+    password: string;
+    fullName: string;
+    shopName: string;
+    shopAddress?: string;
+    phone?: string;
+}
+
+export interface UpdateMerchantPayload {
+    fullName?: string;
+    shopName?: string;
+    shopAddress?: string;
+    phone?: string;
+    status?: MerchantStatus;
 }
 
 export interface MerchantResponse {
@@ -40,13 +59,13 @@ export const merchantService = {
         return response.data;
     },
 
-    create: async (data: any) => {
-        const response = await api.post('/merchants', data);
+    create: async (data: CreateMerchantPayload) => {
+        const response = await api.post<Merchant>('/merchants', data);
         return response.data;
     },
 
-    update: async (id: string, data: any) => {
-        const response = await api.put(`/merchants/${id}`, data);
+    update: async (id: string, data: UpdateMerchantPayload) => {
+        const response = await api.put<Merchant>(`/merchants/${id}`, data);
         return response.data;
     },
 

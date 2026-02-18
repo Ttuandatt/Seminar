@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.0  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-09  
+> **Cập nhật:** 2026-02-18  
 > **Format:** Given-When-Then (Gherkin)
 
 ---
@@ -97,6 +97,40 @@ Scenario: Expired reset link
   And I should see "Request a new reset link"
 ```
 
+
+### AC-104: Personal Profile Update
+
+```gherkin
+Feature: Personal Profile Management
+
+Scenario: View profile info across roles
+  Given I am logged in as Super Admin
+  When I open the "My Profile" page
+  Then I should see my full name, email (read-only), role, status, created date
+  And I should see editable fields for phone, birth date, address, avatar
+
+Scenario: Update profile successfully
+  Given I am logged in as Shop Owner
+  When I update my full name "Nguyễn Văn A", phone "+84901234567", and shop address
+  And I click "Save"
+  Then I should see toast "Profile updated"
+  And the header avatar/name should refresh without page reload
+  And an audit entry should be recorded
+
+Scenario: Validation error on birth date
+  Given I enter a birth date in the future
+  When I click "Save"
+  Then I should see error "Birth date must be in the past and user must be 18+"
+  And the request should not be sent to the server
+
+Scenario: Role-specific shop section
+  Given I am logged in as Admin (non Shop Owner)
+  When I open the profile page
+  Then I should not see the Shop Details section
+  But as a Shop Owner I should see Shop Name and Shop Address as required fields
+```
+
+---
 ---
 
 ## 2. POI Management
@@ -113,7 +147,7 @@ Scenario: Create POI with minimum required fields
   And I enter POI name "Chùa Linh Ứng"
   And I enter description in Vietnamese
   And I click on the map to set location
-  And I select category "MAIN"
+  And I select category "Dining"
   And I click "Save" button
   Then a new POI should be created
   And I should see success message "POI created successfully"
@@ -364,7 +398,7 @@ Scenario: Map loads with POI markers
   When the map loads
   Then I should see my current location marker
   And I should see POI markers around me
-  And MAIN POIs should have different icon than SUB POIs
+  And each POI category should have its assigned color/icon per legend
 
 Scenario: Tap on POI marker
   When I tap on a POI marker

@@ -40,7 +40,8 @@ const TourListPage = () => {
         try {
             await tourService.delete(id);
             setTours(tours.filter(t => t.id !== id));
-        } catch (err) {
+        } catch (error) {
+            console.error('Failed to delete tour:', error);
             alert('Failed to delete tour');
         }
     };

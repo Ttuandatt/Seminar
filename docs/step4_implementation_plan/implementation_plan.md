@@ -327,6 +327,16 @@ POST /auth/register → hash password → create User + (ShopOwner | Tourist)
 All protected routes → JwtAuthGuard → RolesGuard(@Roles('ADMIN'))
 ```
 
+### 1E. Legacy POI Category Migration
+
+| Step | Command | Notes |
+|------|---------|-------|
+| Dry-run keyword remap | `pnpm --filter api run db:migrate-poi-categories` | Phân tích toàn bộ POI `DINING/STREET_FOOD` còn sót lại (từ enum cũ) và log đề xuất theo BR-220. Không ghi vào DB. |
+| Apply after review | `pnpm --filter api run db:migrate-poi-categories:apply` | Cập nhật thật trong DB, dùng priority: Cultural → Outdoor → Experiences → Markets → Bars → Cafes → Street Food → fallback Dining. Script: `apps/api/prisma/scripts/migrate-poi-categories.ts`. |
+
+> [!TIP]
+> Luôn chạy dry-run trước, export log, sau đó mới `--apply`. Nếu cần override thủ công hãy update trực tiếp từng POI trước khi rerun script.
+
 ---
 
 ## Phase 2: Admin Dashboard (Web)
@@ -415,7 +425,7 @@ All protected routes → JwtAuthGuard → RolesGuard(@Roles('ADMIN'))
 | Component | Purpose |
 |-----------|---------|
 | `AudioPlayer.tsx` | Play/pause, progress, background play |
-| `MapMarker.tsx` | Custom marker (MAIN 🔴 / SUB 🟡 / IN RANGE 🔵) |
+| `MapMarker.tsx` | Custom marker palette (Dining 🔴 / Street Food 🟠 / Cafes 🟡 / Nightlife 🟣 / Markets 🟤 / Cultural 🔵 / Experiences 🟢 / Outdoor ⚪, glow blue when in range) |
 | `PoiCard.tsx` | POI preview card (thumbnail, name, distance) |
 | `BottomSheet.tsx` | Auto-trigger popup, POI preview |
 | `LocationTracker.tsx` | GPS tracking + trigger logic |
@@ -476,3 +486,24 @@ gantt
 - `npm run test` per app
 - Prisma migration clean run
 - API response format validation
+
+---
+
+## New Scope – Personal Profile Management (2026-02-18)
+
+### Backend Tasks
+1. **Prisma schema updates** – add `user_profile` table/view + migration for optional fields (birth_date, address, shop metadata) and audit table `profile_audit`.
+2. **Profile module** – NestJS module exposing `GET /me`, `PUT /me`, avatar upload endpoint (re-use existing file storage), guards for authenticated roles, DTO validation for conditional shop fields.
+3. **Event + cache syncing** – publish `profile.updated` event via in-memory bus (or Redis later) so WebSocket/long-poll clients can refresh header; invalidate cached `/me` response per user.
+4. **Tests** – unit tests for DTO validation (birth date ≥18, shop owner required fields) + e2e test hitting `/me` endpoints with different roles.
+
+### Frontend Tasks (Admin Portal)
+1. **API client** – extend `authService` or create `profileService` with `getProfile`, `updateProfile`, `uploadAvatar`, typed responses.
+2. **Global state** – update `AuthContext` / React Query to hydrate profile data on app load and broadcast updates to header avatar/name.
+3. **Profile page** – build `/profile` route (S16) with sections: Personal Info, Account Info (read-only), Shop Details (conditional). Use `react-hook-form + zod`, date picker, phone input with country selector, repeatable opening-hours rows, avatar uploader with preview + size validation.
+4. **Validation UX** – inline errors per AC-104, disable save until dirty+valid, show success toast and optimistic header refresh.
+
+### QA & Documentation
+- Update Cypress (or Playwright) scenario to cover view/edit profile per role.
+- Extend onboarding guide with instructions for `/profile` testing and sample payloads.
+- Keep Step3 PRD references (FR-104, AC-104, API specs) in sync with implementation PR description.

@@ -270,7 +270,7 @@ graph TB
 | 8 | Admin chuyển tab sang English và nhập tên, mô tả tiếng Anh. A2 | |
 | 9 | Admin chọn vị trí trên bản đồ (click hoặc nhập tọa độ lat/lng). | |
 | 10 | | System hiển thị marker tại vị trí đã chọn và auto-fill tọa độ. |
-| 11 | Admin chọn category: MAIN hoặc SUB. | |
+| 11 | Admin chọn category từ taxonomy: Dining, Street Food, Cafes & Desserts, Bars & Nightlife, Markets & Specialty Stores, Cultural Landmarks, Experiences & Workshops, Outdoor & Scenic. | |
 | 12 | Admin thiết lập trigger_radius (mặc định 15m, tùy chỉnh 5-50m). | |
 | 13 | Admin upload images bằng drag & drop. (Lặp lại nếu cần, tối đa 10 ảnh.) {Upload Media} | |
 | 14 | | System validate file (type: JPEG/PNG/WebP, size ≤ 5MB), upload lên S3, hiển thị preview. |
@@ -442,7 +442,7 @@ graph TB
 | **Use Case Name** | Xem bản đồ |
 | **Actor(s)** | Tourist |
 | **Maturity** | Focused |
-| **Summary** | Tourist mở app và xem bản đồ tương tác với các POI markers xung quanh vị trí hiện tại. Bản đồ hiển thị các loại POIs bằng màu sắc khác nhau (🔴 Main, 🟡 Sub, 🔵 In range). |
+| **Summary** | Tourist mở app và xem bản đồ tương tác với các POI markers xung quanh vị trí hiện tại. Bản đồ hiển thị các loại POIs bằng bảng màu: Dining 🔴, Street Food 🟠, Cafes & Desserts 🟡, Bars & Nightlife 🟣, Markets & Specialty Stores 🟤, Cultural Landmarks 🔵, Experiences & Workshops 🟢, Outdoor & Scenic ⚪ (halo xanh khi trong phạm vi). |
 
 **Basic Course of Events:**
 
@@ -453,7 +453,7 @@ graph TB
 | 3 | | System lấy vị trí hiện tại (lat, lng) từ GPS. |
 | 4 | | System gọi API `GET /public/pois/nearby?lat=x&lng=y&radius=1000` để lấy POIs gần đó. |
 | 5 | | System render bản đồ Mapbox centered tại vị trí Tourist. |
-| 6 | | System hiển thị POI markers: 🔴 (Main POI), 🟡 (Sub POI). |
+| 6 | | System hiển thị POI markers với màu tương ứng từng category: Dining 🔴, Street Food 🟠, Cafes & Desserts 🟡, Bars & Nightlife 🟣, Markets & Specialty Stores 🟤, Cultural Landmarks 🔵, Experiences & Workshops 🟢, Outdoor & Scenic ⚪. |
 | 7 | | System hiển thị vị trí Tourist (📍) trên bản đồ. |
 | 8 | Tourist tap vào một POI marker. A1 | |
 | 9 | | System hiển thị preview card tại bottom: tên POI, khoảng cách, thumbnail. |
@@ -667,7 +667,7 @@ graph TB
 
 | Point | Mô tả |
 |-------|-------|
-| Resolve Overlap Priority | Thuật toán sắp xếp: (1) Distance ASC - POI gần nhất ưu tiên. (2) Type: MAIN > SUB - POI chính ưu tiên hơn POI phụ. (3) Not recently viewed - POI chưa xem ưu tiên hơn. (See Business Rule BR-102) E1 |
+| Resolve Overlap Priority | Thuật toán sắp xếp: (1) Distance ASC - POI gần nhất ưu tiên. (2) Category priority: Dining → Street Food → Cafes & Desserts → Bars & Nightlife → Markets & Specialty Stores → Cultural Landmarks → Experiences & Workshops → Outdoor & Scenic. (3) Not recently viewed - POI chưa xem ưu tiên hơn. (See Business Rule BR-102) E1 |
 
 | Field | Detail |
 |-------|--------|

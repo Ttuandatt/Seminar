@@ -3,6 +3,7 @@
 
 > **Phiên bản:** 1.0  
 > **Ngày tạo:** 2026-02-11  
+> **Cập nhật:** 2026-02-14  
 > **Ref:** Step 2 Low-code (UI + Flow + Rule)
 
 ---
@@ -76,7 +77,7 @@
 | BR-35 | Trigger on Enter | IF distance ≤ trigger_radius | THEN auto-show POI content | High |
 | BR-36 | Cooldown | IF POI just triggered | THEN no re-trigger for 5 minutes | High |
 | BR-37 | Overlap Priority | IF 2+ POIs in range | THEN trigger closest, show others in list | High |
-| BR-38 | Priority Type | IF overlap + same distance | THEN MAIN POI > SUB POI | Medium |
+| BR-38 | Category Priority | IF overlap + same distance | THEN use taxonomy priority (Cultural > Outdoor > Experiences > Markets > Bars > Cafes > Street Food > Dining) | Medium |
 | BR-39 | QR Fallback | IF GPS unavailable | THEN allow QR scan to trigger POI | Medium |
 
 ---

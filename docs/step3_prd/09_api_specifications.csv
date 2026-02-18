@@ -103,7 +103,95 @@ Errors:
   - `400`: Token expired or already used
 "  - `422`: Password doesn't meet requirements (min 8 chars, complexity)"
 
-3. POI APIs
+3. User Profile APIs
+
+  GET /me
+Return consolidated profile of current user.
+Headers: `Authorization: Bearer <accessToken>`
+Response (200):
+"[Code: json]
+{
+  ""id"": ""uuid"",
+  ""role"": ""SUPER_ADMIN"",
+  ""email"": ""admin@gpstours.vn"",
+  ""fullName"": ""Trần Bảo Ngọc"",
+  ""avatarUrl"": ""https://cdn.../avatars/ngoc.webp"",
+  ""phone"": {
+    ""countryCode"": "+84",
+    ""number"": ""901234567""
+  },
+  ""birthDate"": ""1992-05-11"",
+  ""gender"": ""FEMALE"",
+  ""address"": {
+    ""line1"": ""123 Vĩnh Khánh"",
+    ""city"": ""HCM"",
+    ""country"": ""VN""
+  },
+  ""shop"": {
+    ""name"": ""Quán Bún Mắm Tùng"",
+    ""address"": ""123 Vĩnh Khánh, Q4"",
+    ""openingHours"": [
+      { ""day"": ""MON"", ""open"": ""08:00"", ""close"": ""22:00"" }
+    ]
+  },
+  ""preferences"": {
+    ""language"": ""vi"",
+    ""theme"": ""light""
+  },
+  ""lastUpdatedAt"": ""2026-02-18T09:20:00Z""
+}"
+Errors:
+  - `401`: Missing/invalid token
+  - `423`: Account disabled or locked
+
+  PUT /me
+Update personal profile fields.
+Headers: `Authorization: Bearer <accessToken>`
+Request:
+"[Code: json]
+{
+  ""fullName"": ""Nguyễn Văn A"",
+  ""birthDate"": ""1990-01-10"",
+  ""phone"": {
+    ""countryCode"": "+84",
+    ""number"": ""912345678""
+  },
+  ""address"": {
+    ""line1"": ""123 Vĩnh Khánh"",
+    ""city"": ""TP.HCM"",
+    ""country"": ""VN""
+  },
+  ""shop"": {
+    ""name"": ""Quán Mới"",
+    ""address"": ""45 Tôn Đản"",
+    ""openingHours"": [
+      { ""day"": ""MON"", ""open"": ""09:00"", ""close"": ""21:00"" }
+    ]
+  }
+}"
+Note: Avatar upload qua multipart field `avatar` (≤2MB).
+Response (200):
+"[Code: json]
+{
+  ""message"": ""Profile updated"",
+  ""profile"": {
+    ""fullName"": ""Nguyễn Văn A"",
+    ""avatarUrl"": ""https://cdn.../avatars/a.webp"",
+    ""shop"": {
+      ""name"": ""Quán Mới"",
+      ""address"": ""45 Tôn Đản""
+    },
+    ""lastUpdatedAt"": ""2026-02-18T10:05:22Z""
+  }
+}"
+Errors:
+  - `400`: Invalid request body
+  - `401`: Missing/invalid token
+  - `403`: Attempt to edit restricted fields (role/email)
+  - `409`: Phone already used by another user
+  - `422`: Validation errors (underage, invalid phone, missing shop info)
+
+4. POI APIs
 
   GET /pois
 List all POIs with pagination and filters.
@@ -129,7 +217,7 @@ Response (200):
       ""latitude"": 16.0544,
       ""longitude"": 108.2022,
       ""triggerRadius"": 15,
-      ""category"": ""MAIN"",
+      ""category"": ""DINING"",
       ""status"": ""ACTIVE"",
       ""thumbnailUrl"": ""https://cdn.../thumb.jpg"",
       ""createdAt"": ""2026-02-08T10:00:00Z""
@@ -156,7 +244,7 @@ Response (200):
   ""latitude"": 16.0544,
   ""longitude"": 108.2022,
   ""triggerRadius"": 15,
-  ""category"": ""MAIN"",
+  ""category"": ""DINING"",
   ""status"": ""ACTIVE"",
   ""media"": [
     {
@@ -199,7 +287,7 @@ descriptionEn: ""...""
 latitude: 16.0544
 longitude: 108.2022
 triggerRadius: 15
-category: ""MAIN""
+category: ""DINING""
 images[]: (file)
 images[]: (file)
 audioVi: (file)

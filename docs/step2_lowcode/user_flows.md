@@ -3,6 +3,7 @@
 
 > **Phiên bản:** 1.0  
 > **Ngày tạo:** 2026-02-11  
+> **Cập nhật:** 2026-02-14  
 > **Ref:** Step 2 Low-code (UI + Flow + Rule)
 
 ---
@@ -40,7 +41,7 @@
 1. Admin vào S04 POI List
 2. Nhấn "+ Add New POI" → S05
 3. Nhập name (VN/EN), description, chọn vị trí trên map
-4. Chọn category (MAIN/SUB), set trigger radius
+4. Chọn category (Dropdown: Dining, Street Food, Cafes & Desserts, Bars & Nightlife, Markets & Specialty, Cultural Landmarks, Experiences & Workshops, Outdoor & Scenic), set trigger radius
 5. Upload images (drag & drop) + audio (VN/EN)
 6. Nhấn "Publish" → toast "POI created!" → redirect S04
 

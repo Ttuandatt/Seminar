@@ -73,7 +73,7 @@ flowchart TD
     A2 -->|Tạo mới| C1[Nhấn '+ Add New POI']
     C1 --> C2[/Nhập tên + mô tả - tabs VN EN/]
     C2 --> C3[/Chọn vị trí trên bản đồ/]
-    C3 --> C3a[/Chọn category: MAIN hoặc SUB/]
+    C3 --> C3a[/Chọn category: Dining, Street Food, Cafes, Bars, Markets, Cultural, Experiences, Outdoor/]
     C3a --> C3b[/Thiết lập trigger_radius 5-50m/]
     C3b --> C4[Upload media - xem AD-08]
     C4 --> C5{Validate data?}
@@ -233,7 +233,7 @@ flowchart TD
     B7 --> A1
     
     A6 -->|Có ≥2 POIs| C1[Overlap detected!]
-    C1 --> C2[Sort by: distance ASC, type MAIN > SUB]
+    C1 --> C2[Sort by: distance ASC, category priority (Dining→Street Food→Cafes→Nightlife→Markets→Cultural→Experiences→Outdoor)]
     C2 --> C3{POI gần nhất đã xem?}
     C3 -->|Chưa| C4[Trigger POI gần nhất]
     C3 -->|Rồi| C5[Trigger POI gần thứ 2]

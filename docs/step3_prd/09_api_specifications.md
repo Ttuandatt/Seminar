@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.0  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10  
+> **Cập nhật:** 2026-02-18  
 > **Base URL:** `https://api.gpstours.vn/v1`
 
 ---
@@ -152,7 +152,112 @@ Reset password using token from email.
 
 ---
 
-## 3. POI APIs
+## 3. User Profile APIs
+
+### GET /me
+
+Return the consolidated profile of the currently authenticated user.
+
+**Headers:** `Authorization: Bearer <accessToken>`
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "role": "SUPER_ADMIN",
+  "email": "admin@gpstours.vn",
+  "fullName": "Trần Bảo Ngọc",
+  "avatarUrl": "https://cdn.../avatars/ngoc.webp",
+  "phone": {
+    "countryCode": "+84",
+    "number": "901234567"
+  },
+  "birthDate": "1992-05-11",
+  "gender": "FEMALE",
+  "address": {
+    "line1": "123 Vĩnh Khánh",
+    "city": "HCM",
+    "country": "VN"
+  },
+  "shop": {
+    "name": "Quán Bún Mắm Tùng",
+    "address": "123 Vĩnh Khánh, Q4",
+    "openingHours": [
+      { "day": "MON", "open": "08:00", "close": "22:00" }
+    ]
+  },
+  "preferences": {
+    "language": "vi",
+    "theme": "light"
+  },
+  "lastUpdatedAt": "2026-02-18T09:20:00Z"
+}
+```
+
+**Errors:**
+- `401`: Missing/invalid token
+- `423`: Account disabled or locked
+
+---
+
+### PUT /me
+
+Update personal profile fields.
+
+**Headers:** `Authorization: Bearer <accessToken>`
+
+**Request:**
+```json
+{
+  "fullName": "Nguyễn Văn A",
+  "birthDate": "1990-01-10",
+  "phone": {
+    "countryCode": "+84",
+    "number": "912345678"
+  },
+  "address": {
+    "line1": "123 Vĩnh Khánh",
+    "city": "TP.HCM",
+    "country": "VN"
+  },
+  "shop": {
+    "name": "Quán Mới",
+    "address": "45 Tôn Đản",
+    "openingHours": [
+      { "day": "MON", "open": "09:00", "close": "21:00" }
+    ]
+  }
+}
+```
+
+> Avatar upload được gửi qua `multipart/form-data` field `avatar` với file ≤2MB.
+
+**Response (200):**
+```json
+{
+  "message": "Profile updated",
+  "profile": {
+    "fullName": "Nguyễn Văn A",
+    "avatarUrl": "https://cdn.../avatars/a.webp",
+    "shop": {
+      "name": "Quán Mới",
+      "address": "45 Tôn Đản"
+    },
+    "lastUpdatedAt": "2026-02-18T10:05:22Z"
+  }
+}
+```
+
+**Errors:**
+- `400`: Invalid request body (bad JSON)
+- `401`: Missing/invalid token
+- `403`: Attempt to edit restricted role/email fields
+- `409`: Phone already used by another user (if unique constraint enforced)
+- `422`: Validation errors (underage, invalid phone, missing shop info for Shop Owner)
+
+---
+
+## 4. POI APIs
 
 ### GET /pois
 
@@ -182,7 +287,7 @@ List all POIs with pagination and filters.
       "latitude": 16.0544,
       "longitude": 108.2022,
       "triggerRadius": 15,
-      "category": "MAIN",
+      "category": "DINING",
       "status": "ACTIVE",
       "thumbnailUrl": "https://cdn.../thumb.jpg",
       "createdAt": "2026-02-08T10:00:00Z"
@@ -214,7 +319,7 @@ Get single POI with all details.
   "latitude": 16.0544,
   "longitude": 108.2022,
   "triggerRadius": 15,
-  "category": "MAIN",
+  "category": "DINING",
   "status": "ACTIVE",
   "media": [
     {
@@ -264,7 +369,7 @@ descriptionEn: "..."
 latitude: 16.0544
 longitude: 108.2022
 triggerRadius: 15
-category: "MAIN"
+category: "DINING"
 status: "ACTIVE" // optional, default DRAFT
 images[]: (file)
 images[]: (file)

@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Store, Loader2, AlertCircle } from 'lucide-react';
-import { merchantService } from '../../services/merchant.service';
+import { merchantService, type Merchant, type MerchantStatus, type UpdateMerchantPayload } from '../../services/merchant.service';
+
+interface MerchantFormState {
+    email: string;
+    password: string;
+    fullName: string;
+    shopName: string;
+    shopAddress: string;
+    phone: string;
+    status: MerchantStatus;
+}
 
 const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
@@ -12,7 +22,7 @@ const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [pageLoading, setPageLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<MerchantFormState>({
         email: '',
         password: '', // Only for creation
         fullName: '',
@@ -26,7 +36,7 @@ const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         if (isEditMode && id) {
             setPageLoading(true);
             merchantService.getOne(id)
-                .then((merchant: any) => {
+                .then((merchant: Merchant) => {
                     setFormData({
                         email: merchant.email,
                         password: '',
@@ -37,8 +47,8 @@ const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         status: merchant.status,
                     });
                 })
-                .catch(err => {
-                    console.error(err);
+                .catch((error: unknown) => {
+                    console.error(error);
                     setError('Failed to load merchant details.');
                 })
                 .finally(() => setPageLoading(false));
@@ -56,24 +66,33 @@ const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
         try {
             if (isEditMode) {
-                // Update
-                const payload = {
+                const payload: UpdateMerchantPayload = {
                     fullName: formData.fullName,
                     shopName: formData.shopName,
-                    shopAddress: formData.shopAddress,
-                    phone: formData.phone,
+                    shopAddress: formData.shopAddress || undefined,
+                    phone: formData.phone || undefined,
                     status: formData.status,
                 };
                 await merchantService.update(id!, payload);
             } else {
-                // Create
-                await merchantService.create(formData);
+                await merchantService.create({
+                    email: formData.email,
+                    password: formData.password,
+                    fullName: formData.fullName,
+                    shopName: formData.shopName,
+                    shopAddress: formData.shopAddress || undefined,
+                    phone: formData.phone || undefined,
+                });
             }
             alert(`Merchant ${isEditMode ? 'updated' : 'created'} successfully!`);
             navigate('/admin/merchants');
-        } catch (err: any) {
-            console.error('Save Merchant error:', err);
-            const msg = err.response?.data?.message || 'Failed to save Merchant.';
+        } catch (error: unknown) {
+            console.error('Save Merchant error:', error);
+            const message =
+                typeof error === 'object' && error !== null && 'response' in error
+                    ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
+                    : undefined;
+            const msg = message || 'Failed to save Merchant.';
             setError(Array.isArray(msg) ? msg.join(', ') : msg);
         } finally {
             setLoading(false);

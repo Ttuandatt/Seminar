@@ -1,31 +1,91 @@
 import api from '../lib/api';
 
+export type PoiStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export const POI_CATEGORY_OPTIONS = [
+    { value: 'DINING', label: 'Dining' },
+    { value: 'STREET_FOOD', label: 'Street Food' },
+    { value: 'CAFES_DESSERTS', label: 'Cafes & Desserts' },
+    { value: 'BARS_NIGHTLIFE', label: 'Bars & Nightlife' },
+    { value: 'MARKETS_SPECIALTY', label: 'Markets & Specialty Stores' },
+    { value: 'CULTURAL_LANDMARKS', label: 'Cultural Landmarks' },
+    { value: 'EXPERIENCES_WORKSHOPS', label: 'Experiences & Workshops' },
+    { value: 'OUTDOOR_SCENIC', label: 'Outdoor & Scenic Stops' },
+] as const;
+
+export type PoiCategory = typeof POI_CATEGORY_OPTIONS[number]['value'];
+
+export const POI_CATEGORY_LABELS: Record<PoiCategory, string> = POI_CATEGORY_OPTIONS.reduce(
+    (acc, option) => {
+        acc[option.value] = option.label;
+        return acc;
+    },
+    {} as Record<PoiCategory, string>,
+);
+
+export interface POIMedia {
+    id: string;
+    type: 'IMAGE' | 'AUDIO';
+    url: string;
+    language?: 'VI' | 'EN' | 'ALL';
+    thumbnailUrl?: string | null;
+}
+
+export interface POIOwner {
+    id: string;
+    fullName: string;
+    shopOwnerProfile?: {
+        shopName?: string | null;
+    } | null;
+}
+
 export interface POI {
     id: string;
     nameVi: string;
-    descriptionVi: string;
-    address: string;
-    category: string;
-    status: string;
-    rating?: number;
-    views: number;
+    nameEn?: string;
+    descriptionVi?: string;
+    category: PoiCategory;
+    status: PoiStatus;
+    ownerId?: string | null;
     latitude: number;
     longitude: number;
+    triggerRadius: number;
+    media?: POIMedia[];
+    owner?: POIOwner | null;
+    _count?: {
+        tourPois?: number;
+        viewHistory?: number;
+    };
     createdAt: string;
+}
+
+export interface POIPagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
 }
 
 export interface POIResponse {
     data: POI[];
-    meta: {
-        page: number;
-        limit: number;
-        total: number;
-        lastPage: number;
-    };
+    pagination: POIPagination;
+}
+
+export interface SavePOIPayload {
+    nameVi: string;
+    nameEn?: string;
+    descriptionVi: string;
+    descriptionEn?: string;
+    latitude: number;
+    longitude: number;
+    category: PoiCategory;
+    triggerRadius: number;
+    status: PoiStatus;
+    ownerId?: string | null;
 }
 
 export const poiService = {
-    getAll: async (params?: { page?: number; limit?: number; search?: string; status?: string; category?: string }) => {
+    getAll: async (params?: { page?: number; limit?: number; search?: string; status?: string; category?: PoiCategory }) => {
         const response = await api.get<POIResponse>('/pois', { params });
         return response.data;
     },
@@ -35,13 +95,13 @@ export const poiService = {
         return response.data;
     },
 
-    create: async (data: any) => {
-        const response = await api.post('/pois', data);
+    create: async (data: SavePOIPayload) => {
+        const response = await api.post<POI>('/pois', data);
         return response.data;
     },
 
-    update: async (id: string, data: any) => {
-        const response = await api.put(`/pois/${id}`, data);
+    update: async (id: string, data: SavePOIPayload) => {
+        const response = await api.put<POI>(`/pois/${id}`, data);
         return response.data;
     },
 

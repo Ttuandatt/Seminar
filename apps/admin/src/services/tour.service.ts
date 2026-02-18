@@ -1,4 +1,7 @@
 import api from '../lib/api';
+import type { POI } from './poi.service';
+
+export type TourStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
 export interface Tour {
     id: string;
@@ -7,7 +10,7 @@ export interface Tour {
     descriptionVi?: string;
     descriptionEn?: string;
     estimatedDuration?: number; // minutes
-    status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'; // Assuming these based on PRD, checking backend DTO might be needed.
+    status: TourStatus;
     createdAt: string;
     updatedAt: string;
     tourPois?: TourPoi[];
@@ -21,7 +24,23 @@ export interface TourPoi {
     tourId: string;
     poiId: string;
     orderIndex: number;
-    poi?: any; // Full POI object if included
+    poi?: POI;
+}
+
+export interface TourListParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: TourStatus;
+}
+
+export interface TourPayload {
+    nameVi: string;
+    nameEn?: string;
+    descriptionVi?: string;
+    descriptionEn?: string;
+    estimatedDuration?: number;
+    status?: TourStatus;
 }
 
 export interface TourResponse {
@@ -35,7 +54,7 @@ export interface TourResponse {
 }
 
 export const tourService = {
-    getAll: async (params?: any) => {
+    getAll: async (params?: TourListParams) => {
         const response = await api.get<TourResponse>('/tours', { params });
         return response.data;
     },
@@ -45,12 +64,12 @@ export const tourService = {
         return response.data;
     },
 
-    create: async (data: any) => {
+    create: async (data: TourPayload) => {
         const response = await api.post<Tour>('/tours', data);
         return response.data;
     },
 
-    update: async (id: string, data: any) => {
+    update: async (id: string, data: TourPayload) => {
         const response = await api.put<Tour>(`/tours/${id}`, data);
         return response.data;
     },
@@ -61,7 +80,6 @@ export const tourService = {
     },
 
     setPois: async (id: string, poiIds: string[]) => {
-        const response = await api.put(`/tours/${id}/pois`, { poiIds });
-        return response.data;
+        await api.put(`/tours/${id}/pois`, { poiIds });
     }
 };

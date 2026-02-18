@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Map, Loader2, AlertCircle, Plus, Trash2, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
-import { tourService } from '../../services/tour.service';
-import { poiService } from '../../services/poi.service';
+import { tourService, type Tour, type TourPayload } from '../../services/tour.service';
+import { poiService, type POI } from '../../services/poi.service';
 
 const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
@@ -24,8 +24,8 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     });
 
     // POI Selection State
-    const [allPois, setAllPois] = useState<any[]>([]);
-    const [selectedPois, setSelectedPois] = useState<any[]>([]); // Array of POI objects
+    const [allPois, setAllPois] = useState<POI[]>([]);
+    const [selectedPois, setSelectedPois] = useState<POI[]>([]);
     const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
 
     useEffect(() => {
@@ -34,12 +34,12 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             try {
                 // Fetch all published POIs for selection
                 // Assuming query params: { status: 'ACTIVE' }
-                const pois = await poiService.getAll({ status: 'ACTIVE' });
-                setAllPois(pois.data || []); // Adjust based on API response structure (PaginationResult)
+                const poisResponse = await poiService.getAll({ status: 'ACTIVE' });
+                setAllPois(poisResponse.data || []);
 
                 // If Edit mode, fetch Tour details
                 if (id) {
-                    const tour: any = await tourService.getOne(id);
+                    const tour: Tour = await tourService.getOne(id);
                     setFormData({
                         name: tour.nameVi,
                         nameEn: tour.nameEn || '',
@@ -52,7 +52,9 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     // Sort tourPois by orderIndex and extract POI details
                     if (tour.tourPois && tour.tourPois.length > 0) {
                         const sorted = [...tour.tourPois].sort((a, b) => a.orderIndex - b.orderIndex);
-                        const mappedPois = sorted.map(tp => tp.poi);
+                        const mappedPois = sorted
+                            .map((tp) => tp.poi)
+                            .filter((poi): poi is POI => Boolean(poi));
                         setSelectedPois(mappedPois);
                     }
                 }
@@ -71,7 +73,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleAddPoi = (poi: any) => {
+    const handleAddPoi = (poi: POI) => {
         if (!selectedPois.find(p => p.id === poi.id)) {
             setSelectedPois([...selectedPois, poi]);
         }
@@ -103,11 +105,11 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         }
 
         try {
-            const payload: any = {
+            const payload: TourPayload = {
                 nameVi: formData.name,
-                nameEn: formData.nameEn,
-                descriptionVi: formData.description,
-                descriptionEn: formData.descriptionEn,
+                nameEn: formData.nameEn || undefined,
+                descriptionVi: formData.description || undefined,
+                descriptionEn: formData.descriptionEn || undefined,
                 estimatedDuration: Number(formData.estimatedDuration),
             };
 
@@ -130,9 +132,13 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
             alert(`Tour ${isEditMode ? 'updated' : 'created'} successfully!`);
             navigate('/admin/tours');
-        } catch (err: any) {
-            console.error('Save Tour error:', err);
-            const msg = err.response?.data?.message || 'Failed to save Tour.';
+        } catch (error: unknown) {
+            console.error('Save Tour error:', error);
+            const message =
+                typeof error === 'object' && error !== null && 'response' in error
+                    ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
+                    : undefined;
+            const msg = message || 'Failed to save Tour.';
             setError(Array.isArray(msg) ? msg.join(', ') : msg);
         } finally {
             setLoading(false);

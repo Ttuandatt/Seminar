@@ -3,6 +3,7 @@
 
 > **Phiên bản:** 1.0  
 > **Ngày tạo:** 2026-02-11  
+> **Cập nhật:** 2026-02-14  
 > **Ref:** Step 2 Low-code (UI + Flow + Rule)
 
 ---
@@ -51,7 +52,7 @@
 | POI | latitude | Decimal(10,8) | Yes | -90 to 90 | GPS lat |
 | POI | longitude | Decimal(11,8) | Yes | -180 to 180 | GPS lng |
 | POI | trigger_radius | Integer | Yes | 5-100m | Default: 15m (BR-19) |
-| POI | category | Enum | Yes | MAIN, SUB | POI type |
+| POI | category | Enum | Yes | DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC | POI taxonomy |
 | POI | status | Enum | Yes | DRAFT, ACTIVE, ARCHIVED | Default: DRAFT (BR-15); Admin có thể đặt ACTIVE ngay khi tạo nếu đủ dữ liệu |
 | POI | owner_id | UUID | No | FK → Shop_Owner | NULL if Admin-created |
 | POI | created_by | UUID | Yes | FK → Admin/User | Creator |

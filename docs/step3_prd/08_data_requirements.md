@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-02-18
 
 ---
 
@@ -143,6 +143,42 @@
 
 ---
 
+### 2.2c User_Profile
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `user_id` | UUID | PK, FK → Admin.id or Shop_Owner.id | Chủ sở hữu hồ sơ |
+| `role` | ENUM | NOT NULL | SUPER_ADMIN, ADMIN, VIEWER, SHOP_OWNER |
+| `full_name` | VARCHAR(100) | NOT NULL | Đồng bộ header/top-bar |
+| `avatar_url` | VARCHAR(500) | NULL | CDN URL thumbnail 128x128 |
+| `birth_date` | DATE | NULL | Ngày sinh (>= 1900, tuổi ≥18) |
+| `gender` | ENUM | NULL | MALE, FEMALE, OTHER, PREFER_NOT_SAY |
+| `phone_country_code` | VARCHAR(5) | NULL | ISO country calling code |
+| `phone_number` | VARCHAR(20) | NULL | Số đã chuẩn hóa E.164 |
+| `address_line1` | VARCHAR(200) | NULL | Địa chỉ dòng 1 |
+| `address_line2` | VARCHAR(200) | NULL | Địa chỉ dòng 2 |
+| `city` | VARCHAR(100) | NULL | Thành phố |
+| `country` | CHAR(2) | NULL | ISO 3166-1 alpha-2 |
+| `shop_name` | VARCHAR(200) | NULL | Hiện với Shop Owner |
+| `shop_address` | VARCHAR(500) | NULL | Địa chỉ quán |
+| `opening_hours` | JSONB | NULL | `{ day, open, close }[]` |
+| `preferences` | JSONB | NULL | UI preferences (language, timezone, notification) |
+| `last_synced_at` | TIMESTAMP | NULL | Lần cuối FE sync |
+| `updated_by` | UUID | NULL | Ai cập nhật (Super Admin hoặc self) |
+| `updated_at` | TIMESTAMP | NOT NULL | Timestamp cập nhật |
+
+**Indexes:**
+- `pk_user_profile` trên `user_id`
+- `idx_user_profile_role` trên `role`
+- `idx_user_profile_country_city`
+
+**Notes:**
+- Coi như view hợp nhất giữa bảng Admin và Shop_Owner để FE gọi `/me`.
+- Nếu user bị disable thì vẫn giữ hồ sơ để audit, `preferences` giúp đồng bộ theme/language.
+- Trigger cập nhật `user_profile` khi bảng Admin hoặc Shop_Owner thay đổi core fields.
+
+---
+
 ### 2.3 POI (Point of Interest)
 
 | Field | Type | Constraints | Description |
@@ -156,7 +192,7 @@
 | `longitude` | DECIMAL(11,8) | NOT NULL | GPS longitude |
 | `location` | GEOMETRY(POINT) | NOT NULL | PostGIS point (for spatial queries) |
 | `trigger_radius` | INTEGER | DEFAULT 15 | Radius in meters (5-100) |
-| `category` | ENUM | NOT NULL | Values: MAIN, SUB |
+| `category` | ENUM | NOT NULL | Values: DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
 | `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, INACTIVE |
 | `created_by` | UUID | FK → Admin.id, NULL | Creator (Admin) |
 | `owner_id` | UUID | FK → Shop_Owner.id, NULL | POI owner (Shop Owner) |
@@ -407,7 +443,15 @@ interface POI {
   latitude: number;
   longitude: number;
   triggerRadius: number;
-  category: 'MAIN' | 'SUB';
+  category:
+    | 'DINING'
+    | 'STREET_FOOD'
+    | 'CAFES_DESSERTS'
+    | 'BARS_NIGHTLIFE'
+    | 'MARKETS_SPECIALTY'
+    | 'CULTURAL_LANDMARKS'
+    | 'EXPERIENCES_WORKSHOPS'
+    | 'OUTDOOR_SCENIC';
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
   media: POIMedia[];
   createdBy?: string;

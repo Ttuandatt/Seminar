@@ -58,6 +58,7 @@
 | BR-217 | Default Draft Status | Trigger | POI created | Status = DRAFT by default | — | FR-207 |
 | BR-218 | Publish Requirements | Constraint | Publish POI | Must have name + description + location | Return 422 + "Missing required fields for publish" | FR-207 |
 | BR-219 | Unpublish Warning | Inference | Unpublish POI in Tour | Show warning with affected Tours | Show warning modal + list Tours | FR-207 |
+| BR-220 | Legacy Category Remap | Computation | DB vẫn còn POI cũ (MAIN/SUB) sau migration | Script `apps/api/prisma/scripts/migrate-poi-categories.ts` remap theo keyword priority: Cultural (chua, temple, museum) → Outdoor (cau, river, park) → Experiences (workshop, class) → Markets (cho, market, specialty, souvenir) → Bars (bar, pub, cocktail) → Cafes (ca phe, coffee, dessert) → Street Food (street food, via he, xe day, oc, banh). Không match → giữ nguyên `Dining`. | Log lại để Admin kiểm tra thủ công trước/ sau khi apply | FR-201 |
 
 ---
 
@@ -182,7 +183,7 @@
 | Type | Ký hiệu | Mô tả | Số lượng |
 |------|----------|-------|----------|
 | **Constraint** | | Ràng buộc, validation, giới hạn | 39 |
-| **Computation** | | Tính toán, chuyển đổi, xử lý | 12 |
+| **Computation** | | Tính toán, chuyển đổi, xử lý | 13 |
 | **Trigger** | | Hành động tự động khi event xảy ra | 23 |
 | **Inference** | | Suy luận, quyết định logic | 7 |
 
@@ -201,7 +202,7 @@
 | Category | | | | | Total |
 |----------|-----|-----|-----|-----|-------|
 | 1. Authentication | 4 | 1 | 3 | 0 | **10** |
-| 2. POI Management | 10 | 4 | 2 | 3 | **19** |
+| 2. POI Management | 10 | 5 | 2 | 3 | **20** |
 | 3. Tour Management | 2 | 1 | 2 | 1 | **7** |
 | 4. Map & Audio | 1 | 0 | 3 | 1 | **6** |
 | 5. Location & Trigger | 5 | 1 | 1 | 1 | **10** |
@@ -211,7 +212,7 @@
 | 9. Tourist User | 2 | 0 | 1 | 1 | **5** |
 | 10. QR Code | 1 | 1 | 2 | 0 | **4** |
 | **11. Shop Owner** | **6** | **0** | **0** | **0** | **6** |
-| **Total** | **33** | **10** | **23** | **9** | **82** |
+| **Total** | **33** | **11** | **23** | **9** | **83** |
 
 ---
 

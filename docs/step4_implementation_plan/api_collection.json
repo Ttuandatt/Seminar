@@ -212,7 +212,7 @@
                                     },
                                     "category": {
                                         "type": "string",
-                                        "example": "MAIN"
+                                        "example": "DINING"
                                     },
                                     "status": {
                                         "type": "string",

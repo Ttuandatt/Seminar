@@ -93,10 +93,10 @@ Cách dễ nhất để kiểm tra dữ liệu (User, POI, Tour) mà không cầ
     *   **Header**: `Authorization: Bearer <ADMIN_TOKEN>`
     *   **Body (JSON)**:
         ```json
-        {
-          "nameVi": "Quán Ốc Oanh",
-          "nameEn": "Oc Oanh Snail Restaurant",
-          "category": "MAIN",
+                {
+                    "nameVi": "Quán Ốc Oanh",
+                    "nameEn": "Oc Oanh Snail Restaurant",
+                    "category": "DINING",
           "status": "ACTIVE",
           "latitude": 10.762622,
           "longitude": 106.660172,

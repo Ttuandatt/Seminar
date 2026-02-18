@@ -95,17 +95,29 @@ npx prisma studio
 ```
 **Tác dụng:** Mở Prisma Studio tại `http://localhost:5555` — giao diện GUI để xem/sửa dữ liệu trong database trực tiếp.
 
+### 10. Legacy POI Category Migration (Dry Run)
+```bash
+pnpm --filter api run db:migrate-poi-categories
+```
+**Tác dụng:** Chạy script `apps/api/prisma/scripts/migrate-poi-categories.ts` ở chế độ xem trước. Log summary số POI còn giữ enum fallback (DINING/STREET_FOOD) và đề xuất category mới dựa trên keyword priority từ BR-220.
+
+### 11. Legacy POI Category Migration (Apply)
+```bash
+pnpm --filter api run db:migrate-poi-categories:apply
+```
+**Tác dụng:** Sau khi review log ổn, chạy lệnh này để ghi thay đổi vào DB. Script tự động map theo thứ tự: Cultural → Outdoor → Experiences → Markets → Bars → Cafes → Street Food → fallback Dining.
+
 ---
 
 ## Phase 2A: Admin Dashboard Setup
 
-### 10. Khởi tạo Vite + React + TypeScript
+### 12. Khởi tạo Vite + React + TypeScript
 ```bash
 npx -y create-vite@latest apps/admin --template react-swc-ts
 ```
 **Tác dụng:** Tạo project React mới với Vite bundler, SWC compiler (nhanh hơn Babel), và TypeScript.
 
-### 11. Cài đặt dependencies cho Admin Dashboard
+### 13. Cài đặt dependencies cho Admin Dashboard
 ```bash
 cd apps/admin
 
@@ -130,7 +142,7 @@ npm install -D tailwindcss @tailwindcss/postcss autoprefixer postcss
 - `@tanstack/react-query` — Server state management, caching
 - `tailwindcss` v4 + `@tailwindcss/postcss` — CSS framework (v4 cần plugin riêng cho PostCSS)
 
-### 12. Chạy Admin Dashboard (Dev Server)
+### 14. Chạy Admin Dashboard (Dev Server)
 ```bash
 cd apps/admin
 npm run dev

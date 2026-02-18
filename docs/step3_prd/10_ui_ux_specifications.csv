@@ -2,6 +2,8 @@
 
 Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
+Cập nhật: 2026-02-14
+
 1. Design System
 
   1.1 Color Palette
@@ -264,9 +266,9 @@ More Menu ─── Bottom Tab: More
 │          │ ┌────┬────────────────┬────────┬────────┬─────┬───┐ │
 │          │ │ 🖼️ │ Name           │ Cat.   │ Status │Owner│ ⋮ │ │
 │          │ ├────┼────────────────┼────────┼────────┼─────┼───┤ │
-│          │ │img │ Chùa Linh Ứng  │ MAIN   │🟢Pub  │Admin│ ⋮ │ │
-│          │ │img │ Quán Bún Mắm   │ SUB    │🟡Draft│Tùng │ ⋮ │ │
-│          │ │img │ Cầu Rồng       │ MAIN   │🟢Pub  │Admin│ ⋮ │ │
+│          │ │img │ Chùa Linh Ứng  │ CULT   │🟢Pub  │Admin│ ⋮ │ │
+│          │ │img │ Quán Bún Mắm   │ STREET │🟡Draft│Tùng │ ⋮ │ │
+│          │ │img │ Cầu Rồng       │ OUTDR  │🟢Pub  │Admin│ ⋮ │ │
 │          │ └────┴────────────────┴────────┴────────┴─────┴───┘ │
 │          │                                                      │
 │          │ [⋮] → Edit | View | Delete                          │
@@ -292,7 +294,11 @@ More Menu ─── Bottom Tab: More
 │          │                                                      │
 │          │ ┌─ Location ───────────┐ ┌─ Settings ───────────┐  │
 │          │ │     [Map View]       │ │ Category:             │  │
-│          │ │        📍            │ │ (●) Main  (○) Sub     │  │
+│          │ │        📍            │ │ [Dining ▼]            │  │
+│          │ │                      │ │ Legend: 🟧 Dining  🟥 Street Food │  │
+│          │ │                      │ │         🟦 Cafes  🟣 Bars          │  │
+│          │ │                      │ │         🟩 Markets  🟫 Cultural    │  │
+│          │ │                      │ │         🟪 Experiences  🟨 Outdoor │  │
 │          │ │                      │ │                       │  │
 │          │ │ Lat: [16.0544     ]  │ │ Trigger Radius:       │  │
 │          │ │ Lng: [108.2022    ]  │ │ ◀═══●══════▶  15m    │  │
@@ -510,42 +516,36 @@ More Menu ─── Bottom Tab: More
 "**States:** Loading, Empty (no data), Error, Success"
 "**Refs:** FR-703, UC-52, BR-43"
 
-  5.5 Shop Owner Profile (S16)
+  5.5 Personal Profile (S16)
 "┌─────────────────────────────────────────────────────────────┐
 │ 👤 My Profile                              [💾 Save]        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌──────┐                                                   │
-│  │      │  Business Name *                                  │
+│  │      │  Personal Information                             │
 │  │  👤  │  ┌─────────────────────────────────────┐         │
-│  │      │  │ Quán Bún Mắm Tùng                   │         │
+│  │      │  │ Full Name *                        │         │
 │  └──────┘  └─────────────────────────────────────┘         │
-│  [Change photo]                                             │
+│  [Change photo]   Role Badge (Super Admin)                 │
+│  Email (readonly)  Status pill                             │
 │                                                             │
-│  Full Name *                                                │
-│  ┌─────────────────────────────────────┐                   │
-│  │ Nguyễn Văn Tùng                     │                   │
-│  └─────────────────────────────────────┘                   │
+│  Phone (+country)           Birth date (date picker)        │
+│  Address line 1             Address line 2                  │
+│  City                        Country dropdown               │
 │                                                             │
-│  Phone                                                      │
-│  ┌─────────────────────────────────────┐                   │
-│  │ 0901 234 567                        │                   │
-│  └─────────────────────────────────────┘                   │
+│  ───── Account Info (read-only) ─────                       │
+│  Email  | Role | Status | Created | Last login              │
 │                                                             │
-│  Address                                                    │
-│  ┌─────────────────────────────────────┐                   │
-│  │ 123 Vĩnh Khánh, Q.4, TP.HCM        │                   │
-│  └─────────────────────────────────────┘                   │
+│  ───── Shop Details (conditional) ─────                     │
+│  Shop Name *                 Shop Address *                 │
+│  Opening Hours: [Mon 08:00-22:00] [Add day]                 │
 │                                                             │
-│  Email: tung@email.com (readonly)                           │
-│                                                             │
-│  ────────────────────────────────────                       │
-│  [🔒 Change Password]    [🚪 Logout]                       │
+│  Sticky footer: [💾 Save changes]   [Cancel]   [🔒 Change Password]   [🚪 Logout]
 │                                                             │
 └─────────────────────────────────────────────────────────────┘"
 **Screen ID:** S16
-"**States:** Loading, Error (validation), Success (toast ""Profile updated"")"
-**Refs:** FR-704
+"**States:** Loading skeleton, Dirty form, Error (validation), Success (toast ""Profile updated"")"
+"**Refs:** FR-104, AC-104"
 
 6. Tourist App Screens
 
@@ -579,7 +579,7 @@ More Menu ─── Bottom Tab: More
 │   🗺️ Map    📍 POIs    🗺️ Tours   ⋯   │
 └─────────────────────────────────────────┘"
 **Screen ID:** S17
-"**Legend:**  Main POI, 🟡 Sub POI,  In range (triggered)"
+"**Legend:** Dining 🔴, Street Food 🟠, Cafes & Desserts 🟡, Bars & Nightlife 🟣, Markets & Specialty Stores 🟤, Cultural Landmarks 🔵, Experiences & Workshops 🟢, Outdoor & Scenic ⚪ (halo xanh khi trong phạm vi)"
 "**States:** Loading GPS, Error (no GPS → S30), Empty (no nearby POIs), Success"
 "**Refs:** FR-401~402, UC-40, BR-28~29"
 
@@ -596,7 +596,7 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ Chùa Linh Ứng                          │
 │ 📍 45m away • Part of ""Tour Đà Nẵng""   │
-│ 🏷️ Main POI                             │
+│ 🏷️ Category: Cultural Landmarks         │
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │    ▶  Nghe thuyết minh    3:24     ││
@@ -659,10 +659,10 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ 📍 8 POIs  •  ⏱️ 45 min  •  🚶 2.3km   │
 │                                         │
-│  1. 🔴 Chùa Linh Ứng          500m     │
-│  2. 🔴 Quán Bún Mắm Tùng      300m     │
-│  3. 🟡 Cầu Rồng               800m     │
-│  4. 🔴 Chợ Hàn                 400m     │
+│  1. 🔵 Chùa Linh Ứng (Cultural) 500m   │
+│  2. 🔴 Quán Bún Mắm (Dining)   300m    │
+│  3. ⚪ Cầu Rồng (Outdoor)      800m     │
+│  4. 🟤 Chợ Hàn (Markets)        400m    │
 │  ...                                    │
 │                                         │
 │ ┌─────────────────────────────────────┐│
@@ -689,7 +689,7 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │ Currently at:                       ││
-│ │ 🔴 Cầu Rồng                         ││
+│ │ ⚪ Cầu Rồng (Outdoor)               ││
 │ │ 🎵 ▶ Playing...  ═══○═══  2:15     ││
 │ ├─────────────────────────────────────┤│
 │ │ Next: Chợ Hàn (400m)       [Next ▶]││
@@ -756,11 +756,11 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │ 🖼️ │ Chùa Linh Ứng       450m  ❤️  ││
-│ │    │ Main POI  •  Part of Tour A  ││
+│ │    │ Cultural Landmark  •  Part of Tour A ││
 │ └─────────────────────────────────────┘│
 │ ┌─────────────────────────────────────┐│
 │ │ 🖼️ │ Quán Bún Mắm         1.2km ❤️  ││
-│ │    │ Sub POI                       ││
+│ │    │ Street Food                   ││
 │ └─────────────────────────────────────┘│
 │                                         │
 ├─────────────────────────────────────────┤

@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.0  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-09
+> **Cập nhật:** 2026-02-18
 
 ---
 
@@ -102,6 +102,64 @@ Admin có thể reset mật khẩu qua email khi quên.
 
 ---
 
+### FR-104: Personal Profile Management
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-104 |
+| **Title** | View & Update Personal Profile |
+| **Priority** | P1 |
+| **User Story** | US-106 |
+
+**Description:**  
+Mọi người dùng đã xác thực (Super Admin, Admin, Shop Owner) có một trang hồ sơ hợp nhất để xem/ cập nhật thông tin cá nhân (họ tên, avatar, số điện thoại, ngày sinh, địa chỉ, thông tin cửa hàng nếu có) mà không cần liên hệ IT.
+
+**Business Rules:**
+- BR-110: Trường `role`, `email`, `status`, `created_at` chỉ hiển thị read-only.
+- BR-111: Shop Owner thấy thêm section "Shop Details" (shop_name, shop_address, opening_hours) còn Admin/Super Admin chỉ thấy phần này nếu gán với POI.
+- BR-112: `birth_date` không được lớn hơn ngày hiện tại và user phải ≥ 18 tuổi.
+- BR-113: Avatar tối đa 2MB, định dạng jpg/png/webp; hệ thống tự sinh thumbnail 128x128.
+- BR-114: Mọi thay đổi phải ghi nhận vào audit log (`profile_audit`): user_id, fields_changed, updated_by, updated_at, ip.
+
+**Pre-conditions:**
+- Người dùng đã đăng nhập và có access token hợp lệ.
+
+**Post-conditions:**
+- Bản ghi `User_Profile` (hoặc bản ghi Shop Owner tương ứng) được cập nhật và đồng bộ cache.
+- Event `profile.updated` được phát để FE đồng bộ header name/avatar.
+
+**Input (Update):**
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| full_name | string | Yes | 3-100 chars |
+| birth_date | date | No | ISO-8601, >= 1900-01-01, age ≥18 |
+| phone | string | No | E.164, max 20 chars |
+| gender | enum | No | MALE, FEMALE, OTHER, PREFER_NOT_SAY |
+| address_line1 | string | No | ≤200 chars |
+| address_line2 | string | No | ≤200 chars |
+| city | string | No | ≤100 chars |
+| country | string | No | ISO 3166-1 alpha-2 |
+| shop_name | string | Conditional | Required for Shop Owner, ≤200 chars |
+| shop_address | string | Conditional | Required for Shop Owner |
+| opening_hours | json | No | Must follow `{ day, open, close }[]` schema |
+| avatar | file | No | jpg/png/webp ≤2MB |
+
+**Output:**
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | User identifier |
+| role | enum | SUPER_ADMIN, ADMIN, VIEWER, SHOP_OWNER |
+| email | string | Login email/username |
+| full_name | string | Latest full name |
+| avatar_url | string | CDN URL of current avatar |
+| phone | string | Normalized phone number |
+| birth_date | date | Stored date of birth |
+| address | object | `{ addressLine1, addressLine2, city, country }` |
+| shop | object | `{ name, address, openingHours }` if applicable |
+| last_updated_at | timestamp | ISO timestamp |
+
+---
+
 ## 2. Admin Dashboard - POI Management
 
 ### FR-201: Create POI
@@ -126,7 +184,7 @@ Admin có thể tạo POI mới với đầy đủ thông tin cơ bản.
 | latitude | decimal | Yes | -90 to 90 |
 | longitude | decimal | Yes | -180 to 180 |
 | trigger_radius | integer | No | 5-100m, default 15m |
-| category | enum | Yes | MAIN, SUB |
+| category | enum | Yes | DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
 | images | file[] | No | Max 10, each ≤5MB |
 | audio_vi | file | No | ≤50MB, mp3/wav |
 | audio_en | file | No | ≤50MB, mp3/wav |
@@ -328,7 +386,7 @@ App hiển thị tất cả POIs có status=active trên bản đồ với marke
 
 **Features:**
 - Cluster markers when zoomed out
-- Different marker icons for MAIN vs SUB POIs
+- Marker legend uses distinct colors/icons for each POI category (8 total)
 - Current location indicator
 - Compass orientation
 

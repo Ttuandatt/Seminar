@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Store, Plus, Search, Eye, Edit, Trash2,
@@ -18,34 +18,35 @@ const MerchantListPage = () => {
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        fetchMerchants();
-    }, []);
-
-    const fetchMerchants = async () => {
+    const fetchMerchants = useCallback(async () => {
         setLoading(true);
         try {
             const result = await merchantService.getAll({ search });
             setMerchants(result.data);
-        } catch (err) {
-            console.error('Failed to fetch merchants:', err);
+        } catch (error) {
+            console.error('Failed to fetch merchants:', error);
             setError('Failed to load merchants.');
         } finally {
             setLoading(false);
         }
-    };
+    }, [search]);
+
+    useEffect(() => {
+        void fetchMerchants();
+    }, [fetchMerchants]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        fetchMerchants();
+        void fetchMerchants();
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to deactivate this merchant?')) return;
         try {
             await merchantService.delete(id);
-            fetchMerchants(); // Refresh list to show updated status
-        } catch (err) {
+            void fetchMerchants();
+        } catch (error) {
+            console.error('Failed to delete merchant:', error);
             alert('Failed to delete merchant');
         }
     };

@@ -7,23 +7,36 @@ import {
   Settings,
   LogOut,
   Store,
+  UserCircle2,
 } from 'lucide-react';
-import api from '../../lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { profileService } from '../../services/profile.service';
+import { useAuth } from '../../contexts/AuthContext';
+
+const getInitials = (fullName?: string) => {
+  if (!fullName) return 'U';
+  const parts = fullName.split(' ').filter(Boolean);
+  if (!parts.length) return 'U';
+  const initials = parts.length === 1 ? parts[0][0] : `${parts[0][0]}${parts[parts.length - 1][0]}`;
+  return initials.toUpperCase();
+};
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { data: profile } = useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: profileService.getProfile,
+    staleTime: 5 * 60 * 1000,
+  });
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      console.warn('Logout request failed:', error);
+      await logout();
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   };
 
@@ -33,6 +46,7 @@ const Sidebar = () => {
     { icon: Map, label: 'Tours', path: '/admin/tours' },
     { icon: Store, label: 'Merchants', path: '/admin/merchants' },
     { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+    { icon: UserCircle2, label: 'Profile', path: '/admin/profile' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
@@ -70,13 +84,23 @@ const Sidebar = () => {
         {/* User / Logout */}
         <div className="border-t border-slate-100 pt-4">
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 mb-2">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-              AD
+            <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs overflow-hidden">
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.fullName ?? 'Profile avatar'} className="h-full w-full object-cover" />
+              ) : (
+                getInitials(profile?.fullName)
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">Admin User</p>
-              <p className="text-xs text-slate-500 truncate">admin@gpstours.vn</p>
+              <p className="text-sm font-medium text-slate-900 truncate">{profile?.fullName ?? 'Admin User'}</p>
+              <p className="text-xs text-slate-500 truncate">{profile?.email ?? 'admin@gpstours.vn'}</p>
             </div>
+            <button
+              onClick={() => navigate('/admin/profile')}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600"
+            >
+              View
+            </button>
           </div>
           <button
             onClick={handleLogout}

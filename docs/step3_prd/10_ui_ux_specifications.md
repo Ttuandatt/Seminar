@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-11
+> **Cập nhật:** 2026-02-18
 
 ---
 
@@ -327,9 +327,9 @@ More Menu ─── Bottom Tab: More
 │          │ ┌────┬────────────────┬────────┬────────┬─────┬───┐ │
 │          │ │ 🖼️ │ Name           │ Cat.   │ Status │Owner│ ⋮ │ │
 │          │ ├────┼────────────────┼────────┼────────┼─────┼───┤ │
-│          │ │img │ Chùa Linh Ứng  │ MAIN   │🟢Pub  │Admin│ ⋮ │ │
-│          │ │img │ Quán Bún Mắm   │ SUB    │🟡Draft│Tùng │ ⋮ │ │
-│          │ │img │ Cầu Rồng       │ MAIN   │🟢Pub  │Admin│ ⋮ │ │
+│          │ │img │ Chùa Linh Ứng  │ Cultural Landmarks │🟢Pub  │Admin│ ⋮ │ │
+│          │ │img │ Quán Bún Mắm   │ Street Food        │🟡Draft│Tùng │ ⋮ │ │
+│          │ │img │ Cầu Rồng       │ Outdoor & Scenic   │🟢Pub  │Admin│ ⋮ │ │
 │          │ └────┴────────────────┴────────┴────────┴─────┴───┘ │
 │          │                                                      │
 │          │ [⋮] → Edit | View | Delete                          │
@@ -361,8 +361,9 @@ More Menu ─── Bottom Tab: More
 │          │                                                      │
 │          │ ┌─ Location ───────────┐ ┌─ Settings ───────────┐  │
 │          │ │     [Map View]       │ │ Category:             │  │
-│          │ │        📍            │ │ (●) Main  (○) Sub     │  │
-│          │ │                      │ │                       │  │
+│          │ │        📍            │ │ [ Dining ▼ ]          │  │
+│          │ │                      │ │ Pills preview: Street  │  │
+│          │ │                      │ │ Food • Cafes • Night   │  │
 │          │ │ Lat: [16.0544     ]  │ │ Trigger Radius:       │  │
 │          │ │ Lng: [108.2022    ]  │ │ ◀═══●══════▶  15m    │  │
 │          │ └──────────────────────┘ │ (5m ———————— 100m)    │  │
@@ -627,7 +628,7 @@ More Menu ─── Bottom Tab: More
 
 ---
 
-### 5.5 Shop Owner Profile (S16)
+### 5.5 Personal Profile (S16)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -665,8 +666,21 @@ More Menu ─── Bottom Tab: More
 ```
 
 **Screen ID:** S16  
-**States:** Loading, Error (validation), Success (toast "Profile updated")  
-**Refs:** FR-704
+**States:** Loading skeleton, Dirty form (Save enabled), Error (inline validation), Success (toast "Profile updated")  
+**Refs:** FR-104, AC-104
+
+**Key sections:**
+- **Avatar + Display identity:** Round avatar (128px) with change button, shows role badge (SUPER ADMIN / ADMIN / SHOP OWNER) and read-only email.
+- **Personal Information card:** Full Name (required), Phone (with country picker), Date of Birth (date picker with ≥18 validation), Gender radio chips, Address lines, City, Country select.
+- **Account Info card:** Read-only fields for Email, Role, Status, Created At, Last Login, plus button `Reset password` (opens modal) for self-service.
+- **Shop Details card (conditional):** Only visible for Shop Owner or users linked to a shop. Fields: Shop Name*, Shop Address*, Opening Hours (repeatable rows, Add day). Hidden for Admin/Super Admin.
+- **Actions:** Primary `Save changes` button pinned bottom/right when dirty, secondary `Cancel` (reset form), tertiary links `Change password` + `Logout`.
+
+**Validation & UX notes:**
+- Disable Save until at least one field changes and passes client validation.
+- Show inline helper text for phone format (`+84 901234567`).
+- When avatar updated successfully, header avatar updates instantly (emit event `profile.updated`).
+- Responsive: in mobile view, cards stack vertically, Save button becomes full-width sticky footer.
 
 ---
 
@@ -706,7 +720,7 @@ More Menu ─── Bottom Tab: More
 ```
 
 **Screen ID:** S17  
-**Legend:** 🔴 Main POI, 🟡 Sub POI, 🔵 In range (triggered)  
+**Legend:** 🔴 Dining, 🟠 Street Food, 🟡 Cafes & Desserts, 🟣 Bars & Nightlife, 🟤 Markets & Specialty Stores, 🔵 Cultural Landmarks, 🟢 Experiences & Workshops, ⚪ Outdoor & Scenic (halo turns blue when triggered)  
 **States:** Loading GPS, Error (no GPS → S30), Empty (no nearby POIs), Success  
 **Refs:** FR-401~402, UC-40, BR-28~29
 
@@ -727,7 +741,7 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ Chùa Linh Ứng                          │
 │ 📍 45m away • Part of "Tour Đà Nẵng"   │
-│ 🏷️ Main POI                             │
+│ 🏷️ Category: Cultural Landmarks         │
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │    ▶  Nghe thuyết minh    3:24     ││
@@ -802,10 +816,10 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ 📍 8 POIs  •  ⏱️ 45 min  •  🚶 2.3km   │
 │                                         │
-│  1. 🔴 Chùa Linh Ứng          500m     │
-│  2. 🔴 Quán Bún Mắm Tùng      300m     │
-│  3. 🟡 Cầu Rồng               800m     │
-│  4. 🔴 Chợ Hàn                 400m     │
+│  1. 🔵 Chùa Linh Ứng (Cultural) 500m   │
+│  2. 🔴 Quán Bún Mắm (Dining)   300m    │
+│  3. ⚪ Cầu Rồng (Outdoor)      800m     │
+│  4. 🟤 Chợ Hàn (Markets)        400m    │
 │  ...                                    │
 │                                         │
 │ ┌─────────────────────────────────────┐│
@@ -838,7 +852,7 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │ Currently at:                       ││
-│ │ 🔴 Cầu Rồng                         ││
+│ │ ⚪ Cầu Rồng (Outdoor)               ││
 │ │ 🎵 ▶ Playing...  ═══○═══  2:15     ││
 │ ├─────────────────────────────────────┤│
 │ │ Next: Chợ Hàn (400m)       [Next ▶]││
@@ -871,7 +885,7 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │  Also nearby:                           │
 │  ┌─────────────────────────────────────┐│
-│  │ 🟡 Quán Bánh Mì            25m     ││
+│  │ 🟠 Quán Bánh Mì (Street Food) 25m  ││
 │  └─────────────────────────────────────┘│
 │                                         │
 │              [Dismiss]                  │
@@ -923,11 +937,11 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ ┌─────────────────────────────────────┐│
 │ │ 🖼️ │ Chùa Linh Ứng       450m  ❤️  ││
-│ │    │ Main POI  •  Part of Tour A  ││
+│ │    │ Cultural Landmark • Part of Tour A ││
 │ └─────────────────────────────────────┘│
 │ ┌─────────────────────────────────────┐│
 │ │ 🖼️ │ Quán Bún Mắm         1.2km ❤️  ││
-│ │    │ Sub POI                       ││
+│ │    │ Street Food spot              ││
 │ └─────────────────────────────────────┘│
 │                                         │
 ├─────────────────────────────────────────┤
@@ -950,11 +964,11 @@ More Menu ─── Bottom Tab: More
 │                                         │
 │ Today                                   │
 │ ┌─────────────────────────────────────┐│
-│ │ 🔴 Chùa Linh Ứng        10:30 AM  ││
+│ │ 🔵 Chùa Linh Ứng (Cultural) 10:30 AM ││
 │ │    🎵 Audio played (3:24)          ││
 │ └─────────────────────────────────────┘│
 │ ┌─────────────────────────────────────┐│
-│ │ 🟡 Quán Bánh Mì          10:45 AM  ││
+│ │ 🟠 Quán Bánh Mì (Street Food) 10:45 AM ││
 │ │    👁 Viewed only                    ││
 │ └─────────────────────────────────────┘│
 │                                         │
