@@ -5,6 +5,8 @@ import {
     Plus, Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, AlertCircle, MapPin
 } from 'lucide-react';
 import { poiService, POI_CATEGORY_OPTIONS, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const statusColors: Record<string, string> = {
     ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -38,6 +40,8 @@ const POIListPage = () => {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [categoryFilter, setCategoryFilter] = useState<'ALL' | PoiCategory>('ALL');
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+    const { showToast } = useToast();
     const limit = 10;
 
     // Fetch POIs
@@ -56,20 +60,28 @@ const POIListPage = () => {
     // Delete Mutation
     const deleteMutation = useMutation({
         mutationFn: poiService.delete,
-        onSuccess: () => {
+        onSuccess: (_, poiId) => {
             queryClient.invalidateQueries({ queryKey: ['pois'] });
-            alert('POI deleted successfully');
+            showToast({
+                variant: 'success',
+                title: 'Đã xoá POI',
+                description: deleteTarget?.id === poiId ? `${deleteTarget.name} đã được xoá.` : 'POI đã được xoá.',
+            });
+            setDeleteTarget(null);
         },
         onError: (err) => {
-            alert('Failed to delete POI');
             console.error(err);
+            showToast({
+                variant: 'error',
+                title: 'Xoá POI thất bại',
+                description: 'Không thể xoá POI. Vui lòng thử lại.',
+            });
         }
     });
 
-    const handleDelete = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this POI?')) {
-            deleteMutation.mutate(id);
-        }
+    const handleDelete = () => {
+        if (!deleteTarget) return;
+        deleteMutation.mutate(deleteTarget.id);
     };
 
     if (isLoading) {
@@ -236,7 +248,7 @@ const POIListPage = () => {
                                                     <Edit className="h-4 w-4" />
                                                 </Link>
                                                 <button
-                                                    onClick={() => handleDelete(poi.id)}
+                                                    onClick={() => setDeleteTarget({ id: poi.id, name: poi.nameVi })}
                                                     className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                                                     title="Delete"
                                                 >
@@ -279,6 +291,17 @@ const POIListPage = () => {
                     </div>
                 )}
             </div>
+            <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title={deleteTarget ? `Xoá POI "${deleteTarget.name}"?` : 'Xoá POI'}
+                description="POI sẽ được đánh dấu là đã xoá và ẩn khỏi tất cả danh sách."
+                confirmLabel="Xoá POI"
+                cancelLabel="Huỷ"
+                isDanger
+                isLoading={deleteMutation.isPending}
+                onConfirm={handleDelete}
+                onCancel={() => (!deleteMutation.isPending ? setDeleteTarget(null) : null)}
+            />
         </div>
     );
 };

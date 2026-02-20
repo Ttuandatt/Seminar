@@ -121,7 +121,7 @@ ID,Rule Name,Type,Condition,Action,Exception (Khi vi phạm),FR Ref
 BR-1001,Self Registration,Constraint,Shop Owner registers,"No Admin approval needed, self-service",—,FR-701
 BR-1002,Unique Email,Constraint,Register Shop Owner,Email must be unique across all users,"Return 409 + ""Email already exists""",FR-701
 BR-1003,Data Isolation,Constraint,Shop Owner accesses POIs,Filter by owner_id = current user,"Return 403 + ""Access denied"" nếu truy cập POI người khác",FR-702
-BR-1004,No Delete Permission,Constraint,Shop Owner attempts delete,"Block delete action, only Admin can delete","Return 403 + ""Only Admin can delete POIs""",FR-702
+BR-1004,Owner Delete Permission,Constraint,Shop Owner attempts delete,"Allow delete when the authenticated user owns the POI, otherwise block","Return 403 + ""Only the owner or an Admin can delete POIs""",FR-702
 BR-1005,Analytics Scoping,Constraint,Shop Owner views analytics,Show only own POI(s) metrics,Return 403 nếu truy cập system analytics,FR-704
 BR-1006,Multiple POIs,Constraint,Shop Owner creates POI,Allow owning multiple POIs,—,FR-702
 

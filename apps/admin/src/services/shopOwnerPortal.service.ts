@@ -63,6 +63,22 @@ export interface ShopOwnerProfilePayload {
   address?: string;
 }
 
+export interface ShopOwnerCreatePOIPayload {
+  nameVi: string;
+  nameEn?: string;
+  descriptionVi: string;
+  descriptionEn?: string;
+  category: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  triggerRadius: number;
+  media?: {
+    images: string[];
+    audio: { language: 'VI' | 'EN'; name: string }[];
+  };
+}
+
 const wait = (ms = 600) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let ownerProfile: ShopOwnerPortalProfile = {
@@ -75,7 +91,7 @@ let ownerProfile: ShopOwnerPortalProfile = {
   avatarEmoji: 'SO',
 };
 
-const ownerPois: ShopOwnerPOI[] = [
+let ownerPois: ShopOwnerPOI[] = [
   {
     id: 'poi-001',
     name: 'Quán Bún Mắm Tùng',
@@ -231,7 +247,7 @@ export const shopOwnerPortalService = {
       ],
       pois: ownerPois,
       tips: [
-        'Chỉ Admin có thể xoá POI. Liên hệ GPS Tours Support để được hỗ trợ.',
+        'Bạn có thể xoá POI do mình sở hữu. Admin vẫn có thể can thiệp nếu cần thiết.',
         'Giữ audio dưới 4 phút giúp tăng tỉ lệ nghe hết.',
       ],
     };
@@ -246,5 +262,44 @@ export const shopOwnerPortalService = {
     await wait(500);
     ownerProfile = { ...ownerProfile, ...payload };
     return ownerProfile;
+  },
+
+  async deletePoi(poiId: string) {
+    await wait(500);
+    const exists = ownerPois.find((poi) => poi.id === poiId);
+    if (!exists) {
+      throw new Error('Không tìm thấy POI thuộc quyền sở hữu của bạn.');
+    }
+    ownerPois = ownerPois.filter((poi) => poi.id !== poiId);
+    return { message: 'POI đã được xoá khỏi tài khoản của bạn.' };
+  },
+
+  async createPoi(payload: ShopOwnerCreatePOIPayload) {
+    await wait(700);
+    const nameVi = payload.nameVi?.trim();
+    if (!nameVi) {
+      throw new Error('Tên POI không được để trống.');
+    }
+    if (!payload.descriptionVi?.trim()) {
+      throw new Error('Vui lòng cung cấp mô tả tiếng Việt cho POI.');
+    }
+    if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
+      throw new Error('Toạ độ không hợp lệ.');
+    }
+
+    const newPoi: ShopOwnerPOI = {
+      id: `poi-${Date.now()}`,
+      name: nameVi,
+      status: 'IN_REVIEW',
+      address: payload.address?.trim() || 'Chưa cập nhật',
+      lastUpdated: 'Vừa tạo',
+      views: 0,
+      plays: 0,
+      audioCompletion: 0,
+      coverEmoji: nameVi.slice(0, 2).toUpperCase(),
+    };
+
+    ownerPois = [newPoi, ...ownerPois];
+    return newPoi;
   },
 };

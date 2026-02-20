@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, CheckCircle2, User, Store, Phone, MapPin, Shield } from 'lucide-react';
 import { shopOwnerPortalService, type ShopOwnerPortalProfile, type ShopOwnerProfilePayload } from '../../services/shopOwnerPortal.service';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const ShopOwnerProfilePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [formState, setFormState] = useState<ShopOwnerProfilePayload>({
     businessName: '',
     ownerName: '',
@@ -163,7 +165,13 @@ const ShopOwnerProfilePage = () => {
           </button>
           <button
             type="button"
-            onClick={() => alert('Tính năng đổi mật khẩu đang được triển khai.')}
+            onClick={() =>
+              showToast({
+                variant: 'info',
+                title: 'Đang phát triển',
+                description: 'Tính năng đổi mật khẩu đang được triển khai và sẽ sớm ra mắt.',
+              })
+            }
             className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600"
           >
             Đổi mật khẩu

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import DashboardPage from './pages/admin/DashboardPage';
 import POIListPage from './pages/admin/POIListPage';
@@ -10,31 +11,32 @@ import MerchantListPage from './pages/admin/MerchantListPage';
 import MerchantFormPage from './pages/admin/MerchantFormPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import PlaceholderPage from './pages/admin/PlaceholderPage';
+import ProfilePage from './pages/admin/ProfilePage';
 import ShopOwnerLayout from './components/layout/ShopOwnerLayout';
 import ShopOwnerLoginPage from './pages/owner/ShopOwnerLoginPage';
-import ShopOwnerRegisterPage from './pages/owner/ShopOwnerRegisterPage';
 import ShopOwnerDashboardPage from './pages/owner/ShopOwnerDashboardPage';
 import ShopOwnerAnalyticsPage from './pages/owner/ShopOwnerAnalyticsPage';
 import ShopOwnerProfilePage from './pages/owner/ShopOwnerProfilePage';
+import ShopOwnerPOIFormPage from './pages/owner/ShopOwnerPOIFormPage';
 import ProtectedRoute from './components/routing/ProtectedRoute';
-import ProfilePage from './pages/admin/ProfilePage';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/owner/login" element={<ShopOwnerLoginPage />} />
-        <Route path="/owner/register" element={<ShopOwnerRegisterPage />} />
+        <Route path="/owner/register" element={<RegisterPage initialRole="SHOP_OWNER" />} />
 
         <Route path="/owner" element={<ShopOwnerLayout />}>
           <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<ShopOwnerDashboardPage />} />
           <Route path="analytics" element={<ShopOwnerAnalyticsPage />} />
           <Route path="profile" element={<ShopOwnerProfilePage />} />
+          <Route path="pois/new" element={<ShopOwnerPOIFormPage />} />
         </Route>
 
-        {/* Admin Routes */}
         <Route
           path="/admin"
           element={(
@@ -61,6 +63,7 @@ function App() {
           <Route path="merchants/:id/edit" element={<MerchantFormPage />} />
           <Route path="settings" element={<PlaceholderPage title="System Settings" />} />
         </Route>
+
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </Router>

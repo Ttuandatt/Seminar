@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsEnum, IsOptional, Matches } from 'class-validator';
 import { Role } from '@prisma/client';
 
 export class LoginDto {
@@ -15,7 +15,10 @@ export class RegisterDto {
     email: string;
 
     @IsString()
-    @MinLength(6)
+    @MinLength(8)
+    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+        message: 'Password must contain uppercase, lowercase, and numeric characters',
+    })
     password: string;
 
     @IsString()
@@ -29,6 +32,10 @@ export class RegisterDto {
     @IsOptional()
     @IsString()
     shopName?: string;
+
+    @IsOptional()
+    @IsString()
+    phone?: string;
 }
 
 export class ForgotPasswordDto {

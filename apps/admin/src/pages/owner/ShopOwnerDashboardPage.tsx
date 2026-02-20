@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2, AlertCircle, Plus, Edit3, ExternalLink, Clock3, MapPin, ShieldAlert } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Loader2, AlertCircle, Plus, Edit3, ExternalLink, Clock3, MapPin, ShieldAlert, Trash2 } from 'lucide-react';
 import { shopOwnerPortalService, type ShopOwnerPOIStatus } from '../../services/shopOwnerPortal.service';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const statusStyles: Record<ShopOwnerPOIStatus, string> = {
   ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -10,9 +13,32 @@ const statusStyles: Record<ShopOwnerPOIStatus, string> = {
 };
 
 const ShopOwnerDashboardPage = () => {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['shop-owner', 'overview'],
     queryFn: shopOwnerPortalService.getOverview,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (poiId: string) => shopOwnerPortalService.deletePoi(poiId),
+    onSuccess: (response, poiId) => {
+      showToast({
+        variant: 'success',
+        title: 'Đã xoá POI',
+        description: response?.message || 'POI đã được xoá khỏi tài khoản của bạn.',
+      });
+      refetch();
+      if (deleteTarget?.id === poiId) {
+        setDeleteTarget(null);
+      }
+    },
+    onError: (mutationError: unknown) => {
+      const message = mutationError instanceof Error ? mutationError.message : 'Không thể xoá POI. Vui lòng thử lại.';
+      showToast({ variant: 'error', title: 'Xoá POI thất bại', description: message });
+    },
   });
 
   if (isLoading) {
@@ -42,7 +68,16 @@ const ShopOwnerDashboardPage = () => {
   const overview = data!;
 
   const handleCreatePOI = () => {
-    alert('Tính năng tạo POI sẽ ra mắt ở sprint tiếp theo.');
+    navigate('/owner/pois/new');
+  };
+
+  const handleDeletePoi = (poiId: string, poiName: string) => {
+    setDeleteTarget({ id: poiId, name: poiName });
+  };
+
+  const confirmDeletePoi = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget.id);
   };
 
   return (
@@ -77,7 +112,7 @@ const ShopOwnerDashboardPage = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">My POIs</h2>
-            <p className="text-sm text-slate-500">Chỉ hiển thị POIs thuộc quyền sở hữu của bạn.</p>
+            <p className="text-sm text-slate-500">Chỉ hiển thị POIs thuộc quyền sở hữu của bạn. Bạn có thể chỉnh sửa hoặc xoá chúng bất cứ lúc nào.</p>
           </div>
           <Link to="/owner/dashboard" className="text-sm font-semibold text-blue-600 hover:text-blue-500">
             Xem tất cả
@@ -111,13 +146,30 @@ const ShopOwnerDashboardPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-blue-200 hover:text-blue-600">
                   <Edit3 className="mr-2 inline h-4 w-4" />
                   Chỉnh sửa
                 </button>
                 <button className="rounded-full border border-slate-200 px-3 py-2 text-slate-500 hover:border-slate-300">
                   <ExternalLink className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDeletePoi(poi.id, poi.name)}
+                  disabled={deleteMutation.isPending && deleteMutation.variables === poi.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                >
+                  {deleteMutation.isPending && deleteMutation.variables === poi.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang xoá...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Xoá POI
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -145,6 +197,17 @@ const ShopOwnerDashboardPage = () => {
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={`Xoá POI${deleteTarget ? `: ${deleteTarget.name}` : ''}`}
+        description="Hành động này sẽ xoá POI khỏi tài khoản của bạn. Bạn có thể tạo lại sau nếu cần."
+        confirmLabel="Xoá POI"
+        cancelLabel="Huỷ"
+        isDanger
+        isLoading={deleteMutation.isPending}
+        onConfirm={confirmDeletePoi}
+        onCancel={() => (!deleteMutation.isPending ? setDeleteTarget(null) : null)}
+      />
     </div>
   );
 };

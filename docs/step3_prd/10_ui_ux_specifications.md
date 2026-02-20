@@ -118,13 +118,17 @@
 
 | Component | Usage |
 |-----------|-------|
-| Toast | Success/Error notifications (auto-dismiss 5s) |
+| Toast | Success/Error/Info notifications, stacked top-right, auto-dismiss 5s |
 | Alert | Inline warnings/info (dismissible) |
 | Skeleton | Loading placeholders (pulse animation) |
 | Spinner | Loading indicator (inside buttons, pages) |
 | Progress Bar | Upload progress (determinate) |
 | Empty State | No data: illustration + message + CTA |
-| Confirmation Dialog | Double confirm for destructive actions |
+| Confirmation Dialog | Double confirm for destructive actions with explicit copy |
+
+**Feedback patterns:**
+- Toast variants: `success`, `error`, `info`, `warning`. Each includes icon, bold title, optional body text, and supports manual dismissal. Triggered for create/update success, validation failures, placeholder actions (e.g., "Coming soon"), and API errors. Maximum of 3 concurrent toasts.
+- Confirmation dialog: fullscreen overlay with focus trap, descriptive title/paragraph, `Huỷ`/`Xác nhận` buttons. Danger confirmations color the primary button red, support loading state, and mirror the copy used in admin + shop-owner flows.
 
 ### 2.5 Navigation (Web)
 
@@ -342,6 +346,10 @@ More Menu ─── Bottom Tab: More
 **States:** Loading (skeleton rows), Empty ("No POIs yet" + CTA), Error (API), Success  
 **Refs:** FR-201~207, UC-11~13, BR-10~21
 
+**UX Notes:**
+- `Delete` opens a confirmation dialog referencing the POI name ("Xoá POI \"{name}\"?") with danger styling; confirmation triggers an inline button spinner.
+- Successful deletion shows a success toast ("Đã xoá POI") and failures show an error toast; no native browser alerts are used.
+
 ---
 
 ### 4.5 POI Create/Edit Form (S05)
@@ -384,6 +392,12 @@ More Menu ─── Bottom Tab: More
 **States:** Loading (pre-fill), Error (validation inline errors), Error (upload fail), Success (toast), Unsaved changes warning  
 **Refs:** FR-201~205, UC-11~12, BR-10~21
 
+**UX Notes:**
+- Saving shows a full-width loading state on the primary button; once API returns, a success toast confirms "Đã tạo/Đã cập nhật POI" before redirecting to the POI list.
+- API/validation failures surface inline error text and an error toast summarizing the issue (merged for multi-error responses).
+- `Preview` requires at least Vietnamese Name + Description; missing fields trigger an error toast instead of a blocking alert.
+- Removing uploaded media opens a confirmation dialog referencing the asset label, then shows toast feedback on success/failure.
+
 ---
 
 ### 4.6 Tour List (S07)
@@ -408,6 +422,10 @@ More Menu ─── Bottom Tab: More
 **Screen ID:** S07  
 **States:** Loading, Empty ("No Tours" + CTA), Error, Success  
 **Refs:** FR-301~302, UC-21
+
+**UX Notes:**
+- Each card's `Delete` button opens the shared confirmation dialog (title: "Xoá tour \"{name}\"?") with danger styling and loading state when submitting.
+- Users receive success/error toasts summarizing the result; list updates instantly without page reload.
 
 ---
 
@@ -579,7 +597,7 @@ More Menu ─── Bottom Tab: More
 │  │ 🖼️ │ Chi nhánh 2        │ 🟡Draft  │ [✏️ Edit] │         │
 │  └────┴───────────────────┴──────────┴───────────┘         │
 │                                                             │
-│  ⚠️ Only Admins can delete POIs. Contact support if needed. │
+│  ⚠️ Shop owners có thể xoá POIs do họ tạo. Admin vẫn có thể can thiệp khi cần. │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -589,6 +607,10 @@ More Menu ─── Bottom Tab: More
 **Refs:** FR-701~704, UC-51~52, BR-40~43
 
 > **Note:** SO chỉ thấy POIs của mình. Không có Tours, Settings, User management.
+
+**UX Notes:**
+- `Tạo POI mới` currently fires an info toast ("Sắp ra mắt") to communicate roadmap instead of a disabled button.
+- `Xoá POI` action opens the confirmation dialog with POI name; upon success, a toast confirms deletion and the list refetches. Errors show red toast copy.
 
 ---
 
@@ -625,6 +647,10 @@ More Menu ─── Bottom Tab: More
 **Screen ID:** S15  
 **States:** Loading, Empty (no data), Error, Success  
 **Refs:** FR-703, UC-52, BR-43
+
+**UX Notes:**
+- Range selector snaps to 7/30/90-day presets; charts animate when data changes.
+- `Export CSV` currently triggers an info toast ("Coming soon") until backend endpoint is available, reinforcing roadmap transparency.
 
 ---
 
@@ -666,7 +692,7 @@ More Menu ─── Bottom Tab: More
 ```
 
 **Screen ID:** S16  
-**States:** Loading skeleton, Dirty form (Save enabled), Error (inline validation), Success (toast "Profile updated")  
+**States:** Loading skeleton, Dirty form (Save enabled), Error (inline validation), Success (inline status banner)  
 **Refs:** FR-104, AC-104
 
 **Key sections:**
@@ -675,12 +701,14 @@ More Menu ─── Bottom Tab: More
 - **Account Info card:** Read-only fields for Email, Role, Status, Created At, Last Login, plus button `Reset password` (opens modal) for self-service.
 - **Shop Details card (conditional):** Only visible for Shop Owner or users linked to a shop. Fields: Shop Name*, Shop Address*, Opening Hours (repeatable rows, Add day). Hidden for Admin/Super Admin.
 - **Actions:** Primary `Save changes` button pinned bottom/right when dirty, secondary `Cancel` (reset form), tertiary links `Change password` + `Logout`.
+- **Actions:** Primary `Save changes` button pinned bottom/right when dirty, secondary `Cancel` (reset form), tertiary links `Change password` + `Logout`. `Change password` fires an info toast (feature gated) until the API endpoint ships.
 
 **Validation & UX notes:**
 - Disable Save until at least one field changes and passes client validation.
 - Show inline helper text for phone format (`+84 901234567`).
 - When avatar updated successfully, header avatar updates instantly (emit event `profile.updated`).
 - Responsive: in mobile view, cards stack vertically, Save button becomes full-width sticky footer.
+- Inline status banner (green/red) appears above the form after save attempts; use toasts for roadmap messaging (e.g., change password) instead of browser alerts.
 
 ---
 

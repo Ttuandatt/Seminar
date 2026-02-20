@@ -5,6 +5,8 @@ import {
     Clock, MapPin, Loader2, AlertCircle
 } from 'lucide-react';
 import { tourService, type Tour } from '../../services/tour.service';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const statusColors: Record<string, string> = {
     PUBLISHED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -17,6 +19,9 @@ const TourListPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<Tour | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
         fetchTours();
@@ -35,14 +40,27 @@ const TourListPage = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this tour?')) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
         try {
-            await tourService.delete(id);
-            setTours(tours.filter(t => t.id !== id));
+            await tourService.delete(deleteTarget.id);
+            setTours((prev) => prev.filter((tour) => tour.id !== deleteTarget.id));
+            showToast({
+                variant: 'success',
+                title: 'Đã xoá tour',
+                description: `${deleteTarget.nameVi} đã được gỡ khỏi danh sách.`,
+            });
         } catch (error) {
             console.error('Failed to delete tour:', error);
-            alert('Failed to delete tour');
+            showToast({
+                variant: 'error',
+                title: 'Xoá tour thất bại',
+                description: 'Không thể xoá tour. Vui lòng thử lại.',
+            });
+        } finally {
+            setIsDeleting(false);
+            setDeleteTarget(null);
         }
     };
 
@@ -145,7 +163,7 @@ const TourListPage = () => {
                                 <Link to={`/admin/tours/${tour.id}/edit`} className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors" title="Edit">
                                     <Edit className="h-4 w-4" />
                                 </Link>
-                                <button onClick={() => handleDelete(tour.id)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
+                                <button onClick={() => setDeleteTarget(tour)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete">
                                     <Trash2 className="h-4 w-4" />
                                 </button>
                             </div>
@@ -153,6 +171,17 @@ const TourListPage = () => {
                     ))}
                 </div>
             )}
+            <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title={deleteTarget ? `Xoá tour "${deleteTarget.nameVi}"?` : 'Xoá tour'}
+                description="Hành động này sẽ xoá tour và toàn bộ lộ trình liên quan khỏi danh sách quản trị."
+                confirmLabel="Xoá tour"
+                cancelLabel="Huỷ"
+                isDanger
+                isLoading={isDeleting}
+                onConfirm={handleDelete}
+                onCancel={() => (!isDeleting ? setDeleteTarget(null) : null)}
+            />
         </div>
     );
 };

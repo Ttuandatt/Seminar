@@ -23,6 +23,7 @@ import {
     type OpeningHour,
     type UserGender,
 } from '../../services/profile.service';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const genderOptions: { label: string; value: UserGender }[] = [
     { label: 'Không tiết lộ', value: 'PREFER_NOT_SAY' },
@@ -104,6 +105,7 @@ const ProfilePage = () => {
     const [initialFormState, setInitialFormState] = useState<FormState>(initialState);
     const [statusMessage, setStatusMessage] = useState('');
     const [statusType, setStatusType] = useState<'success' | 'error' | ''>('');
+    const { showToast } = useToast();
 
     const { data: profile, isLoading, isError, error } = useQuery<UserProfile>({
         queryKey: ['profile', 'me'],
@@ -699,7 +701,13 @@ const ProfilePage = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => alert('Tính năng đổi mật khẩu sẽ sớm khả dụng.')} // placeholder
+                        onClick={() =>
+                            showToast({
+                                variant: 'info',
+                                title: 'Đang phát triển',
+                                description: 'Tính năng đổi mật khẩu sẽ sớm khả dụng.',
+                            })
+                        }
                         className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600"
                     >
                         Đổi mật khẩu

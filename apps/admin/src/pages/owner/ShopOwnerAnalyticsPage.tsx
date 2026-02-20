@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, AlertCircle, Download, BarChart3 } from 'lucide-react';
 import { shopOwnerPortalService, type ShopOwnerAnalytics } from '../../services/shopOwnerPortal.service';
+import { useToast } from '../../components/ui/ToastProvider';
 
 const ranges: Array<{ value: '7d' | '30d' | '90d'; label: string }> = [
   { value: '7d', label: '7 ngày qua' },
@@ -11,6 +12,7 @@ const ranges: Array<{ value: '7d' | '30d' | '90d'; label: string }> = [
 
 const ShopOwnerAnalyticsPage = () => {
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('7d');
+  const { showToast } = useToast();
   const { data, isLoading, isError, error } = useQuery<ShopOwnerAnalytics>({
     queryKey: ['shop-owner', 'analytics', range],
     queryFn: () => shopOwnerPortalService.getAnalytics(range),
@@ -19,7 +21,11 @@ const ShopOwnerAnalyticsPage = () => {
   const maxViews = Math.max(...(data?.daily.map((point) => point.views) || [1]));
 
   const handleExport = () => {
-    alert('Tính năng export CSV sẽ có trong sprint tới.');
+    showToast({
+      variant: 'info',
+      title: 'Coming soon',
+      description: 'Tính năng xuất CSV sẽ được phát hành trong sprint kế tiếp.',
+    });
   };
 
   if (isLoading) {

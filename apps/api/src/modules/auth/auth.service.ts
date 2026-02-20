@@ -33,8 +33,13 @@ export class AuthService {
         }
 
         // Validate shop owner fields
-        if (dto.role === Role.SHOP_OWNER && !dto.shopName) {
-            throw new BadRequestException('shopName is required for SHOP_OWNER');
+        if (dto.role === Role.SHOP_OWNER) {
+            if (!dto.shopName) {
+                throw new BadRequestException('shopName is required for SHOP_OWNER');
+            }
+            if (!dto.phone) {
+                throw new BadRequestException('phone is required for SHOP_OWNER');
+            }
         }
 
         const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -48,7 +53,10 @@ export class AuthService {
                 ...(dto.role === Role.SHOP_OWNER
                     ? {
                         shopOwnerProfile: {
-                            create: { shopName: dto.shopName! },
+                            create: {
+                                shopName: dto.shopName!,
+                                phone: dto.phone,
+                            },
                         },
                     }
                     : {}),
@@ -62,11 +70,19 @@ export class AuthService {
             },
         });
 
+        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        await this.storeRefreshToken(user.id, tokens.refreshToken, tokens.refreshTokenId);
+
         return {
-            id: user.id,
-            email: user.email,
-            role: user.role,
             message: 'Registration successful',
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+            },
         };
     }
 

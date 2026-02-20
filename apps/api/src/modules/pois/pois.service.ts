@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreatePoiDto, UpdatePoiDto, QueryPoiDto } from './dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class PoisService {
@@ -107,8 +107,15 @@ export class PoisService {
         });
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(id: string, currentUser: { id: string; role: Role }) {
+        const poi = await this.findOne(id);
+        const isAdmin = currentUser.role === Role.ADMIN;
+        const ownsPoi = poi.ownerId === currentUser.id;
+
+        if (!isAdmin && !ownsPoi) {
+            throw new ForbiddenException('Only the owner or an admin can delete this POI.');
+        }
+
         return this.prisma.poi.update({
             where: { id },
             data: { deletedAt: new Date() },

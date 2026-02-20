@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { authService } from '../../services/auth.service';
+import { authService, type UserRole } from '../../services/auth.service';
 import { useAuth } from '../../contexts/AuthContext';
+
+const roleRedirects: Record<UserRole, string | null> = {
+    ADMIN: '/admin/dashboard',
+    SHOP_OWNER: '/owner/dashboard',
+    TOURIST: null,
+};
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -25,10 +31,22 @@ const LoginPage = () => {
                 return;
             }
 
-            localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('refreshToken', response.refreshToken);
+            const redirectPath = roleRedirects[response.user.role];
+
+            if (!redirectPath) {
+                setError('Tourist accounts are handled in the mobile app. Please use the mobile experience to continue.');
+                return;
+            }
+
             login(response);
-            navigate('/admin/dashboard', { replace: true });
+
+            if (response.user.role === 'SHOP_OWNER') {
+                localStorage.setItem('ownerAccessToken', response.accessToken);
+            } else {
+                localStorage.removeItem('ownerAccessToken');
+            }
+
+            navigate(redirectPath, { replace: true });
         } catch (error: unknown) {
             console.error('Login error:', error);
             const message =
@@ -144,6 +162,12 @@ const LoginPage = () => {
                             </>
                         )}
                     </button>
+                    <p className="text-center text-sm text-slate-500">
+                        Want to keep track?{' '}
+                        <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500">
+                            Sign up now
+                        </Link>
+                    </p>
                 </form>
 
                 {/* Footer */}

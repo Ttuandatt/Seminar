@@ -18,6 +18,8 @@ import { poiService, type POI, type POIMedia, type SavePOIPayload, POI_CATEGORY_
 import { merchantService, type Merchant } from '../../services/merchant.service';
 import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
+import { useToast } from '../../components/ui/ToastProvider';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -51,6 +53,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
     const { id } = useParams();
     const isEditMode = !!id;
+    const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
@@ -77,6 +80,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [imageQueue, setImageQueue] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [audioQueue, setAudioQueue] = useState<{ file: File; language: 'VI' | 'EN' }[]>([]);
+    const [mediaToDelete, setMediaToDelete] = useState<MediaResource | null>(null);
+    const [isDeletingMedia, setIsDeletingMedia] = useState(false);
     const audioInputRefs = {
         VI: useRef<HTMLInputElement>(null),
         EN: useRef<HTMLInputElement>(null),
@@ -207,14 +212,32 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         });
     };
 
-    const handleDeleteMedia = async (mediaId: string) => {
-        if (!confirm('Are you sure you want to delete this image?')) return;
+    const handleDeleteMediaRequest = (media: MediaResource) => {
+        if (readOnly) return;
+        setMediaToDelete(media);
+    };
+
+    const confirmDeleteMedia = async () => {
+        if (!mediaToDelete || !id) return;
+        setIsDeletingMedia(true);
         try {
-            await poiService.deleteMedia(id!, mediaId);
-            setExistingMedia(existingMedia.filter(m => m.id !== mediaId));
+            await poiService.deleteMedia(id, mediaToDelete.id);
+            setExistingMedia((prev) => prev.filter((media) => media.id !== mediaToDelete.id));
+            showToast({
+                variant: 'success',
+                title: 'Đã xoá media',
+                description: 'Tệp đã được xoá khỏi POI.',
+            });
         } catch (error) {
             console.error('Failed to delete media:', error);
-            alert('Failed to delete media');
+            showToast({
+                variant: 'error',
+                title: 'Xoá media thất bại',
+                description: 'Không thể xoá media. Vui lòng thử lại.',
+            });
+        } finally {
+            setIsDeletingMedia(false);
+            setMediaToDelete(null);
         }
     };
 
@@ -299,7 +322,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 }
             }
 
-            alert(`POI ${isEditMode ? 'updated' : 'created'} successfully!`);
+            showToast({
+                variant: 'success',
+                title: isEditMode ? 'Đã cập nhật POI' : 'Đã tạo POI',
+                description: 'Thông tin POI đã được lưu thành công.',
+            });
             navigate('/admin/pois');
         } catch (error: unknown) {
             console.error('Save POI error:', error);
@@ -309,6 +336,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     : undefined;
             const msg = message || 'Failed to save POI.';
             setError(Array.isArray(msg) ? msg.join(', ') : msg);
+            showToast({
+                variant: 'error',
+                title: 'Lưu POI thất bại',
+                description: Array.isArray(msg) ? msg.join(', ') : String(msg),
+            });
         } finally {
             setLoading(false);
         }
@@ -316,7 +348,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
     const handlePreview = () => {
         if (!formData.name || !formData.description) {
-            alert('Vui lòng nhập tối thiểu tên và mô tả tiếng Việt để xem preview.');
+            showToast({
+                variant: 'error',
+                title: 'Thiếu nội dung',
+                description: 'Vui lòng nhập tên và mô tả tiếng Việt trước khi xem preview.',
+            });
             return;
         }
         setIsPreviewOpen(true);
@@ -633,7 +669,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                             {!readOnly && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleDeleteMedia(media.id)}
+                                                    onClick={() => handleDeleteMediaRequest(media)}
                                                     className="absolute top-2 right-2 p-1.5 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     <X className="h-4 w-4" />
@@ -697,7 +733,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                                 {!readOnly && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDeleteMedia(media.id)}
+                                                        onClick={() => handleDeleteMediaRequest(media)}
                                                         className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:text-red-600"
                                                     >
                                                         <X className="h-4 w-4" />
@@ -868,6 +904,17 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 longitude={longitudeValue}
             />
         )}
+        <ConfirmDialog
+            open={Boolean(mediaToDelete)}
+            title={mediaToDelete?.type === 'AUDIO' ? 'Xoá audio khỏi POI' : 'Xoá hình ảnh khỏi POI'}
+            description="Tệp sẽ bị xoá vĩnh viễn khỏi POI sau khi xác nhận."
+            confirmLabel="Xoá tệp"
+            cancelLabel="Huỷ"
+            isDanger
+            isLoading={isDeletingMedia}
+            onConfirm={confirmDeleteMedia}
+            onCancel={() => (!isDeletingMedia ? setMediaToDelete(null) : null)}
+        />
         </>
     );
 };
