@@ -1,6 +1,6 @@
 # 🗺️ GPS Tours — Phố Ẩm thực Vĩnh Khánh
 
-Hệ thống hướng dẫn du lịch GPS cho khu phố ẩm thực Vĩnh Khánh, bao gồm Admin Dashboard và Backend API.
+Hệ thống hướng dẫn du lịch GPS cho khu phố ẩm thực Vĩnh Khánh, bao gồm Admin Dashboard, Backend API, và Tourist Mobile App.
 
 ## 📁 Cấu trúc dự án
 
@@ -8,7 +8,8 @@ Hệ thống hướng dẫn du lịch GPS cho khu phố ẩm thực Vĩnh Khánh
 Seminar/
 ├── apps/
 │   ├── api/          # Backend API (NestJS + Prisma + PostgreSQL)
-│   └── admin/        # Admin Dashboard (React + Vite + Tailwind CSS)
+│   ├── admin/        # Admin Dashboard (React + Vite + Tailwind CSS)
+│   └── mobile/       # Tourist Mobile App (Expo + React Native)
 ├── docs/             # Tài liệu PRD, UML, API specs
 ├── .env              # Database URL (root-level, dùng cho Prisma)
 └── README.md         # ← Bạn đang đọc file này
@@ -17,9 +18,10 @@ Seminar/
 ## 🛠️ Tech Stack
 
 | Layer | Công nghệ |
-|-------|-----------|
+|-------|-----------| 
 | **Backend** | NestJS 11, Prisma 5, PostgreSQL 15, Redis 7 |
-| **Frontend** | React 19, Vite 7, Tailwind CSS 4, TypeScript 5 |
+| **Frontend (Web)** | React 19, Vite 7, Tailwind CSS 4, TypeScript 5 |
+| **Frontend (Mobile)** | Expo SDK 54, React Native 0.81, TypeScript 5 |
 | **Auth** | JWT (Access + Refresh Token) |
 | **API Docs** | Swagger (OpenAPI 3.0) |
 | **Database** | Docker (PostgreSQL + Redis) |
@@ -29,6 +31,7 @@ Seminar/
 - **Node.js** >= 20 (khuyến nghị v22+)
 - **Docker Desktop** (để chạy PostgreSQL & Redis)
 - **Git**
+- **Expo Go** (cài trên điện thoại từ App Store / Play Store — để test mobile app)
 
 ---
 
@@ -123,6 +126,18 @@ npm run dev
 
 > **Admin Dashboard chạy tại**: http://localhost:5173
 
+### Bước 7: Cài đặt & Chạy Tourist Mobile App
+
+```bash
+# Mở terminal mới
+cd apps/mobile
+npm install --legacy-peer-deps
+npx expo start
+```
+
+> Quét **QR code** trên terminal bằng app **Expo Go** trên điện thoại (cùng mạng Wi-Fi).
+> App sẽ tự động tải và hiển thị giao diện bản đồ.
+
 ---
 
 ## 📖 Các tool hữu ích
@@ -194,6 +209,47 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | `/admin/merchants/new` | MerchantFormPage | Tạo Merchant |
 | `/admin/merchants/:id/edit` | MerchantFormPage | Sửa Merchant |
 | `/admin/analytics` | AnalyticsPage | Thống kê |
+| `/admin/profile` | ProfilePage | Quản lý hồ sơ Admin |
+
+---
+
+## 📱 Kiến trúc Tourist Mobile App
+
+### Tech Stack
+
+| Item | Chi tiết |
+|------|----------|
+| **Framework** | Expo SDK 54 + React Native 0.81 |
+| **Navigation** | expo-router (file-based routing) |
+| **Maps** | react-native-maps (default provider) |
+| **Audio** | expo-av |
+| **Icons** | lucide-react-native + react-native-svg |
+| **HTTP** | Axios (auto-detect LAN IP) |
+| **Storage** | AsyncStorage (JWT tokens) |
+
+### Screens
+
+| Tab/Route | Screen | Mô tả |
+|-----------|--------|--------|
+| `(tabs)/index` | 🗺️ Map Screen | Bản đồ với POI markers, GPS, bottom sheet preview |
+| `(tabs)/tours` | 📋 Tour List | Danh sách tours với badges (số POIs, duration) |
+| `(tabs)/more` | ⚙️ More | Login/Logout, Settings, Favorites link |
+| `poi/[id]` | 📍 POI Detail | Image carousel, AudioPlayer, language toggle, favorite |
+| `tour/[id]` | 🗺️ Tour Detail | Route map (Polyline), POI timeline, Start Tour |
+
+### Components
+
+| Component | Chức năng |
+|-----------|-----------|
+| `AudioPlayer.tsx` | Play/Pause, progress bar, time display |
+
+### Services
+
+| Service | Chức năng |
+|---------|-----------|
+| `api.ts` | Axios instance, auto LAN IP, JWT interceptors |
+| `publicService.ts` | POIs, Tours, QR validate (no auth) |
+| `touristService.ts` | Profile, Favorites, History (JWT required) |
 
 ---
 
@@ -238,6 +294,14 @@ Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với th
 | `npm run build` | Build production |
 | `npm run preview` | Preview bản build |
 
+### Tourist Mobile App (`apps/mobile`)
+
+| Script | Mô tả |
+|--------|--------|
+| `npx expo start` | Chạy dev server (quét QR bằng Expo Go) |
+| `npx expo start -c` | Chạy + xóa cache bundler |
+| `npm install --legacy-peer-deps` | Cài dependencies |
+
 ---
 
 ## ❓ Troubleshooting
@@ -249,3 +313,7 @@ Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với th
 | `CORS error` | Đảm bảo frontend chạy đúng port `5173` |
 | `401 Unauthorized` | Token hết hạn, đăng nhập lại |
 | `Prisma Client not generated` | Chạy `npx prisma generate` |
+| Mobile: `AxiosError: Network Error` | Đảm bảo điện thoại và laptop cùng mạng Wi-Fi. API URL auto-detect từ Expo |
+| Mobile: `Cannot find module` | Chạy `npm install --legacy-peer-deps` rồi `npx expo start -c` |
+| Mobile: `No Android device found` | Dùng Expo Go quét QR thay vì nhấn `a` (không cần emulator) |
+

@@ -1,9 +1,9 @@
 # 📋 Scope Definition
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-02-24
 
 ---
 
@@ -175,13 +175,13 @@
 
 | Constraint | Description |
 |------------|-------------|
-| **Frontend** | React, TypeScript, Vite, Tailwind CSS |
-| **Mobile** | React Native / PWA |
-| **Backend** | NestJS (Node.js + TypeScript) |
-| **ORM** | Prisma |
-| **Database** | PostgreSQL + PostGIS |
-| **Maps** | Google Maps hoặc Mapbox |
-| **Hosting** | Azure / AWS / GCP |
+| **Frontend** | React 19, TypeScript 5, Vite 7, Tailwind CSS 4 |
+| **Mobile** | Expo SDK 54, React Native 0.81 |
+| **Backend** | NestJS 11 (Node.js + TypeScript) |
+| **ORM** | Prisma 5 |
+| **Database** | PostgreSQL 15 + PostGIS |
+| **Maps** | react-native-maps (Mobile), Google Maps (Admin) |
+| **Hosting** | Docker (local dev) |
 
 ### Business Constraints
 
@@ -198,12 +198,12 @@
 
 | Dependency | Type | Owner | Status |
 |------------|------|-------|--------|
-| Backend API | External | Backend Team | TBD |
-| Map API Key | External | Ops | TBD |
-| Content creation | Content | Content Team | TBD |
-| Audio recording | Content | Content Team | TBD |
-| UI/UX Design | Internal | Design | TBD |
-| Infrastructure | Internal | DevOps | TBD |
+| Backend API | Internal | Dev team | ✅ Complete (10 modules, ~50 endpoints) |
+| Map API Key | External | Ops | ✅ Using default provider (Google Maps on Android) |
+| Content creation | Content | Content Team | 🔲 Pending (using test data) |
+| Audio recording | Content | Content Team | 🔲 Pending (AudioPlayer component ready) |
+| UI/UX Design | Internal | Design | ✅ Implemented (Admin + Mobile) |
+| Infrastructure | Internal | DevOps | ✅ Docker (PostgreSQL + Redis) |
 
 ---
 
@@ -254,18 +254,19 @@
 
 | Component | P0 Done | P1 Done | Total |
 |-----------|---------|---------|-------|
-| Admin Dashboard | 0/10 | 0/4 | 0/14 |
-| Tourist App | 0/7 | 0/4 | 0/11 |
-| Backend | 0/5 | 0/2 | 0/7 |
-| **Total** | **0/22** | **0/10** | **0/32** |
+| Admin Dashboard | 10/10 ✅ | 4/4 ✅ | 14/14 |
+| Shop Owner Dashboard | 4/6 | 2/6 | 6/12 |
+| Tourist App | 5/7 | 1/4 | 6/11 |
+| Backend | 5/5 ✅ | 2/2 ✅ | 7/7 |
+| **Total** | **24/28** | **9/16** | **33/44** |
 
 ### 9.3 MVP Success Metrics (Launch Ready)
 
 | Metric | Target | Actual |
 |--------|--------|--------|
-| All P0 features complete | 22/22 | TBD |
-| Critical bugs | 0 | TBD |
-| API response time p95 | <500ms | TBD |
+| All P0 features complete | 28/28 | 24/28 (86%) |
+| Critical bugs | 0 | 0 ✅ |
+| API response time p95 | <500ms | ~100ms (local) |
 | Test coverage | >70% | TBD |
 | Security scan clean | Pass | TBD |
 

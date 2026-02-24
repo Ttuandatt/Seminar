@@ -68,12 +68,43 @@ npm run dev
   - `npm run lint` (static checks).
   - `npm run build` followed by `npm run preview` to test the production bundle locally.
 
+## 3.5 Tourist Mobile App (`apps/mobile`)
+
+### First-time setup
+```powershell
+cd apps\mobile
+npm install --legacy-peer-deps
+```
+- `--legacy-peer-deps` is required due to peer dependency conflicts between `react-native-maps` and Expo SDK 54.
+
+### Run the Expo dev server
+```powershell
+cd apps\mobile
+npx expo start
+```
+- A QR code will appear in the terminal.
+- Install **Expo Go** on your phone (Play Store / App Store).
+- Scan the QR code with Expo Go (Android) or Camera app (iOS). **Phone and laptop must be on the same Wi-Fi network.**
+- The app auto-detects the laptop's LAN IP for API calls (no manual config needed).
+- Useful commands:
+  - `npx expo start -c` — clear bundler cache and restart.
+  - Press `r` in the terminal to reload the app on the phone.
+  - Shake the phone to open the Expo developer menu.
+
+### Key config files
+- `app.json` — Expo config (scheme `gpstours`, plugins, icons).
+- `babel.config.js` — Uses `babel-preset-expo`.
+- `metro.config.js` — Configured for monorepo module resolution.
+- `services/api.ts` — Auto-detect LAN IP via `expo-constants`.
+
 ## 4. Typical daily workflow
 1. `docker compose up -d` in `apps/api` to ensure Postgres/Redis are running.
 2. `npm run start:dev` in `apps/api` to boot the NestJS server with hot reload.
 3. `npm run dev` in `apps/admin` (new terminal) to boot the React app with HMR.
-4. Code, refresh the browser, and watch both terminals for lint/runtime errors.
-5. When done, stop services with `Ctrl+C` in each terminal and `docker compose down` if you do not need the databases.
+4. `npx expo start` in `apps/mobile` (new terminal) to boot the Expo dev server.
+5. Code, refresh the browser, and watch all terminals for lint/runtime errors.
+6. Mobile changes auto-refresh on the phone (Hot Reload / Fast Refresh).
+7. When done, stop services with `Ctrl+C` in each terminal and `docker compose down` if you do not need the databases.
 
 ## 5. Troubleshooting
 - **Ports in use**: change `PORT` in `.env` and update `src/lib/api.ts`, or free the conflicting process.
@@ -81,5 +112,8 @@ npm run dev
 - **Need a clean database**: `docker compose down -v` removes Postgres/Redis volumes (data loss!).
 - **Uploads**: backend stores files under `apps/api/uploads`. Ensure the folder exists or adjust `UPLOAD_DIR`.
 - **Node version mismatch**: use `nvm use 20` (or `nvs use 20`) to align with the team baseline.
+- **Mobile: Network Error**: Ensure phone and laptop are on the same Wi-Fi. The API URL is auto-detected from Expo.
+- **Mobile: Cannot find module**: Run `npm install --legacy-peer-deps` then `npx expo start -c`.
+- **Mobile: Bundler error**: Try `npx expo start -c` to clear the Metro bundler cache.
 
-Following these steps gets both the NestJS API and the Vite React admin running locally so you can continue feature development immediately.
+Following these steps gets the NestJS API, Vite React admin, and Expo mobile app running locally so you can continue feature development immediately.

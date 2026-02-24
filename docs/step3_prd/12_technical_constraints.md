@@ -1,9 +1,9 @@
 # ⚙️ Technical Constraints
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-02-24
 
 ---
 
@@ -13,13 +13,13 @@
 
 | Layer | Technology | Version | Notes |
 |-------|------------|---------|-------|
-| Framework | React | 18.x | Hooks-based |
+| Framework | React | 19.x | Hooks-based |
 | Language | TypeScript | 5.x | Strict mode |
-| Build Tool | Vite | 5.x | Fast dev server |
-| Styling | Tailwind CSS | 3.x | Utility-first |
+| Build Tool | Vite | 7.x | Fast dev server |
+| Styling | Tailwind CSS | 4.x | Utility-first |
 | State | Zustand / TanStack Query | Latest | Server state + client state |
 | Forms | React Hook Form + Zod | Latest | Validation |
-| Maps | Mapbox GL JS | Latest | Interactive maps |
+| Maps | Google Maps | Latest | Interactive maps |
 | UI Components | shadcn/ui | Latest | Radix-based |
 | Auth | JWT (Admin) / JWT (Shop Owner) | - | Role-based routing |
 
@@ -29,28 +29,30 @@
 
 | Layer | Technology | Version | Notes |
 |-------|------------|---------|-------|
-| Framework | React Native (Expo) | SDK 50+ | Cross-platform iOS/Android |
-| Maps | react-native-maps | Latest | GPS integration |
-| Audio | react-native-track-player | Latest | Background playback |
-| Storage | AsyncStorage + SQLite | Latest | Offline cache |
+| Framework | React Native (Expo) | SDK 54 | Cross-platform iOS/Android |
+| Navigation | expo-router | 4.x | File-based routing |
+| Maps | react-native-maps | 1.20+ | GPS integration (default provider) |
+| Audio | expo-av | Latest | Playback (migrating to expo-audio in SDK 55) |
+| Icons | lucide-react-native | Latest | SVG icons |
+| Storage | AsyncStorage | Latest | JWT token storage |
 | Push | Firebase Cloud Messaging | Latest | Future (P3) |
-| Auth | JWT + Social Login (Google/Facebook/Apple) | - | Optional login |
+| Auth | JWT (Optional) | - | Optional login for favorites/history |
 
-> **Quyết định:** Chọn React Native (Expo) thay vì PWA vì cần background GPS tracking, offline audio, và native UX.
+> **Quyết định:** Chọn React Native (Expo) thay vì PWA vì cần background GPS tracking, offline audio, và native UX. Dùng expo-router (file-based) thay vì React Navigation để đồng bộ với cấu trúc Expo hiện đại.
 
 ### 1.3 Backend
 
 | Layer | Technology | Version | Notes |
 |-------|------------|---------|-------|
-| Runtime | Node.js | 20 LTS | TypeScript only |
-| Framework | NestJS | 10.x | Modular architecture |
+| Runtime | Node.js | 24 LTS | TypeScript only |
+| Framework | NestJS | 11.x | Modular architecture |
 | Language | TypeScript | 5.x | Strict mode, shared types |
 | Database | PostgreSQL | 15+ | With PostGIS extension |
 | ORM | Prisma | 5.x | Type-safe queries |
 | Cache | Redis | 7.x | Session, rate limiting |
 | Auth | Passport.js + JWT | Latest | Role-based (Admin, Shop Owner, Tourist) |
-| Storage | AWS S3 / Cloudinary | Latest | Media files |
-| CDN | CloudFront | Latest | Media delivery |
+| Storage | Local filesystem | Latest | Media files (UPLOAD_DIR) |
+| API Docs | Swagger (OpenAPI) | 3.0 | Auto-generated from decorators |
 
 > **Quyết định:** Chọn NestJS + Prisma thay vì FastAPI/SQLAlchemy để giữ thống nhất TypeScript stack và type safety từ DB đến frontend.
 

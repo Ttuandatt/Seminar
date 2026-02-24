@@ -39,19 +39,19 @@
 
 ## C. Tourist App (Mobile — Expo/React Native)
 
-| ID | Screen | Purpose | UI Blocks | States |
-|----|--------|---------|-----------|--------|
-| S17 | Map Screen (Main) | Bản đồ POIs | Mapbox map, Markers (🔴🟡), Bottom card, Location button | loading (GPS) / error (no GPS) / empty (no nearby) / success |
-| S18 | POI Detail | Xem chi tiết POI | Image carousel, Audio player, Description, Directions CTA, ❤️ Favorite | loading / error (offline) / success / playing (audio) |
-| S19 | Tour List | Danh sách Tours | Card list (thumbnail, name, POI count, duration) | loading / empty / error / success |
-| S20 | Tour Detail | Chi tiết Tour | Route map, Ordered POI list, Start button | loading / error / success |
-| S21 | Tour Following | Đang theo Tour | Map with route, Current POI highlight, Distance indicator, Next button | navigating / arrived (auto-trigger) / completed (🎉) / error (GPS lost) |
-| S22 | Auto-trigger Popup | Notification POI gần | Bottom sheet (POI preview, Play button) | single POI / overlap (multiple POIs) |
-| S23 | QR Scanner | Quét QR fallback | Camera view, QR frame | scanning / success (POI loaded) / error (invalid QR) |
-| S24 | Favorites | Danh sách yêu thích | POI card list + distance | loading / empty ("Chưa lưu") / error / success |
-| S25 | History | Lịch sử tham quan | Timeline list (POI, date, audio played) | loading / empty ("Chưa tham quan") / error / success |
-| S26 | Settings | Cài đặt app | Language selector, GPS toggle, About, Logout | success |
-| S27 | Login/Register | Đăng nhập Tourist | Form (email, password), Social login (Google) | loading / error / success |
+| ID | Screen | Purpose | UI Blocks | States | Status |
+|----|--------|---------|-----------|--------|--------|
+| S17 | Map Screen (Main) | Bản đồ POIs | MapView, Markers (🔴🟡), Bottom card, Location button | loading (GPS) / error (no GPS) / empty (no nearby) / success | ✅ Implemented |
+| S18 | POI Detail | Xem chi tiết POI | Image carousel, Audio player, Description, Directions CTA, ❤️ Favorite | loading / error (offline) / success / playing (audio) | ✅ Implemented |
+| S19 | Tour List | Danh sách Tours | Card list (thumbnail, name, POI count, duration) | loading / empty / error / success | ✅ Implemented |
+| S20 | Tour Detail | Chi tiết Tour | Route map, Ordered POI list, Start button | loading / error / success | ✅ Implemented |
+| S21 | Tour Following | Đang theo Tour | Map with route, Current POI highlight, Distance indicator, Next button | navigating / arrived (auto-trigger) / completed (🎉) / error (GPS lost) | 🔲 Planned |
+| S22 | Auto-trigger Popup | Notification POI gần | Bottom sheet (POI preview, Play button) | single POI / overlap (multiple POIs) | 🔲 Planned |
+| S23 | QR Scanner | Quét QR fallback | Camera view, QR frame | scanning / success (POI loaded) / error (invalid QR) | 🔲 Planned |
+| S24 | Favorites | Danh sách yêu thích | POI card list + distance | loading / empty ("Chưa lưu") / error / success | 🔲 Planned (API ready) |
+| S25 | History | Lịch sử tham quan | Timeline list (POI, date, audio played) | loading / empty ("Chưa tham quan") / error / success | 🔲 Planned (API ready) |
+| S26 | Settings / More | Cài đặt app | Language selector, GPS toggle, About, Logout | success | ✅ Implemented |
+| S27 | Login/Register | Đăng nhập Tourist | Form (email, password), Social login (Google) | loading / error / success | 🔲 Planned |
 
 ---
 

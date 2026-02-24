@@ -1,32 +1,53 @@
-# Context Snapshot — 2026-02-20
+# Context Snapshot — 2026-02-24
 
 ## Project Overview
-- Monorepo structure: `apps/admin` (React + Vite dashboard & shop-owner portal), `apps/api` (NestJS backend with Prisma), extensive requirements docs under `docs/`.
-- Active sprint goals: unify toast/confirm UX, enable shop-owner self-service (registration + POI authoring), and keep spec/business-rule docs in sync.
+- Monorepo structure: `apps/api` (NestJS backend with Prisma), `apps/admin` (React + Vite dashboard & shop-owner portal), `apps/mobile` (Expo/React Native tourist app), extensive requirements docs under `docs/`.
+- Active sprint: Phase 3 (Tourist Mobile App) completed. All 3 apps operational.
 
-## Recent Progress
-1. **Global Notifications**
-   - Added `ToastProvider` + `ConfirmDialog` components and wrapped the React tree so both admin and owner surfaces use consistent feedback.
-   - Replaced native `alert/confirm` usage in POI/Tour lists, profile forms, analytics exports, etc.
-2. **Shop-Owner Experience**
-   - Consolidated register flow (`/register`, `/owner/register`) with role-specific UI and API payloads; removed the bespoke owner register page.
-   - Hooked login to redirect per `UserRole`, storing `ownerAccessToken` for shop owners.
-   - Implemented full `/owner/pois/new` form (bilingual copy, media queues, MapPicker, preview modal) and linked CTA from owner dashboard.
-   - Extended mock `shopOwnerPortalService` with `createPoi` + `deletePoi`, updated dashboard + analytics to call it, and reflected new privileges in docs/business rules.
-3. **Backend Alignment**
-   - `apps/api` auth module now requires `shopName`+`phone` for shop-owner registration and returns the same token envelope as login.
-   - `pois` controller/service allow owners to soft-delete their own POIs (guards + authorization checks updated).
+## Current Status
+
+### Phase 1: Backend API — ✅ COMPLETE & RUNNING
+- 10 modules: Auth, POIs, Tours, Media, Public, Tourist, Merchants, ShopOwner, Profile, Analytics
+- ~50 endpoints fully implemented
+- Running at `http://localhost:3000/api/v1`
+- Docker: PostgreSQL 15 + Redis 7
+
+### Phase 2: Admin Dashboard — ✅ COMPLETE & RUNNING
+- 10 pages: Login, Dashboard, POI CRUD, Tour CRUD, Merchant CRUD, Analytics, Profile
+- 6 API services with JWT interceptors
+- Running at `http://localhost:5173`
+
+### Phase 3: Tourist Mobile App — ✅ COMPLETE & RUNNING
+- Framework: Expo SDK 54 + React Native 0.81
+- Navigation: expo-router (file-based) with tab layout (Map, Tours, More)
+- 5 screens: Map (GPS + markers + bottom sheet), POI Detail (carousel + audio + lang toggle), Tour List, Tour Detail (polyline + timeline), More (settings)
+- Components: AudioPlayer (expo-av)
+- API: Axios with auto-detect LAN IP via expo-constants
+- Running via `npx expo start` → Expo Go QR scan
+
+## Recent Progress (2026-02-24)
+1. **Mobile App Init** — Expo project created at `apps/mobile` with blank-typescript template
+2. **Dependencies resolved** — Fixed babel-preset-expo, react-native-svg, react-native-reanimated, expo-splash-screen, metro.config.js for monorepo module resolution
+3. **Map Screen** — GPS location, POI markers (red/gold by type), bottom sheet preview, navigation to POI detail
+4. **POI Detail** — Image carousel, AudioPlayer component, Vietnamese/English language toggle, favorite button
+5. **Tour Flow** — Tour list with badges, Tour detail with route map (Polyline) and numbered POI timeline
+6. **More tab** — Login/logout, auto-play audio toggle, language setting
+7. **API Integration** — Auto-detect LAN IP from Expo Constants for real device testing (no more localhost/10.0.2.2 issues)
+8. **Documentation** — Updated README.md with Mobile App section, project snapshot at docs/snapshot/
 
 ## Documentation Sync
-- `docs/step3_prd/10_ui_ux_specifications.*` updated with toast/dialog patterns, owner delete messaging, and new POI form/dash behavior.
-- `docs/step3_prd/11_business_rules.*` reflects owner delete permission (BR-1004) and self-registration constraints.
+- `README.md` updated with Mobile App setup (Bước 7), architecture, screens, troubleshooting
+- `docs/snapshot/project_snapshot.md` created with full system overview
+- `docs/step2_lowcode/screens.md` annotated with implementation status
 
 ## Outstanding / Next Steps
-- Run `npm run dev` (was failing previously) or equivalent lint/test suites for both admin and api apps to ensure new flows compile.
-- Smoke test critical routes: `/admin/pois`, `/admin/tours`, `/admin/profile`, `/owner/dashboard`, `/owner/pois/new`, `/owner/profile`.
-- Search for any remaining `alert(` / `confirm(` usage outside already touched files.
-- Plan backend persistence for shop-owner POI creation (current owner form still relies on mock service).
+- QR Code Scanner (S23) — planned but not yet implemented
+- Tour Following mode (S21) — GPS tracking along route
+- Favorites & History screens (S24, S25) — backend APIs ready, frontend pending
+- `expo-av` migration to `expo-audio` (deprecated warning in SDK 54)
+- Upload real audio/image media via Admin Dashboard for end-to-end testing
 
 ## Operational Notes
-- Current git status: multiple staged/unstaged changes across admin frontend, api backend, and docs (see last `git diff` snapshot if needed).
-- Context window nearing limit (~65.8k/128k tokens); use this snapshot to resume work in a new session without losing track.
+- Mobile app runs on real device via Expo Go (same Wi-Fi as dev machine)
+- Hot Reload active — code changes reflect instantly on phone
+- API auto-detects LAN IP from Expo Constants (no hardcoded URLs)

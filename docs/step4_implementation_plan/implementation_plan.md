@@ -6,9 +6,9 @@ Triển khai **3 apps** cho GPS Tours & Phố Ẩm thực Vĩnh Khánh.
 
 | App | Stack | Role | Screens |
 |-----|-------|------|---------|
-| **Backend API** | NestJS 10 + Prisma 5 + PostgreSQL 15 | Server | 49 endpoints |
-| **Admin Dashboard** | React 18 + Vite 5 + Tailwind + shadcn/ui | Admin + Shop Owner | S01-S16 |
-| **Tourist App** | Expo SDK 50 + react-native-maps | Tourist | S17-S27 |
+| **Backend API** | NestJS 11 + Prisma 5 + PostgreSQL 15 | Server | ~50 endpoints |
+| **Admin Dashboard** | React 19 + Vite 7 + Tailwind 4 + shadcn/ui | Admin + Shop Owner | S01-S16 |
+| **Tourist App** | Expo SDK 54 + react-native-maps | Tourist | S17-S27 |
 
 > [!IMPORTANT]
 > **POC scope:** Happy path chạy được end-to-end. Error handling cơ bản. Chưa pixel-perfect. Bỏ qua: Push notifications, Social login, Offline mode, CI/CD.
@@ -397,38 +397,39 @@ All protected routes → JwtAuthGuard → RolesGuard(@Roles('ADMIN'))
 
 ## Phase 3: Tourist App (Mobile)
 
-### 3A. Project Setup
+### 3A. Project Setup ✅
 
-| Task | Output |
-|------|--------|
-| Init Expo | `npx create-expo-app mobile` |
-| Install libs | react-native-maps, expo-location, expo-camera |
-| Install navigation | expo-router (file-based) |
-| Config EAS | eas.json for builds |
+| Task | Output | Status |
+|------|--------|--------|
+| Init Expo | `npx create-expo-app@latest mobile --template blank-typescript` | ✅ Done |
+| Install libs | react-native-maps, expo-location, expo-av, axios, lucide-react-native, react-native-svg | ✅ Done |
+| Install navigation | expo-router (file-based routing) | ✅ Done |
+| Config Metro | metro.config.js for monorepo module resolution | ✅ Done |
+| Config Babel | babel-preset-expo | ✅ Done |
 
 ### 3B. Screens (theo Screen IDs)
 
-| Screen | File | API Calls | Key Features |
-|--------|------|-----------|--------------|
-| Map (S17) | `app/(tabs)/index.tsx` | GET /public/pois/nearby | MapView, markers, bottom card |
-| POI Detail (S18) | `app/poi/[id].tsx` | GET /public/pois/:id | Image carousel, audio player, favorite |
-| Tour List (S19) | `app/(tabs)/tours.tsx` | GET /public/tours | FlatList, tour cards |
-| Tour Detail (S20) | `app/tour/[id].tsx` | GET /public/tours/:id | Route map, POI list, start button |
-| Tour Follow (S21) | `app/tour/follow.tsx` | Local state | Route tracking, progress bar |
-| QR Scanner (S23) | `app/scanner.tsx` | POST /public/qr/validate | Camera, QR frame |
-| Favorites (S24) | `app/favorites.tsx` | GET /tourist/me/favorites | POI list, unfavorite |
-| History (S25) | `app/history.tsx` | GET /tourist/me/history | Timeline list |
-| Settings (S26) | `app/settings.tsx` | PATCH /tourist/me | Language, GPS, about |
+| Screen | File | API Calls | Key Features | Status |
+|--------|------|-----------|--------------|---------|
+| Map (S17) | `app/(tabs)/index.tsx` | GET /public/pois | MapView, markers (red/gold), bottom sheet, GPS | ✅ Done |
+| POI Detail (S18) | `app/poi/[id].tsx` | GET /public/pois/:id | Image carousel, AudioPlayer, language toggle, favorite | ✅ Done |
+| Tour List (S19) | `app/(tabs)/tours.tsx` | GET /public/tours | FlatList, tour cards with badges | ✅ Done |
+| Tour Detail (S20) | `app/tour/[id].tsx` | GET /public/tours/:id | Route map (Polyline), POI timeline, Start Tour button | ✅ Done |
+| More/Settings (S26) | `app/(tabs)/more.tsx` | PATCH /tourist/me | Login/logout, language, auto-play toggle | ✅ Done |
+| Tour Follow (S21) | `app/tour/follow.tsx` | Local state | Route tracking, progress bar | 🔲 Planned |
+| QR Scanner (S23) | `app/scanner.tsx` | POST /public/qr/validate | Camera, QR frame | 🔲 Planned |
+| Favorites (S24) | `app/favorites.tsx` | GET /tourist/me/favorites | POI list, unfavorite | 🔲 Planned |
+| History (S25) | `app/history.tsx` | GET /tourist/me/history | Timeline list | 🔲 Planned |
+| Login (S27) | `app/auth/login.tsx` | POST /auth/login | Email/password form | 🔲 Planned |
 
 ### 3C. Core Mobile Components
 
-| Component | Purpose |
-|-----------|---------|
-| `AudioPlayer.tsx` | Play/pause, progress, background play |
-| `MapMarker.tsx` | Custom marker palette (Dining 🔴 / Street Food 🟠 / Cafes 🟡 / Nightlife 🟣 / Markets 🟤 / Cultural 🔵 / Experiences 🟢 / Outdoor ⚪, glow blue when in range) |
-| `PoiCard.tsx` | POI preview card (thumbnail, name, distance) |
-| `BottomSheet.tsx` | Auto-trigger popup, POI preview |
-| `LocationTracker.tsx` | GPS tracking + trigger logic |
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| `AudioPlayer.tsx` | Play/pause, progress bar, time display (expo-av) | ✅ Done |
+| `api.ts` | Axios instance, auto-detect LAN IP via expo-constants | ✅ Done |
+| `publicService.ts` | POIs, Tours, QR validate, Trigger log (no auth) | ✅ Done |
+| `touristService.ts` | Profile, Favorites, History (JWT required) | ✅ Done |
 
 ---
 

@@ -1,8 +1,9 @@
 # 📐 Component Diagram
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.0  
-> **Ngày tạo:** 2026-02-10
+> **Phiên bản:** 1.1  
+> **Ngày tạo:** 2026-02-10  
+> **Cập nhật:** 2026-02-24
 
 ---
 
@@ -147,61 +148,51 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph MobileApp["React Native + Expo"]
-        Navigation["React Navigation"]
+    subgraph MobileApp["React Native + Expo SDK 54"]
+        Navigation["expo-router (file-based)"]
         
-        subgraph Screens["Screens"]
-            MapScreen["🗺️ MapScreen"]
-            POIDetail["📍 POIDetailScreen"]
-            TourList["🗺️ TourListScreen"]
-            TourDetail["🗺️ TourDetailScreen"]
-            HistoryScreen["📋 HistoryScreen"]
-            FavoritesScreen["❤️ FavoritesScreen"]
-            SettingsScreen["⚙️ SettingsScreen"]
+        subgraph Tabs["Tab Screens"]
+            MapScreen["🗺️ MapScreen (tabs/index)"]
+            TourList["🗺️ TourListScreen (tabs/tours)"]
+            MoreScreen["⚙️ MoreScreen (tabs/more)"]
         end
 
-        subgraph CoreServices["Core Services"]
-            LocationService["📍 LocationService (GPS)"]
-            TriggerService["🔔 TriggerService"]
-            AudioService["🎵 AudioService"]
-            OfflineService["📴 OfflineService"]
-            NotificationService["🔔 NotificationService"]
+        subgraph DetailScreens["Detail Screens"]
+            POIDetail["📍 POIDetailScreen (poi/[id])"]
+            TourDetail["🗺️ TourDetailScreen (tour/[id])"]
         end
 
-        subgraph Hooks["Custom Hooks"]
-            useLocation["useLocation()"]
-            useNearbyPOIs["useNearbyPOIs()"]
-            useTriggerZone["useTriggerZone()"]
-            useAudioPlayer["useAudioPlayer()"]
-            useOffline["useOffline()"]
+        subgraph Components["Shared Components"]
+            AudioPlayer["🎧 AudioPlayer (expo-av)"]
         end
 
-        subgraph Api["API Layer"]
-            PublicAPI["publicApi.ts"]
-            AuthAPI2["authApi.ts"]
+        subgraph ApiLayer["API Services"]
+            ApiService["api.ts (Axios + auto LAN IP)"]
+            PublicAPI["publicService.ts"]
+            TouristAPI["touristService.ts"]
         end
     end
 
-    Navigation --> Screens
-    Screens --> Hooks
-    Hooks --> CoreServices
-    Hooks --> Api
-    LocationService --> TriggerService
-    TriggerService --> NotificationService
-    TriggerService --> AudioService
+    Navigation --> Tabs
+    Navigation --> DetailScreens
+    MapScreen --> Components
+    POIDetail --> Components
+    Tabs --> ApiLayer
+    DetailScreens --> ApiLayer
 ```
 
-**Tech Stack:**
+**Tech Stack (Actual Implementation):**
 
 | Component | Technology | Version |
-|-----------|-----------|---------|
-| Framework | React Native | 0.73+ |
-| Platform | Expo | SDK 50+ |
+|-----------|-----------|--------|
+| Framework | React Native | 0.81 |
+| Platform | Expo | SDK 54 |
 | Language | TypeScript | 5.x |
-| Navigation | React Navigation | 6.x |
-| Maps | react-native-maps | latest |
-| Audio | react-native-track-player | 4.x |
-| Storage | AsyncStorage | latest |
+| Navigation | expo-router | 4.x |
+| Maps | react-native-maps | 1.20 |
+| Audio | expo-av | Latest |
+| Icons | lucide-react-native | Latest |
+| Storage | AsyncStorage | Latest |
 | HTTP Client | Axios | 1.x |
 
 ---
