@@ -1,0 +1,251 @@
+# 🗺️ GPS Tours — Phố Ẩm thực Vĩnh Khánh
+
+Hệ thống hướng dẫn du lịch GPS cho khu phố ẩm thực Vĩnh Khánh, bao gồm Admin Dashboard và Backend API.
+
+## 📁 Cấu trúc dự án
+
+```
+Seminar/
+├── apps/
+│   ├── api/          # Backend API (NestJS + Prisma + PostgreSQL)
+│   └── admin/        # Admin Dashboard (React + Vite + Tailwind CSS)
+├── docs/             # Tài liệu PRD, UML, API specs
+├── .env              # Database URL (root-level, dùng cho Prisma)
+└── README.md         # ← Bạn đang đọc file này
+```
+
+## 🛠️ Tech Stack
+
+| Layer | Công nghệ |
+|-------|-----------|
+| **Backend** | NestJS 11, Prisma 5, PostgreSQL 15, Redis 7 |
+| **Frontend** | React 19, Vite 7, Tailwind CSS 4, TypeScript 5 |
+| **Auth** | JWT (Access + Refresh Token) |
+| **API Docs** | Swagger (OpenAPI 3.0) |
+| **Database** | Docker (PostgreSQL + Redis) |
+
+## ⚡ Yêu cầu hệ thống
+
+- **Node.js** >= 20 (khuyến nghị v22+)
+- **Docker Desktop** (để chạy PostgreSQL & Redis)
+- **Git**
+
+---
+
+## 🚀 Hướng dẫn Setup từ đầu
+
+### Bước 1: Clone & Cài đặt
+
+```bash
+git clone <repo-url>
+cd Seminar
+```
+
+### Bước 2: Khởi động Database (Docker)
+
+```bash
+cd apps/api
+docker-compose up -d
+```
+
+Lệnh này sẽ tạo 2 containers:
+- **gpstours-db** — PostgreSQL 15 (port `5432`)
+- **gpstours-cache** — Redis 7 (port `6379`)
+
+> **Kiểm tra**: `docker ps` → thấy 2 containers đang chạy.
+
+### Bước 3: Cấu hình Backend
+
+```bash
+# Vẫn đang ở apps/api
+cp .env.example .env
+```
+
+Mở file `.env` và cập nhật nếu cần (mặc định đã hoạt động với Docker ở trên):
+
+```env
+# Database
+DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=public"
+
+# JWT
+JWT_SECRET="change-me-in-production"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_SECRET="change-me-in-production"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+# Server
+PORT=3000
+NODE_ENV=development
+
+# Upload
+UPLOAD_DIR="./uploads"
+MAX_IMAGE_SIZE=5242880
+MAX_AUDIO_SIZE=52428800
+```
+
+**Cũng cần tạo file `.env` ở thư mục gốc** (`Seminar/.env`) chứa `DATABASE_URL`:
+
+```env
+DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=public"
+```
+
+### Bước 4: Cài dependencies & Khởi tạo Database
+
+```bash
+# Ở apps/api
+npm install
+
+# Tạo bảng trong database
+npx prisma migrate deploy
+
+# Generate Prisma Client
+npx prisma generate
+```
+
+### Bước 5: Chạy Backend
+
+```bash
+# Development mode (auto-reload)
+npm run start:dev
+```
+
+> **API chạy tại**: http://localhost:3000/api/v1
+> **Swagger Docs**: http://localhost:3000/api/docs
+
+### Bước 6: Cài đặt & Chạy Admin Dashboard
+
+```bash
+# Mở terminal mới
+cd apps/admin
+npm install
+npm run dev
+```
+
+> **Admin Dashboard chạy tại**: http://localhost:5173
+
+---
+
+## 📖 Các tool hữu ích
+
+### Prisma Studio (Database GUI)
+
+```bash
+cd apps/api
+npx prisma studio
+```
+> Mở trình duyệt tại http://localhost:5555 để xem/sửa data trực tiếp.
+
+### Swagger API Docs
+
+Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
+- Xem tất cả endpoints
+- Test API trực tiếp trên trình duyệt
+- Xem request/response schema
+
+---
+
+## 🏗️ Kiến trúc Backend
+
+### Modules
+
+| Module | Prefix | Mô tả |
+|--------|--------|--------|
+| **Auth** | `/auth` | Đăng ký, đăng nhập, refresh token |
+| **POIs** | `/pois` | CRUD điểm tham quan |
+| **Tours** | `/tours` | CRUD tours, gán POIs vào tour |
+| **Media** | `/media` | Upload hình ảnh, audio |
+| **Merchants** | `/merchants` | Admin quản lý Shop Owners |
+| **Shop Owner** | `/shop-owner` | Shop owner tự quản lý profile & POIs |
+| **Tourist** | `/tourist` | API cho ứng dụng du khách |
+| **Public** | `/public` | API công khai (không cần auth) |
+| **Analytics** | `/analytics` | Thống kê lượt xem, tương tác |
+
+### Roles
+
+| Role | Quyền |
+|------|-------|
+| `ADMIN` | Toàn quyền quản lý hệ thống |
+| `SHOP_OWNER` | Quản lý cửa hàng & POIs của mình |
+| `TOURIST` | Xem tours, POIs, lưu yêu thích |
+
+### Database Schema (11 entities)
+
+`User`, `ShopOwner`, `TouristUser`, `Poi`, `PoiMedia`, `Tour`, `TourPoi`, `Favorite`, `ViewHistory`, `TriggerLog`, `PasswordResetToken`
+
+> Chi tiết xem tại `apps/api/prisma/schema.prisma`
+
+---
+
+## 🖥️ Kiến trúc Admin Dashboard
+
+### Pages
+
+| Route | Trang | Mô tả |
+|-------|-------|--------|
+| `/login` | LoginPage | Đăng nhập admin |
+| `/admin` | DashboardPage | Tổng quan KPI |
+| `/admin/pois` | POIListPage | Danh sách POIs |
+| `/admin/pois/new` | POIFormPage | Tạo POI mới |
+| `/admin/pois/:id/edit` | POIFormPage | Sửa POI |
+| `/admin/tours` | TourListPage | Danh sách Tours |
+| `/admin/tours/new` | TourFormPage | Tạo Tour mới |
+| `/admin/tours/:id/edit` | TourFormPage | Sửa Tour |
+| `/admin/merchants` | MerchantListPage | Danh sách Merchants |
+| `/admin/merchants/new` | MerchantFormPage | Tạo Merchant |
+| `/admin/merchants/:id/edit` | MerchantFormPage | Sửa Merchant |
+| `/admin/analytics` | AnalyticsPage | Thống kê |
+
+---
+
+## 🧑‍💻 Tạo tài khoản Admin đầu tiên
+
+Sau khi backend chạy, dùng Swagger hoặc Postman:
+
+```http
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@gpstours.com",
+  "password": "Admin@123",
+  "fullName": "System Admin",
+  "role": "ADMIN"
+}
+```
+
+Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với thông tin trên.
+
+---
+
+## 📝 Scripts tham khảo nhanh
+
+### Backend (`apps/api`)
+
+| Script | Mô tả |
+|--------|--------|
+| `npm run start:dev` | Chạy dev mode (auto-reload) |
+| `npm run start:prod` | Chạy production (cần `npm run build` trước) |
+| `npm run build` | Build production bundle |
+| `npx prisma studio` | Mở Database GUI |
+| `npx prisma migrate deploy` | Áp dụng migrations |
+| `npx prisma migrate dev` | Tạo migration mới |
+
+### Admin Dashboard (`apps/admin`)
+
+| Script | Mô tả |
+|--------|--------|
+| `npm run dev` | Chạy dev server |
+| `npm run build` | Build production |
+| `npm run preview` | Preview bản build |
+
+---
+
+## ❓ Troubleshooting
+
+| Vấn đề | Giải pháp |
+|---------|-----------|
+| `Cannot connect to database` | Kiểm tra Docker containers: `docker ps` |
+| `Port 5432 already in use` | Tắt PostgreSQL local hoặc đổi port trong `docker-compose.yml` |
+| `CORS error` | Đảm bảo frontend chạy đúng port `5173` |
+| `401 Unauthorized` | Token hết hạn, đăng nhập lại |
+| `Prisma Client not generated` | Chạy `npx prisma generate` |
