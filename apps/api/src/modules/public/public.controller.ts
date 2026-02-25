@@ -33,7 +33,11 @@ export class PublicController {
         return this.prisma.poi.findMany({
             where: { status: 'ACTIVE', deletedAt: null },
             include: {
-                media: { where: { type: 'IMAGE' }, take: 1 },
+                media: {
+                    where: {
+                        type: { in: ['IMAGE', 'AUDIO'] }
+                    }
+                },
             },
             orderBy: { nameVi: 'asc' },
         });

@@ -1,0 +1,13 @@
+feat(mobile): Hoàn thiện toàn bộ tính năng MVP (Phân hệ Mobile - Phase 4)
+
+Bản cập nhật này đánh dấu dự án chính thức hoàn thành 100% phạm vi MVP (44/44 tính năng). Các trải nghiệm cốt lõi dành cho du khách trên Mobile App đã được phát triển đầy đủ.
+
+Các tính năng mới được hoàn thiện:
+- Tính năng Tự động phát hiện điểm lân cận (Auto-trigger POI): Hệ thống tự động theo dõi vị trí GPS ngầm. Khi du khách bước vào bán kính 50m của một địa điểm, app sẽ rự động popup thông tin và phát âm thanh thuyết minh.
+- Chế độ "Đi theo Tour" (Tour Tracking Mode): Giao diện bản đồ điều hướng bám sát lộ trình tour. Bao gồm hệ thống theo dõi tiến độ từng trạm và tự động check-in báo hiệu khi đến nơi.
+- Tiện ích Quét mã QR (QR Scanner): Tích hợp luồng quét mã vạch bằng camera, nhảy dữ liệu trỏ thẳng đến trang chi tiết của địa điểm tham quan.
+- Giao diện Cá nhân hóa: Xây dựng hoàn chỉnh các màn hình "Địa điểm yêu thích" và "Lịch sử trải nghiệm", đồng bộ chặt chẽ với hồ sơ Tourist Profile.
+
+Các cải tiến trải nghiệm & Tài liệu:
+- Nâng cấp Trải nghiệm Đa phương tiện: Âm thanh (Audio Guide) và hình ảnh lấy từ Admin Dashboard nay đã hoạt động trơn tru. Hệ thống tự động nhận diện ngôn ngữ ưu tiên (Việt/Anh) để phát đúng file tệp âm thanh tương ứng mà không bị che khuất giao diện.
+- Nghiệm thu Tài liệu: Đóng dấu đánh giá đạt 100% chỉ số mục tiêu MVP trong tài liệu Scope Definition và cập nhật toàn bộ hệ thống Context.

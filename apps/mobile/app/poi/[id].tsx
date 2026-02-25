@@ -6,6 +6,7 @@ import { publicService, Poi } from '../../services/publicService';
 import AudioPlayer from '../../components/AudioPlayer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touristService } from '../../services/touristService';
+import { getMediaUrl } from '../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -97,7 +98,7 @@ export default function PoiDetailScreen() {
     }
 
     const images = poi.media?.filter(m => m.type === 'IMAGE') || [];
-    const audio = poi.media?.find(m => m.type === 'AUDIO' && m.language === lang.toUpperCase());
+    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'));
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -108,7 +109,7 @@ export default function PoiDetailScreen() {
                         {images.map((img, index) => (
                             <Image
                                 key={img.id || index}
-                                source={{ uri: img.url }}
+                                source={{ uri: getMediaUrl(img.url) }}
                                 style={styles.carouselImage}
                             />
                         ))}

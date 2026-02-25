@@ -99,8 +99,8 @@ model User {
   // Relations
   shopOwnerProfile ShopOwner?
   touristProfile   TouristUser?
-  createdPois      Poi[]               @relation("PoiCreator")
-  ownedPois        Poi[]               @relation("PoiOwner")
+  createdPois      Poi[]                @relation("PoiCreator")
+  ownedPois        Poi[]                @relation("PoiOwner")
   createdTours     Tour[]
   passwordResets   PasswordResetToken[]
   revokedTokens    RevokedToken[]
@@ -109,12 +109,12 @@ model User {
 }
 
 model ShopOwner {
-  id          String  @id @default(uuid())
-  userId      String  @unique
-  shopName    String
-  shopAddress String?
-  phone       String?
-  avatarUrl   String?
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  shopName     String
+  shopAddress  String?
+  phone        String?
+  avatarUrl    String?
   openingHours Json?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -140,12 +140,12 @@ model TouristUser {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -175,7 +175,7 @@ model Poi {
   descriptionEn String?
   latitude      Float
   longitude     Float
-  triggerRadius  Int         @default(15)
+  triggerRadius Int         @default(15)
   category      PoiCategory @default(DINING)
   status        PoiStatus   @default(DRAFT)
   createdById   String
@@ -185,11 +185,11 @@ model Poi {
   updatedAt     DateTime    @updatedAt
 
   // Relations
-  createdBy  User        @relation("PoiCreator", fields: [createdById], references: [id])
-  owner      User?       @relation("PoiOwner", fields: [ownerId], references: [id])
-  media      PoiMedia[]
-  tourPois   TourPoi[]
-  favorites  Favorite[]
+  createdBy   User          @relation("PoiCreator", fields: [createdById], references: [id])
+  owner       User?         @relation("PoiOwner", fields: [ownerId], references: [id])
+  media       PoiMedia[]
+  tourPois    TourPoi[]
+  favorites   Favorite[]
   viewHistory ViewHistory[]
   triggerLogs TriggerLog[]
 
@@ -223,7 +223,7 @@ model Tour {
   descriptionVi     String?
   descriptionEn     String?
   thumbnailUrl      String?
-  estimatedDuration Int?       // minutes
+  estimatedDuration Int? // minutes
   status            TourStatus @default(DRAFT)
   createdById       String
   deletedAt         DateTime?

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LogIn, Heart, Settings, Languages, Volume2 } from 'lucide-react-native';
+import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 export default function MoreScreen() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [autoPlay, setAutoPlay] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         checkLoginStatus();
@@ -17,10 +19,11 @@ export default function MoreScreen() {
     };
 
     const menuItems = [
-        { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn },
+        { icon: <QrCode size={20} color="#64748b" />, label: 'Quét mã QR địa điểm', show: true, onPress: () => router.push('/scanner') },
+        { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn, onPress: () => router.push('/favorites') },
         { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: setAutoPlay },
         { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true },
-        { icon: <User size={20} color="#64748b" />, label: 'Lịch sử xem', show: isLoggedIn },
+        { icon: <User size={20} color="#64748b" />, label: 'Lịch sử xem', show: isLoggedIn, onPress: () => router.push('/history') },
     ];
 
     return (
@@ -69,7 +72,8 @@ export default function MoreScreen() {
                     <TouchableOpacity
                         key={index}
                         style={[styles.menuItem, index === 0 && styles.firstMenuItem]}
-                        disabled={item.isSwitch}
+                        disabled={item.isSwitch && !item.onPress}
+                        onPress={item.onPress ? item.onPress : undefined}
                     >
                         <View style={styles.menuItemLeft}>
                             {item.icon}

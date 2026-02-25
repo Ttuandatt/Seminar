@@ -118,7 +118,10 @@ export default function TourDetailScreen() {
 
             {/* Start Tour Button */}
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.startButton}>
+                <TouchableOpacity
+                    style={styles.startButton}
+                    onPress={() => router.push(`/tour/follow/${tour.id}`)}
+                >
                     <Navigation size={20} color="#fff" />
                     <Text style={styles.startButtonText}>Bắt đầu Tour</Text>
                 </TouchableOpacity>

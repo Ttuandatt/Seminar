@@ -11,6 +11,7 @@ export interface Poi {
     poiType: string;
     media: any[];
     distance?: number;
+    triggerRadius?: number;
 }
 
 export interface Tour {

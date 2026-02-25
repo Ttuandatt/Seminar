@@ -2,13 +2,28 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
+export const getServerUrl = () => {
+    if (process.env.EXPO_PUBLIC_API_URL) {
+        // Assume process.env.EXPO_PUBLIC_API_URL is like http://ip:3000/api/v1
+        const url = new URL(process.env.EXPO_PUBLIC_API_URL);
+        return `${url.protocol}//${url.host}`;
+    }
+    const debuggerHost = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
+    const lanIp = debuggerHost?.split(':')[0] || '192.168.1.5';
+    return `http://${lanIp}:3000`;
+};
+
 // Auto-detect dev server LAN IP from Expo, so the phone can reach the backend
 const getBaseUrl = () => {
     if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
-    // In dev, Expo's debuggerHost contains the LAN IP (e.g. "192.168.1.5:8081")
-    const debuggerHost = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
-    const lanIp = debuggerHost?.split(':')[0] || '192.168.1.5';
-    return `http://${lanIp}:3000/api/v1`;
+    return `${getServerUrl()}/api/v1`;
+};
+
+export const getMediaUrl = (path?: string) => {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/')) return `${getServerUrl()}${path}`;
+    return `${getServerUrl()}/${path}`;
 };
 
 const api = axios.create({

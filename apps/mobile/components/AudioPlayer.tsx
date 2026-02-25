@@ -2,12 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
 import { Play, Pause } from 'lucide-react-native';
+import { getMediaUrl } from '../services/api';
 
-export default function AudioPlayer({ audioUrl }: { audioUrl: string }) {
+export default function AudioPlayer({ audioUrl, autoPlay = false }: { audioUrl: string; autoPlay?: boolean }) {
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
+
+    // Initial autoplay
+    useEffect(() => {
+        if (autoPlay && audioUrl) {
+            // Give it a tiny delay to ensure component is mounted and ready
+            const timer = setTimeout(() => {
+                if (!sound && !isPlaying) {
+                    playPause();
+                }
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [autoPlay, audioUrl]);
 
     useEffect(() => {
         return sound
@@ -25,8 +39,9 @@ export default function AudioPlayer({ audioUrl }: { audioUrl: string }) {
                 staysActiveInBackground: true,
             });
 
+            const fullUrl = getMediaUrl(audioUrl);
             const { sound: newSound } = await Audio.Sound.createAsync(
-                { uri: audioUrl },
+                { uri: fullUrl },
                 { shouldPlay: false },
                 onPlaybackStatusUpdate
             );
@@ -63,8 +78,9 @@ export default function AudioPlayer({ audioUrl }: { audioUrl: string }) {
             // If sound hasn't loaded but play is pressed, try loading and playing
             try {
                 if (!audioUrl) return;
+                const fullUrl = getMediaUrl(audioUrl);
                 const { sound: freshSound } = await Audio.Sound.createAsync(
-                    { uri: audioUrl },
+                    { uri: fullUrl },
                     { shouldPlay: true },
                     onPlaybackStatusUpdate
                 );
