@@ -744,19 +744,19 @@ Scenario: No access to system-wide analytics
 
 | Story | AC ID | Description | Status |
 |-------|-------|-------------|--------|
-| US-101 | AC-101 | Login scenarios | ☐ |
-| US-201 | AC-201 | Create POI | ☐ |
-| US-203 | AC-203 | Delete POI | ☐ |
-| US-204 | AC-204 | Map picker | ☐ |
-| US-301 | AC-301 | Create Tour | ☐ |
-| US-401 | AC-401 | View map | ☐ |
-| US-403 | AC-403 | Audio playback | ☐ |
-| US-404 | AC-404 | Auto-trigger | ☐ |
-| US-405 | AC-601 | Language | ☐ |
-| US-409 | AC-602 | Offline | ☐ |
-| **US-801** | **AC-701** | **Shop Owner Registration** | ☐ |
-| **US-803** | **AC-702** | **Shop Owner POI Mgmt** | ☐ |
-| **US-805** | **AC-703** | **Shop Owner Analytics** | ☐ |
+| US-101 | AC-101 | Login scenarios | ✅ |
+| US-201 | AC-201 | Create POI | ✅ |
+| US-203 | AC-203 | Delete POI | ✅ |
+| US-204 | AC-204 | Map picker | ✅ |
+| US-301 | AC-301 | Create Tour | ✅ |
+| US-401 | AC-401 | View map | ✅ |
+| US-403 | AC-403 | Audio playback | ✅ |
+| US-404 | AC-404 | Auto-trigger | ✅ |
+| US-405 | AC-601 | Language | ✅ |
+| US-409 | AC-602 | Offline | ✅ |
+| **US-801** | **AC-701** | **Shop Owner Registration** | ✅ |
+| **US-803** | **AC-702** | **Shop Owner POI Mgmt** | ✅ |
+| **US-805** | **AC-703** | **Shop Owner Analytics** | ✅ |
 
 ---
 
