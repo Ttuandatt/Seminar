@@ -469,6 +469,13 @@ Scenario: Background playback
   When I press the home button (minimize app)
   Then audio should continue playing
   And I should see notification with playback controls
+
+Scenario: Singleton Audio Manager
+  Given audio of POI A is currently playing
+  When I enter the trigger zone of POI B
+  And audio for POI B is triggered to play
+  Then audio of POI A must stop immediately
+  And audio from POI B is the only track playing
 ```
 
 ### AC-404: Auto-trigger Audio
@@ -506,22 +513,30 @@ Scenario: Overlapping POI zones
 ```gherkin
 Feature: QR Code Scanning
 
-Scenario: Scan valid QR code
-  Given I am at a POI with QR code displayed
-  When I open the QR scanner in the app
-  And I scan the QR code
-  Then the app should recognize the POI
-  And I should be taken to that POI's detail page
-  And audio can start playing
+Scenario: Scan valid QR code without heavy media (TH1)
+  Given I have synced offline data
+  And I am at a POI scanning its QR code
+  When the POI text data exists in SQLite
+  And the POI does not have heavy audio/video
+  Then I should immediately see the POI text details without network loading
+  
+Scenario: Scan valid QR code with heavy media (TH2)
+  Given I am at a POI scanning its QR code
+  When the POI data indicates it has heavy audio/video attached
+  Then the app should display an alert "Dữ liệu lớn"
+  And it should explain that a network connection is required
+  When I accept the alert
+  Then I am navigated to the online POI Detail view to stream the audio
 
 Scenario: Scan invalid QR code
-  When I scan a QR code that is not from GPS Tours
-  Then I should see error "Invalid QR code"
+  When I scan a QR code that is not from GPS Tours format (gpstours:poi:id)
+  Then I should see error "Mã QR không hợp lệ"
   And I should have option to scan again
 
 Scenario: QR code for deleted POI
-  When I scan QR for a POI that has been deleted
-  Then I should see "This point of interest is no longer available"
+  When I scan QR for a POI that has been deleted or not in sync
+  Then the system will attempt online validation
+  And if not found online, show "Mã QR không thuộc hệ thống"
 ```
 
 ---

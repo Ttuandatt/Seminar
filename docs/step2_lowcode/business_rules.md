@@ -64,7 +64,7 @@
 | BR-29 | Center on User | IF map loads | THEN center on user's GPS position | Medium |
 | BR-30 | Background Audio | IF screen locked | THEN continue audio playback | Medium |
 | BR-31 | Pause on Call | IF incoming phone call | THEN pause audio, resume after | Medium |
-| BR-32 | Offline Fallback | IF no internet | THEN show cached data + "Offline" badge | Medium |
+| BR-32 | Singleton Audio | IF audio is playing AND another POI audio triggered | THEN instantly pause previous audio and play new audio | High |
 
 ---
 
@@ -78,7 +78,8 @@
 | BR-36 | Cooldown | IF POI just triggered | THEN no re-trigger for 5 minutes | High |
 | BR-37 | Overlap Priority | IF 2+ POIs in range | THEN trigger closest, show others in list | High |
 | BR-38 | Category Priority | IF overlap + same distance | THEN use taxonomy priority (Cultural > Outdoor > Experiences > Markets > Bars > Cafes > Street Food > Dining) | Medium |
-| BR-39 | QR Fallback | IF GPS unavailable | THEN allow QR scan to trigger POI | Medium |
+| BR-39 | QR Fallback Offline (TH1) | IF QR scanned AND POI data small (no audio) | THEN load text from SQLite without network | High |
+| BR-40 | QR Fallback Online (TH2) | IF QR scanned AND POI data large (has audio/video) | THEN prompt user for network connection before load | High |
 
 ---
 
@@ -86,10 +87,10 @@
 
 | ID | Rule Name | Condition | Action | Priority |
 |----|-----------|-----------|--------|----------|
-| BR-40 | Data Isolation | IF SO queries POIs | THEN only return POIs where owner_id = current SO | High |
-| BR-41 | No Delete | IF SO attempts delete | THEN deny, only Admin can delete | High |
-| BR-42 | Auto Owner | IF SO creates POI | THEN auto-set owner_id = current SO | High |
-| BR-43 | Analytics Scoped | IF SO views analytics | THEN only show stats for own POIs | High |
+| BR-41 | Data Isolation | IF SO queries POIs | THEN only return POIs where owner_id = current SO | High |
+| BR-42 | No Delete | IF SO attempts delete | THEN deny, only Admin can delete | High |
+| BR-43 | Auto Owner | IF SO creates POI | THEN auto-set owner_id = current SO | High |
+| BR-44 | Analytics Scoped | IF SO views analytics | THEN only show stats for own POIs | High |
 
 ---
 
@@ -97,11 +98,12 @@
 
 | ID | Rule Name | Condition | Action | Priority |
 |----|-----------|-----------|--------|----------|
-| BR-44 | Login for Favorites | IF Tourist adds favorite without login | THEN prompt login dialog | Medium |
-| BR-45 | Toggle Favorite | IF Tourist taps ❤️ | THEN toggle ON/OFF (upsert/delete) | Medium |
-| BR-46 | Auto History | IF Tourist views POI / audio plays | THEN log to view_history | Low |
-| BR-47 | Language Fallback | IF selected language content null | THEN fallback to Vietnamese | Medium |
-| BR-48 | GPS Permission | IF GPS needed | THEN request just-in-time with reason | High |
+| BR-45 | Login for Favorites | IF Tourist adds favorite without login | THEN prompt login dialog | Medium |
+| BR-46 | Toggle Favorite | IF Tourist taps ❤️ | THEN toggle ON/OFF (upsert/delete) | Medium |
+| BR-47 | Auto History | IF Tourist views POI / audio plays | THEN log to view_history | Low |
+| BR-48 | Language Fallback | IF selected language content null | THEN fallback to Vietnamese | Medium |
+| BR-49 | GPS Permission | IF GPS needed | THEN request just-in-time with reason | High |
+| BR-50 | Auto Profile Update | IF Tourist logs in | THEN trigger profile synchronization automatically | Medium |
 
 ---
 
@@ -112,8 +114,8 @@
 | Authentication | 9 (BR-01~09) | 5 |
 | POI Management | 12 (BR-10~21) | 5 |
 | Tour Management | 6 (BR-22~27) | 3 |
-| Map & Audio | 5 (BR-28~32) | 1 |
-| Location & Trigger | 7 (BR-33~39) | 4 |
-| Shop Owner | 4 (BR-40~43) | 4 |
-| Tourist | 5 (BR-44~48) | 1 |
-| **Tổng** | **48 rules** | **23 High** |
+| Map & Audio | 5 (BR-28~32) | 2 |
+| Location & Trigger | 8 (BR-33~40) | 6 |
+| Shop Owner | 4 (BR-41~44) | 4 |
+| Tourist | 6 (BR-45~50) | 1 |
+| **Tổng** | **50 rules** | **26 High** |

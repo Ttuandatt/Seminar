@@ -421,7 +421,7 @@ App hiển thị tất cả POIs có status=active trên bản đồ với marke
 | Field | Description |
 |-------|-------------|
 | **ID** | FR-403 |
-| **Title** | Audio Player Controls |
+| **Title** | Global Audio Player Controls |
 | **Priority** | P0 |
 | **User Story** | US-403, US-406 |
 
@@ -429,12 +429,30 @@ App hiển thị tất cả POIs có status=active trên bản đồ với marke
 - Play / Pause button
 - Progress bar with seek
 - Current time / Total duration
-- Background playback support
+- Background playback support via expo-audio
 
 **Business Rules:**
-- BR-404: Audio tiếp tục phát khi lock screen
-- BR-405: Pause audio khi incoming call
-- BR-406: Resume audio sau call kết thúc
+- BR-404: Audio tiếp tục phát khi lock screen.
+- BR-405: **Singleton Player Rule** - Ứng dụng chỉ duy trì 1 phiên Audio. Khi kích hoạt POI B, Audio của POI A sẽ lập tức bị ngắt.
+- BR-406: Hỗ trợ auto-play nếu user bật cấu hình tự động phát trong Settings.
+
+---
+
+### FR-404: Tourist Authentication
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-404 |
+| **Title** | Tourist Login & Registration |
+| **Priority** | P1 |
+| **User Story** | US-409 |
+
+**Description:**
+Người dùng app Tourist có thể đăng ký tài khoản và đăng nhập để lưu trữ lịch sử và địa điểm yêu thích.
+
+**Business Rules:**
+- BR-407: Password phải có ít nhất 8 ký tự, 1 hoa, 1 thường, 1 số.
+- BR-408: Sau khi đăng nhập thành công, token được lưu vào máy. Cập nhật thẻ Profile trên ứng dụng với tên thật và email.
 
 ---
 
@@ -485,19 +503,22 @@ IDLE → (enter zone) → TRIGGERED → (user accepts) → PLAYING
 
 ---
 
-### FR-503: QR Code Fallback
+### FR-503: QR Code Offline Fallback
 
 | Field | Description |
 |-------|-------------|
 | **ID** | FR-503 |
-| **Title** | Manual POI Trigger via QR |
+| **Title** | Manual POI Trigger via QR with Offline Support |
 | **Priority** | P1 |
 | **User Story** | US-407 |
 
 **Description:**  
-User có thể quét mã QR tại POI để mở nội dung trực tiếp.
+User có thể quét mã QR tại vị trí thực tế của POI để xem thông tin trực tiếp. Cung cấp cơ chế Offline Fallback dựa trên SQLite.
 
 **Business Rules:**
+- BR-509: Dữ liệu văn bản POIs phải được đồng bộ hóa (sync) về máy điện thoại (SQLite).
+- BR-510: **TH1 (Data Thuyết Minh Nhỏ)**: Nếu mã QR quét được khớp với dữ liệu POI nội bộ và POI đó KHÔNG chứa Audio/Video dung lượng lớn -> Bỏ qua network, hiển thị dữ liệu văn bản từ SQLite ngay lập tức.
+- BR-511: **TH2 (Data Thuyết Minh Lớn)**: Nếu POI chứa Audio/Video (dung lượng lớn), hệ thống phải cảnh báo người dùng chuẩn bị kết nối mạng (Network Connection Required) trước khi điều hướng sang trang chi tiết để tải file media.
 - BR-509: QR code chứa POI ID hoặc deep link
 - BR-510: Validate QR format trước khi process
 - BR-511: Hiển thị error nếu POI không tồn tại

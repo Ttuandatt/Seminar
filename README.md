@@ -222,7 +222,8 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | **Framework** | Expo SDK 54 + React Native 0.81 |
 | **Navigation** | expo-router (file-based routing) |
 | **Maps** | react-native-maps (default provider) |
-| **Audio** | expo-av |
+| **Audio** | expo-audio (Global Singleton Context) |
+| **Database** | expo-sqlite (Offline QR Fallback) |
 | **Icons** | lucide-react-native + react-native-svg |
 | **HTTP** | Axios (auto-detect LAN IP) |
 | **Storage** | AsyncStorage (JWT tokens) |
@@ -241,7 +242,7 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 
 | Component | Chức năng |
 |-----------|-----------|
-| `AudioPlayer.tsx` | Play/Pause, progress bar, time display |
+| `AudioPlayer.tsx` | Play/Pause, progress bar, time display (Managed by Global Context) |
 
 ### Services
 
@@ -250,6 +251,8 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | `api.ts` | Axios instance, auto LAN IP, JWT interceptors |
 | `publicService.ts` | POIs, Tours, QR validate (no auth) |
 | `touristService.ts` | Profile, Favorites, History (JWT required) |
+| `authService.ts` | Login, Register specifically for TOURIST role |
+| `database.ts` | SQLite management, POI offline synchronization |
 
 ---
 
