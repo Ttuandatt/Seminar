@@ -1,8 +1,9 @@
 # 📐 Sequence Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.0  
-> **Ngày tạo:** 2026-02-10
+> **Phiên bản:** 2.0  
+> **Ngày tạo:** 2026-02-10  
+> **Cập nhật:** 2026-02-26
 
 ---
 
@@ -24,6 +25,9 @@
 | SD-12 | Tourist Lưu POI yêu thích | Tourist | UC-36 |
 | SD-13 | Shop Owner Xem Analytics | Shop Owner | UC-41 |
 | SD-14 | Tourist Chuyển đổi ngôn ngữ | Tourist | UC-34 |
+| SD-15 | **Tourist Đăng ký & Đăng nhập** | Tourist | FR-404 |
+| SD-16 | **Global Audio Singleton** | Tourist, System | FR-403 |
+| SD-17 | **QR Code Offline Fallback (SQLite)** | Tourist | FR-503 |
 
 ---
 
@@ -253,8 +257,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Tourist
-    participant App as Mobile App (Expo)
-    participant Map as Mapbox GL
+    participant App as Mobile App [Expo]
+    participant Map as react-native-maps
     participant GPS as GPS Service
     participant API as NestJS API
     participant DB as PostgreSQL
@@ -263,15 +267,15 @@ sequenceDiagram
     App->>GPS: requestPermission()
     GPS-->>App: Permission granted
     App->>GPS: getCurrentPosition()
-    GPS-->>App: {lat: 10.7534, lng: 106.6868}
+    GPS-->>App: lat, lng
 
-    App->>API: GET /public/pois/nearby?lat=10.7534&lng=106.6868&radius=1000
-    API->>DB: SELECT * FROM pois WHERE ST_DWithin(geom, point, 1000) AND status = 'published'
-    DB-->>API: Nearby POIs (with distance)
-    API-->>App: POI list [{id, name, lat, lng, type, distance}, ...]
+    App->>API: GET /public/pois/nearby?lat&lng&radius=1000
+    API->>DB: SELECT * FROM pois WHERE status = ACTIVE
+    DB-->>API: Nearby POIs with distance
+    API-->>App: POI list
 
     App->>Map: Render map centered at Tourist position
-    App->>Map: Add markers using category palette (Dining 🔴, Street Food 🟠, Cafes 🟡, Bars 🟣, Markets 🟤, Cultural 🔵, Experiences 🟢, Outdoor ⚪)
+    App->>Map: Add markers by POI type
     Map-->>Tourist: Bản đồ với POI markers
 
     Note over Tourist, DB: === GPS Tracking Loop ===
@@ -279,29 +283,12 @@ sequenceDiagram
         GPS-->>App: Updated position
         App->>App: Calculate distance to each POI
         
-        alt distance ≤ trigger_radius
+        alt distance <= trigger_radius
             App->>App: Trigger! POI in range
-            App->>Tourist: Notification "Bạn đang gần [POI Name]"
-            App->>API: GET /public/pois/{id}
-            API->>DB: SELECT * FROM pois WHERE id = ?
-            DB-->>API: Full POI data + media URLs
-            API-->>App: POI detail
-            App->>Tourist: Hiển thị POI detail + auto-play audio
+            App->>Tourist: Bottom sheet preview
+            App->>App: playGlobalAudio via AudioContext
+            App->>Tourist: Auto-play audio
         end
-    end
-
-    Note over Tourist, DB: === QR Code Fallback (FR-402) ===
-    Tourist->>App: Quét QR Code tại POI
-    App->>API: POST /public/qr/validate {qrData}
-    API->>DB: SELECT * FROM pois WHERE qr_code = ?
-    alt QR hợp lệ
-        DB-->>API: POI data
-        API-->>App: 200 {poi}
-        App->>Tourist: Hiển thị POI detail + auto-play audio
-    else QR không hợp lệ
-        DB-->>API: null
-        API-->>App: 404 {error: "Invalid QR code"}
-        App->>Tourist: Hiển thị "QR code không hợp lệ"
     end
 ```
 
@@ -731,6 +718,161 @@ sequenceDiagram
 
 ---
 
+## SD-15: Tourist Đăng ký & Đăng nhập
+
+```mermaid
+sequenceDiagram
+    actor Tourist
+    participant App as Mobile App [Expo]
+    participant Auth as authService.ts
+    participant API as NestJS API
+    participant DB as PostgreSQL
+    participant Store as AsyncStorage
+
+    Note over Tourist, Store: === ĐĂNG KÝ ===
+    Tourist->>App: Mở tab Cá nhân, nhấn "Đăng nhập"
+    App->>Tourist: Hiển thị Login Screen
+    Tourist->>App: Nhấn "Đăng ký ngay"
+    App->>Tourist: Hiển thị Register Screen
+    Tourist->>App: Nhập fullName, email, password
+    App->>App: Validate password regex
+    App->>Auth: register(fullName, email, password)
+    Auth->>API: POST /auth/register (role = TOURIST)
+    API->>DB: INSERT INTO users + INSERT INTO tourist_users
+    DB-->>API: User created
+    API-->>Auth: 201 Created
+    Auth-->>App: Success
+    App->>Tourist: Alert "Đăng ký thành công! Chuyển đến Đăng nhập"
+    App->>App: router.replace /login
+
+    Note over Tourist, Store: === ĐĂNG NHẬP ===
+    Tourist->>App: Nhập email, password trên Login Screen
+    App->>Auth: login(email, password)
+    Auth->>API: POST /auth/login
+    API->>DB: Verify credentials
+    DB-->>API: User record
+    API-->>Auth: 200 accessToken, refreshToken
+    Auth-->>App: Token data
+    App->>Store: AsyncStorage.setItem accessToken
+    Store-->>App: Saved
+    App->>Tourist: Alert "Đăng nhập thành công"
+    App->>App: router.back to More Tab
+
+    Note over Tourist, Store: === CẬP NHẬT PROFILE ===
+    App->>App: useFocusEffect triggers
+    App->>API: GET /tourist/me
+    API->>DB: SELECT FROM tourist_users JOIN users
+    DB-->>API: Profile data
+    API-->>App: displayName, email
+    App->>Tourist: Hiển thị Profile Card thay thế nút Đăng nhập
+```
+
+---
+
+## SD-16: Global Audio Singleton
+
+```mermaid
+sequenceDiagram
+    actor Tourist
+    participant App as Mobile App [Expo]
+    participant Ctx as AudioContext [Singleton]
+    participant Player as expo-audio Player
+    participant GPS as GPS Service
+
+    Note over Tourist, GPS: Tourist đang nghe audio POI_A
+    Tourist->>App: Đang đi bộ, audio POI_A playing
+    Ctx->>Player: currentPoiId = POI_A, isPlaying = true
+
+    GPS-->>App: Position updated
+    App->>App: distance to POI_B <= trigger_radius
+    App->>Ctx: playGlobalAudio(POI_B, audioUrl_B)
+
+    Note over Ctx, Player: Kill previous, play new
+    Ctx->>Ctx: Compare: POI_B != currentPoiId POI_A
+    Ctx->>Player: player.pause() for POI_A
+    Ctx->>Ctx: Update currentPoiId = POI_B
+    Ctx->>Ctx: Update currentAudioUrl = audioUrl_B
+    Ctx->>Player: player.replace(audioUrl_B)
+    Player-->>Ctx: Audio ready
+    Ctx->>Player: player.play()
+    Player-->>Tourist: Audio POI_B starts playing
+
+    Note over Tourist, GPS: Tourist nhấn Pause thủ công
+    Tourist->>App: Nhấn Pause trên AudioPlayer widget
+    App->>Ctx: pauseGlobalAudio()
+    Ctx->>Player: player.pause()
+    Player-->>Tourist: Audio paused
+
+    Tourist->>App: Nhấn Play
+    App->>Ctx: resumeGlobalAudio()
+    Ctx->>Player: player.play()
+    Player-->>Tourist: Audio resumed
+```
+
+---
+
+## SD-17: QR Code Offline Fallback (SQLite)
+
+```mermaid
+sequenceDiagram
+    actor Tourist
+    participant App as Mobile App [Expo]
+    participant Scanner as CameraView
+    participant SQLite as expo-sqlite
+    participant API as NestJS API
+    participant DB as PostgreSQL
+
+    Note over Tourist, DB: === Bước 0: Đồng bộ Offline Data ===
+    Tourist->>App: Mở tab Cá nhân, nhấn "Đồng bộ dữ liệu Offline"
+    App->>API: GET /pois
+    API->>DB: SELECT all active POIs
+    DB-->>API: POI list with media flags
+    API-->>App: POIs data
+    App->>SQLite: Clear old + INSERT all POIs
+    SQLite-->>App: Synced N POIs
+    App->>Tourist: Alert "Đã đồng bộ N địa điểm"
+
+    Note over Tourist, DB: === Bước 1: Quét QR Code ===
+    Tourist->>App: Mở Scanner từ menu
+    App->>Scanner: Open camera, detect QR
+    Scanner-->>App: QR data = "gpstours:poi:abc-123"
+
+    App->>App: Parse regex gpstours:poi:(id)
+    App->>SQLite: getOfflinePoi("abc-123")
+
+    alt TH1 - Dữ liệu nhỏ, không có Audio lớn
+        SQLite-->>App: POI found, hasLargeAudio = 0
+        App->>Tourist: Alert "Chế độ Offline"
+        Tourist->>App: Nhấn "Tiếp tục"
+        App->>App: router.replace poi/abc-123?offline=true
+        App->>SQLite: Load text data from local DB
+        SQLite-->>App: nameVi, descriptionVi
+        App->>Tourist: Hiển thị POI detail no network
+    else TH2 - Dữ liệu lớn, có Audio/Video
+        SQLite-->>App: POI found, hasLargeAudio = 1
+        App->>Tourist: Alert "Dữ liệu lớn - Cần kết nối mạng"
+        Tourist->>App: Nhấn "Tiếp tục"
+        App->>App: router.replace poi/abc-123
+        App->>API: GET /public/pois/abc-123
+        API->>DB: SELECT full POI + media
+        DB-->>API: POI with audio URLs
+        API-->>App: Full POI data
+        App->>Tourist: Hiển thị POI detail + stream audio
+    else Không tìm thấy trong SQLite
+        SQLite-->>App: null
+        App->>API: POST /public/qr/validate
+        alt Online validate OK
+            API-->>App: 200 valid, poi
+            App->>App: Navigate to poi detail
+        else Online cũng fail
+            API-->>App: Error
+            App->>Tourist: "Mã QR không hợp lệ"
+        end
+    end
+```
+
+---
+
 ## Summary
 
 | Diagram | Actors | Lifelines | Messages | Complexity |
@@ -749,6 +891,9 @@ sequenceDiagram
 | SD-12 | Tourist | 4 | 20 | Medium |
 | SD-13 | Shop Owner | 5 | 18 | High |
 | SD-14 | Tourist | 5 | 18 | Medium |
+| SD-15 | Tourist | 5 | 22 | High |
+| SD-16 | Tourist | 4 | 16 | High |
+| SD-17 | Tourist | 5 | 24 | High |
 
 ---
 
