@@ -1,107 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Audio } from 'expo-av';
 import { Play, Pause } from 'lucide-react-native';
-import { getMediaUrl } from '../services/api';
+import { useGlobalAudio } from '../context/AudioContext';
 
-export default function AudioPlayer({ audioUrl, autoPlay = false }: { audioUrl: string; autoPlay?: boolean }) {
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [position, setPosition] = useState(0);
-    const [duration, setDuration] = useState(0);
+export default function AudioPlayer({ audioUrl, poiId, autoPlay = false }: { audioUrl: string; poiId: string; autoPlay?: boolean }) {
+    const {
+        currentAudioUrl,
+        currentPoiId,
+        isPlaying,
+        position,
+        duration,
+        playGlobalAudio,
+        pauseGlobalAudio,
+        resumeGlobalAudio
+    } = useGlobalAudio();
 
-    // Initial autoplay
+    // Determine if this specific audio is the one currently active in the global context
+    const isThisAudioActive = currentAudioUrl === audioUrl && currentPoiId === poiId;
+
     useEffect(() => {
-        if (autoPlay && audioUrl) {
-            // Give it a tiny delay to ensure component is mounted and ready
+        if (autoPlay && audioUrl && poiId) {
             const timer = setTimeout(() => {
-                if (!sound && !isPlaying) {
-                    playPause();
+                // Play it globally if not already playing
+                if (!isThisAudioActive || !isPlaying) {
+                    playGlobalAudio(audioUrl, poiId);
                 }
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [autoPlay, audioUrl]);
+    }, [autoPlay, audioUrl, poiId]);
 
-    useEffect(() => {
-        return sound
-            ? () => {
-                sound.unloadAsync();
-            }
-            : undefined;
-    }, [sound]);
+    const handlePlayPause = () => {
+        if (!audioUrl || !poiId) return;
 
-    const loadSound = async () => {
-        try {
-            if (!audioUrl) return;
-            await Audio.setAudioModeAsync({
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-            });
-
-            const fullUrl = getMediaUrl(audioUrl);
-            const { sound: newSound } = await Audio.Sound.createAsync(
-                { uri: fullUrl },
-                { shouldPlay: false },
-                onPlaybackStatusUpdate
-            );
-            setSound(newSound);
-        } catch (error) {
-            console.error("Error loading audio:", error);
-        }
-    };
-
-    const onPlaybackStatusUpdate = (status: any) => {
-        if (status.isLoaded) {
-            setPosition(status.positionMillis);
-            setDuration(status.durationMillis || 0);
-            setIsPlaying(status.isPlaying);
-            if (status.didJustFinish) {
-                setIsPlaying(false);
-                if (sound) sound.setPositionAsync(0);
-            }
-        }
-    };
-
-    const playPause = async () => {
-        if (!sound) {
-            await loadSound();
-        }
-
-        if (sound) {
+        if (isThisAudioActive) {
             if (isPlaying) {
-                await sound.pauseAsync();
+                pauseGlobalAudio();
             } else {
-                await sound.playAsync();
+                resumeGlobalAudio();
             }
         } else {
-            // If sound hasn't loaded but play is pressed, try loading and playing
-            try {
-                if (!audioUrl) return;
-                const fullUrl = getMediaUrl(audioUrl);
-                const { sound: freshSound } = await Audio.Sound.createAsync(
-                    { uri: fullUrl },
-                    { shouldPlay: true },
-                    onPlaybackStatusUpdate
-                );
-                setSound(freshSound);
-            } catch (e) { }
+            // Switching to this audio
+            playGlobalAudio(audioUrl, poiId);
         }
     };
 
     const formatTime = (millis: number) => {
-        const totalSeconds = Math.floor(millis / 1000);
+        const totalSeconds = Math.floor((millis || 0) / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     };
 
-    if (!audioUrl) return null;
+    if (!audioUrl || !poiId) return null;
+
+    // Use global position/duration only if this audio is the active one tracking
+    const displayPosition = isThisAudioActive ? position : 0;
+    const displayDuration = isThisAudioActive ? duration : 0;
+    const displayIsPlaying = isThisAudioActive ? isPlaying : false;
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.playButton} onPress={playPause}>
-                {isPlaying ? <Pause size={24} color="#fff" /> : <Play size={24} color="#fff" />}
+            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+                {displayIsPlaying ? <Pause size={24} color="#fff" /> : <Play size={24} color="#fff" />}
             </TouchableOpacity>
 
             <View style={styles.progressContainer}>
@@ -109,13 +70,13 @@ export default function AudioPlayer({ audioUrl, autoPlay = false }: { audioUrl: 
                     <View
                         style={[
                             styles.progressFill,
-                            { width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }
+                            { width: displayDuration > 0 ? `${(displayPosition / displayDuration) * 100}%` : '0%' }
                         ]}
                     />
                 </View>
                 <View style={styles.timeRow}>
-                    <Text style={styles.timeText}>{formatTime(position)}</Text>
-                    <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                    <Text style={styles.timeText}>{formatTime(displayPosition)}</Text>
+                    <Text style={styles.timeText}>{formatTime(displayDuration)}</Text>
                 </View>
             </View>
         </View>

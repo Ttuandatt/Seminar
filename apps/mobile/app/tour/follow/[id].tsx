@@ -187,7 +187,7 @@ export default function TourFollowScreen() {
 
                         {hasArrived && audioMedia && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioMedia.url} autoPlay={true} />
+                                <AudioPlayer audioUrl={audioMedia.url} poiId={targetPoi.id} autoPlay={true} />
                             </View>
                         )}
 

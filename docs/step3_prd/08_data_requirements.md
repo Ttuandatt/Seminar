@@ -1,9 +1,9 @@
 # 🗃️ Data Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
+> **Phiên bản:** 2.2  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-18
+> **Cập nhật:** 2026-02-25
 
 ---
 
@@ -11,84 +11,91 @@
 
 ```
 ┌────────────────┐       ┌────────────────┐       ┌────────────────┐
-│     Admin      │       │      POI       │       │     Tour       │
+│      User      │       │      POI       │       │     Tour       │
 ├────────────────┤       ├────────────────┤       ├────────────────┤
 │ id (PK)        │       │ id (PK)        │       │ id (PK)        │
-│ username       │       │ name_vi        │       │ name_vi        │
-│ email          │       │ name_en        │       │ name_en        │
-│ password_hash  │       │ description_vi │       │ description_vi │
-│ role           │       │ description_en │       │ description_en │
-│ created_at     │       │ latitude       │       │ thumbnail_url  │
-│ updated_at     │       │ longitude      │       │ est_duration   │
-└────────────────┘       │ trigger_radius │       │ status         │
-                         │ category       │       │ created_by(FK) │
-                         │ status         │       │ created_at     │
-                         │ created_by(FK) │       │ updated_at     │
-                         │ created_at     │       │ deleted_at     │
-                         │ updated_at     │       └───────┬────────┘
-                         │ deleted_at     │               │
-                         └───────┬────────┘               │
-                                 │                        │
-                    ┌────────────┼────────────┐          │
-                    │            │            │          │
-            ┌───────▼───────┐    │    ┌───────▼───────┐  │
-            │   POI_Media   │    │    │   Tour_POI    │◄─┘
-            ├───────────────┤    │    ├───────────────┤
-            │ id (PK)       │    │    │ id (PK)       │
-            │ poi_id (FK)   │    │    │ tour_id (FK)  │
-            │ type          │    │    │ poi_id (FK)   │
-            │ language      │    │    │ order_index   │
-            │ url           │    │    │ created_at    │
-            │ duration      │    │    └───────────────┘
-            │ size_bytes    │    │
-            │ created_at    │    │
-            └───────────────┘    │
-                                 │
-┌────────────────────────────────┼────────────────────────────────┐
-│            TOURIST USER DOMAIN (Optional Login)                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                │                                │
-│  ┌────────────────┐    ┌───────▼───────┐    ┌────────────────┐  │
-│  │  Tourist_User  │    │ View_History  │    │ User_Favorite  │  │
-│  ├────────────────┤    ├───────────────┤    ├────────────────┤  │
-│  │ id (PK)        │◄───┤ user_id (FK)  │    │ id (PK)        │  │
-│  │ device_id      │    │ poi_id (FK)   │    │ user_id (FK)   │  │
-│  │ email          │    │ viewed_at     │    │ poi_id (FK)    │  │
-│  │ display_name   │    │ duration_sec  │    │ created_at     │  │
-│  │ auth_provider  │    │ audio_played  │    └────────────────┘  │
-│  │ language_pref  │    └───────────────┘                        │
-│  │ push_token     │                                             │
-│  │ created_at     │                                             │
-│  │ last_active_at │                                             │
-│  └────────────────┘                                             │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+│ email          │       │ name_vi        │       │ name_vi        │
+│ password_hash  │       │ name_en        │       │ name_en        │
+│ full_name      │       │ description_vi │       │ description_vi │
+│ role (enum)    │       │ description_en │       │ description_en │
+│ status         │       │ latitude (Flt) │       │ thumbnail_url  │
+│ profile (JSON) │       │ longitude(Flt) │       │ est_duration   │
+│ created_at     │       │ trigger_radius │       │ status         │
+│ updated_at     │       │ category       │       │ created_by(FK) │
+└───────┬────────┘       │ poi_type       │       │ created_at     │
+        │                │ status         │       │ updated_at     │
+   ┌────▼────────┐       │ created_by(FK) │       │ deleted_at     │
+   │ Shop_Owner  │       │ owner_id (FK)  │       └───────┬────────┘
+   │ (profile)   │       │ created_at     │               │
+   ├─────────────┤       │ updated_at     │               │
+   │ id (PK)     │       │ deleted_at     │               │
+   │ user_id(FK) │       └───────┬────────┘               │
+   │ shop_name   │               │                        │
+   │ shop_address│  ┌────────────┼────────────┐           │
+   │ phone       │  │            │            │           │
+   │ avatar_url  │  │    ┌───────▼───────┐    │   ┌───────▼───────┐
+   │ opening_hrs │  │    │   POI_Media   │    │   │   Tour_POI    │
+   └─────────────┘  │    ├───────────────┤    │   ├───────────────┤
+                    │    │ id (PK)       │    │   │ id (PK)       │
+                    │    │ poi_id (FK)   │    │   │ tour_id (FK)  │
+                    │    │ type          │    │   │ poi_id (FK)   │
+                    │    │ language      │    │   │ order_index   │
+                    │    │ url           │    │   └───────────────┘
+                    │    │ duration      │    │
+                    │    │ size_bytes    │    │
+                    │    │ created_at    │    │
+                    │    └───────────────┘    │
+                    │                        │
+┌───────────────────┼────────────────────────┼───────────────────┐
+│          TOURIST USER DOMAIN               │                   │
+├────────────────────────────────────────────┤                   │
+│                   │                        │                   │
+│  ┌────────────────┤    ┌───────────────┐   │  ┌────────────────┐│
+│  │  Tourist_User  │    │ View_History  │   │  │   Favorite     ││
+│  ├────────────────┤    ├───────────────┤   │  ├────────────────┤│
+│  │ id (PK)        │◄───┤ tourist_id(FK)│   │  │ id (PK)        ││
+│  │ user_id (FK)   │    │ poi_id (FK)   │   │  │ tourist_id(FK) ││
+│  │ display_name   │    │ viewed_at     │   │  │ poi_id (FK)    ││
+│  │ language_pref  │    │ audio_played  │   │  │ created_at     ││
+│  │ auto_play      │    │ trigger_type  │   │  └────────────────┘│
+│  │ push_token     │    └───────────────┘   │                    │
+│  │ device_id      │                        │                    │
+│  └────────────────┘                        │                    │
+└────────────────────────────────────────────┘                    │
 ```
+
+> **Lưu ý thiết kế thực tế (Implementation Notes):**
+> - `User` là bảng hợp nhất cho cả Admin, Shop Owner, và Tourist (phân quyền bằng cột `role`).
+> - Không sử dụng PostGIS extension; tọa độ lưu trực tiếp bằng 2 trường `Float`.
+> - Không tạo bảng `QR_Code` riêng; QR validation dùng format string `gpstours:poi:<uuid>` xử lý trên code.
+> - `PoiStatus` / `TourStatus` dùng giá trị `ARCHIVED` thay vì `INACTIVE`.
 
 ---
 
 ## 2. Entity Definitions
 
-### 2.1 Admin (User)
+### 2.1 User (Unified — Admin, Shop Owner, Tourist)
+
+> **Implementation Note:** Trong code thực tế, bảng `Admin` và `Shop_Owner` được hợp nhất thành **1 bảng `User` duy nhất**, phân quyền bằng cột `role`. Thiết kế này đơn giản hóa authentication flow và giảm trùng lặp.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | UUID | PK | Primary key |
-| `username` | VARCHAR(50) | UNIQUE, NOT NULL | Login username |
-| `email` | VARCHAR(100) | UNIQUE, NOT NULL | Email address |
+| `email` | VARCHAR(100) | UNIQUE, NOT NULL | Login email |
 | `password_hash` | VARCHAR(255) | NOT NULL | bcrypt hashed password |
 | `full_name` | VARCHAR(100) | NOT NULL | Display name |
-| `role` | ENUM | NOT NULL | Values: SUPER_ADMIN, ADMIN, VIEWER |
-| `status` | ENUM | NOT NULL | Values: ACTIVE, INACTIVE, LOCKED |
-| `last_login_at` | TIMESTAMP | NULL | Last successful login |
+| `role` | ENUM | NOT NULL | Values: ADMIN, SHOP_OWNER, TOURIST |
+| `status` | ENUM | NOT NULL, DEFAULT ACTIVE | Values: ACTIVE, INACTIVE, LOCKED |
 | `failed_login_count` | INTEGER | DEFAULT 0 | Failed login attempts |
 | `locked_until` | TIMESTAMP | NULL | Account lock expiry |
+| `refresh_token` | VARCHAR(500) | NULL | Current refresh token |
+| `refresh_token_id` | VARCHAR(100) | NULL | Refresh token identifier |
+| `profile` | JSONB | NULL | Extended profile data (phone, birth_date, address, gender) |
 | `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
 | `updated_at` | TIMESTAMP | NOT NULL | Last update timestamp |
 
 **Indexes:**
-- `idx_admin_username` on `username`
-- `idx_admin_email` on `email`
+- `idx_user_email` on `email` (UNIQUE)
 
 ---
 
@@ -115,67 +122,26 @@
 
 ---
 
-### 2.2b Shop_Owner
+### 2.2 Shop_Owner (Profile extension)
+
+> **Implementation Note:** `ShopOwner` là bảng phụ liên kết 1-1 với `User` để lưu thông tin cửa hàng. Không phải entity đăng nhập riêng.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | UUID | PK | Primary key |
-| `email` | VARCHAR(100) | UNIQUE, NOT NULL | Login email |
-| `password_hash` | VARCHAR(255) | NOT NULL | bcrypt hashed password |
-| `full_name` | VARCHAR(100) | NOT NULL | Tên chủ quán |
-| `phone` | VARCHAR(20) | NULL | Số điện thoại |
+| `user_id` | UUID | FK → User.id, UNIQUE, NOT NULL | Link to User table |
 | `shop_name` | VARCHAR(200) | NOT NULL | Tên quán |
 | `shop_address` | VARCHAR(500) | NULL | Địa chỉ quán |
+| `phone` | VARCHAR(20) | NULL | Số điện thoại |
 | `avatar_url` | VARCHAR(500) | NULL | Ảnh đại diện |
-| `status` | ENUM | NOT NULL | Values: ACTIVE, INACTIVE, PENDING |
-| `email_verified` | BOOLEAN | DEFAULT false | Email đã xác minh |
-| `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
-| `updated_at` | TIMESTAMP | NOT NULL | Last update |
-
-**Indexes:**
-- `idx_shop_owner_email` on `email`
-- `idx_shop_owner_status` on `status`
-
-**Notes:**
-- Shop Owner tự đăng ký qua registration form
-- Status = PENDING cho đến khi email verified
-- Mỗi Shop Owner có thể sở hữu nhiều POIs
-
----
-
-### 2.2c User_Profile
-
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `user_id` | UUID | PK, FK → Admin.id or Shop_Owner.id | Chủ sở hữu hồ sơ |
-| `role` | ENUM | NOT NULL | SUPER_ADMIN, ADMIN, VIEWER, SHOP_OWNER |
-| `full_name` | VARCHAR(100) | NOT NULL | Đồng bộ header/top-bar |
-| `avatar_url` | VARCHAR(500) | NULL | CDN URL thumbnail 128x128 |
-| `birth_date` | DATE | NULL | Ngày sinh (>= 1900, tuổi ≥18) |
-| `gender` | ENUM | NULL | MALE, FEMALE, OTHER, PREFER_NOT_SAY |
-| `phone_country_code` | VARCHAR(5) | NULL | ISO country calling code |
-| `phone_number` | VARCHAR(20) | NULL | Số đã chuẩn hóa E.164 |
-| `address_line1` | VARCHAR(200) | NULL | Địa chỉ dòng 1 |
-| `address_line2` | VARCHAR(200) | NULL | Địa chỉ dòng 2 |
-| `city` | VARCHAR(100) | NULL | Thành phố |
-| `country` | CHAR(2) | NULL | ISO 3166-1 alpha-2 |
-| `shop_name` | VARCHAR(200) | NULL | Hiện với Shop Owner |
-| `shop_address` | VARCHAR(500) | NULL | Địa chỉ quán |
 | `opening_hours` | JSONB | NULL | `{ day, open, close }[]` |
-| `preferences` | JSONB | NULL | UI preferences (language, timezone, notification) |
-| `last_synced_at` | TIMESTAMP | NULL | Lần cuối FE sync |
-| `updated_by` | UUID | NULL | Ai cập nhật (Super Admin hoặc self) |
-| `updated_at` | TIMESTAMP | NOT NULL | Timestamp cập nhật |
 
 **Indexes:**
-- `pk_user_profile` trên `user_id`
-- `idx_user_profile_role` trên `role`
-- `idx_user_profile_country_city`
+- `idx_shop_owner_user_id` on `user_id` (UNIQUE)
 
 **Notes:**
-- Coi như view hợp nhất giữa bảng Admin và Shop_Owner để FE gọi `/me`.
-- Nếu user bị disable thì vẫn giữ hồ sơ để audit, `preferences` giúp đồng bộ theme/language.
-- Trigger cập nhật `user_profile` khi bảng Admin hoặc Shop_Owner thay đổi core fields.
+- Mỗi Shop Owner có thể sở hữu nhiều POIs
+- Đăng nhập qua bảng `User` với `role = SHOP_OWNER`
 
 ---
 
@@ -188,12 +154,11 @@
 | `name_en` | VARCHAR(200) | NULL | English name |
 | `description_vi` | TEXT | NOT NULL | Vietnamese description |
 | `description_en` | TEXT | NULL | English description |
-| `latitude` | DECIMAL(10,8) | NOT NULL | GPS latitude |
-| `longitude` | DECIMAL(11,8) | NOT NULL | GPS longitude |
-| `location` | GEOMETRY(POINT) | NOT NULL | PostGIS point (for spatial queries) |
-| `trigger_radius` | INTEGER | DEFAULT 15 | Radius in meters (5-100) |
+| `latitude` | FLOAT | NOT NULL | GPS latitude |
+| `longitude` | FLOAT | NOT NULL | GPS longitude |
+| `trigger_radius` | INTEGER | DEFAULT 50 | Radius in meters (5-100) |
 | `category` | ENUM | NOT NULL | Values: DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
-| `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, INACTIVE |
+| `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, ARCHIVED |
 | `created_by` | UUID | FK → Admin.id, NULL | Creator (Admin) |
 | `owner_id` | UUID | FK → Shop_Owner.id, NULL | POI owner (Shop Owner) |
 | `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
@@ -201,11 +166,12 @@
 | `deleted_at` | TIMESTAMP | NULL | Soft delete timestamp |
 
 **Indexes:**
-- `idx_poi_location` GIST index on `location`
 - `idx_poi_status` on `status`
 - `idx_poi_category` on `category`
 - `idx_poi_deleted_at` on `deleted_at`
 - `idx_poi_owner` on `owner_id`
+
+> **Implementation Note:** Không sử dụng PostGIS `GEOMETRY(POINT)`. Tọa độ lưu trực tiếp bằng 2 trường `Float` (`latitude`, `longitude`). Tìm kiếm gần (nearby) sử dụng công thức Haversine trong application layer.
 
 **Validation Rules:**
 - `-90 <= latitude <= 90`
@@ -324,13 +290,14 @@
 | `viewed_at` | TIMESTAMP | NOT NULL | View timestamp |
 | `view_duration_sec` | INTEGER | NULL | Time spent on POI detail |
 | `audio_played` | BOOLEAN | DEFAULT false | Did user play audio? |
-| `audio_completed` | BOOLEAN | DEFAULT false | Did user complete audio? |
 | `trigger_type` | ENUM | NOT NULL | Values: GPS, QR, MANUAL |
 
 **Indexes:**
 - `idx_history_user` on `user_id`
 - `idx_history_poi` on `poi_id`
 - `idx_history_date` on `viewed_at`
+
+> **Implementation Note:** Trường `view_duration_sec` và `audio_completed` trong PRD gốc chưa được implement trong MVP. Sẽ bổ sung ở post-MVP nếu cần.
 
 ---
 
@@ -349,29 +316,7 @@
 
 ---
 
-## 4. System Support Entities
-
-### 4.1 QR_Code
-
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `id` | UUID | PK | Primary key |
-| `poi_id` | UUID | FK → POI.id, NOT NULL | Linked POI |
-| `code_data` | VARCHAR(500) | UNIQUE, NOT NULL | QR encoded data (deep link) |
-| `format` | ENUM | DEFAULT 'URL' | Values: URL, POI_ID |
-| `is_active` | BOOLEAN | DEFAULT true | Active status |
-| `scan_count` | INTEGER | DEFAULT 0 | Total scans |
-| `generated_at` | TIMESTAMP | NOT NULL | Generation time |
-| `last_scanned_at` | TIMESTAMP | NULL | Last scan time |
-
-**Indexes:**
-- `idx_qr_poi` on `poi_id`
-- `idx_qr_code` on `code_data`
-
-**Notes:**
-- Mỗi POI có thể có nhiều QR codes (ví dụ: in ở nhiều vị trí)
-- QR code bị inactive khi POI bị xóa hoặc unpublish
-- `code_data` format: `https://gpstours.app/poi/{poi_id}`
+> **Implementation Note:** Bảng `QR_Code` riêng biệt trong PRD gốc **không được triển khai** trong MVP. Thay vào đó, QR validation sử dụng format string `gpstours:poi:<uuid>` và được xử lý trực tiếp trong code controller (`/public/qr/validate`). Cách tiếp cận này đơn giản hơn cho MVP và tránh tạo thêm entity không cần thiết.
 
 ---
 
@@ -380,14 +325,14 @@
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | UUID | PK | Primary key |
-| `user_id` | UUID | FK → Tourist_User.id, NULL | User (NULL if anonymous) |
+| `device_id` | VARCHAR(255) | NOT NULL | Device identifier |
 | `poi_id` | UUID | FK → POI.id, NOT NULL | Triggered POI |
 | `trigger_type` | ENUM | NOT NULL | Values: GPS, QR, MANUAL |
-| `user_action` | ENUM | NOT NULL | Values: ACCEPTED, SKIPPED, IGNORED, AUTO_DISMISSED |
-| `user_lat` | DECIMAL(10,8) | NULL | User latitude at trigger |
-| `user_lng` | DECIMAL(11,8) | NULL | User longitude at trigger |
-| `distance_meters` | DECIMAL(6,2) | NULL | Distance to POI at trigger |
-| `triggered_at` | TIMESTAMP | NOT NULL | Event timestamp |
+| `user_action` | ENUM | NOT NULL | Values: ACCEPTED, SKIPPED, DISMISSED |
+| `user_lat` | FLOAT | NULL | User latitude at trigger |
+| `user_lng` | FLOAT | NULL | User longitude at trigger |
+| `distance_meters` | FLOAT | NULL | Distance to POI at trigger |
+| `created_at` | TIMESTAMP | NOT NULL | Event timestamp |
 
 **Indexes:**
 - `idx_trigger_user` on `user_id`

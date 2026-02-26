@@ -1,9 +1,9 @@
 # 📋 Functional Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-18
+> **Cập nhật:** 2026-02-25
 
 ---
 
@@ -719,6 +719,108 @@ Shop Owner xem thống kê lượt xem và lượt nghe audio của POI(s) mình
 
 **Business Rules:**
 - BR-1005: Shop Owner chỉ xem analytics của POI(s) mình
+
+---
+
+## 8. Tourist App — Phase 4 (Auto-trigger, Tour Following, QR, Favorites, History)
+
+### FR-801: Auto-trigger POI theo GPS
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-801 |
+| **Title** | Tự động phát hiện điểm lân cận theo vị trí GPS |
+| **Priority** | P0 |
+| **User Story** | US-404 |
+
+**Description:**  
+Hệ thống sử dụng `Location.watchPositionAsync` để liên tục giám sát vị trí GPS của du khách. Khi khoảng cách đến POI < `triggerRadius` (mặc định 50m), tự động hiển thị thông tin và phát audio.
+
+**Business Rules:**
+- BR-801: Tính khoảng cách bằng công thức Haversine (trong `utils/distance.ts`)
+- BR-802: Mỗi POI chỉ trigger 1 lần trong 1 session (được track bằng `triggeredPoiIds`)
+- BR-803: Bottom sheet popup hiển thị tên, hình ảnh, và tự động autoPlay audio
+- BR-804: Quản lý hàng chờ phát Audio (Audio Queue Management): Đảm bảo ở một thời điểm chỉ có 1 luồng âm thanh được phát (không phát trùng lặp).
+- BR-805: Xử lý chuyển vùng liền kề: Khi user đang nghe audio của vùng 1, nếu lập tức rời khỏi vùng 1 và đi vào vùng 2, hệ thống phải **tắt ngay lập tức** audio vùng 1 trước khi tự động phát audio của vùng 2.
+
+---
+
+### FR-802: Tour Following Mode
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-802 |
+| **Title** | Chế độ đi theo Tour thực tế |
+| **Priority** | P0 |
+| **User Story** | US-407 |
+
+**Description:**  
+Giao diện bản đồ chuyên dụng cho việc bám sát lộ trình tour. Vẽ đường Polyline giữa các trạm, theo dõi tiến độ và tự động check-in khi đến nơi.
+
+**Business Rules:**
+- BR-804: Hiển thị markers màu (xanh: đang đến, xanh lá: đã qua, xám: chưa đến)
+- BR-805: Tự động chuyển sang trạm kế tiếp khi bấm nút "Tiếp theo"
+- BR-806: Khi hoàn thành tất cả trạm, hiển thị màn hình chúc mừng
+
+---
+
+### FR-803: QR Scanner
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-803 |
+| **Title** | Quét mã QR để check-in địa điểm |
+| **Priority** | P1 |
+| **User Story** | US-503 |
+
+**Description:**  
+Tourist mở camera quét QR code được gắn tại các điểm tham quan. App gọi API `/public/qr/validate` để kiểm tra và chuyển hướng đến trang chi tiết POI.
+
+**Business Rules:**
+- BR-807: QR format: `gpstours:poi:<uuid>`
+- BR-808: Nếu QR không hợp lệ, hiển thị thông báo lỗi và cho quét lại
+- BR-809: Sử dụng `expo-camera` (CameraView) với `onBarcodeScanned`
+- BR-809a: Phân loại tải dữ liệu khi quét QR:
+  + TH1 (Offline Mode): Nếu dung lượng data thuyết minh < cấu hình bộ nhớ cho phép của thiết bị -> Không yêu cầu Wi-Fi, truy xuất ngay dữ liệu Local qua **SQLite**.
+  + TH2 (Online Mode): Nếu tổng dung lượng data thuyết minh > cấu hình thiết bị -> Bắt buộc yêu cầu Wi-Fi/4G, gọi API lên **SQL Server (PostgreSQL)** để lấy thông tin.
+
+---
+
+### FR-804: Favorites
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-804 |
+| **Title** | Lưu địa điểm yêu thích |
+| **Priority** | P1 |
+| **User Story** | US-408 |
+
+**Description:**  
+Tourist đã đăng nhập có thể bấm nút ❤️ trên POI Detail để lưu địa điểm yêu thích. Màn hình Favorites hiển thị danh sách các POI đã lưu.
+
+**Business Rules:**
+- BR-810: Cần đăng nhập để sử dụng tính năng
+- BR-811: Toggle favorite (bấm lần 2 để bỏ yêu thích)
+- BR-812: API: `POST/DELETE /tourist/me/favorites/:poiId`
+
+---
+
+### FR-805: History
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-805 |
+| **Title** | Lịch sử trải nghiệm |
+| **Priority** | P1 |
+| **User Story** | US-409 |
+
+**Description:**  
+Màn hình liệt kê các địa điểm du khách đã tham quan, bao gồm thời gian và trạng thái nghe audio.
+
+**Business Rules:**
+- BR-813: Cần đăng nhập để xem
+- BR-814: Sắp xếp theo thời gian mới nhất
+- BR-815: API: `GET /tourist/me/history`
 
 ---
 

@@ -1,25 +1,63 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode, Database } from 'lucide-react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { syncOfflinePois } from '../../services/database';
+import { touristService } from '../../services/touristService';
 
 export default function MoreScreen() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [autoPlay, setAutoPlay] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [userProfile, setUserProfile] = useState<{ displayName: string; email: string } | null>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        checkLoginStatus();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            checkLoginStatus();
+        }, [])
+    );
 
     const checkLoginStatus = async () => {
         const token = await AsyncStorage.getItem('accessToken');
-        setIsLoggedIn(!!token);
+        if (token) {
+            setIsLoggedIn(true);
+            try {
+                const profile = await touristService.getProfile();
+                setUserProfile({
+                    displayName: profile.displayName || profile.user?.fullName || 'Tourist User',
+                    email: profile.user?.email || 'tourist@gpstours.com'
+                });
+            } catch (error) {
+                console.error('Failed to get profile', error);
+                // If token is invalid/expired, we could log them out here
+            }
+        } else {
+            setIsLoggedIn(false);
+            setUserProfile(null);
+        }
+    };
+
+    const handleSyncOffline = async () => {
+        setIsSyncing(true);
+        try {
+            const result = await syncOfflinePois();
+            if (result.success) {
+                Alert.alert('Thành công', `Đã đồng bộ ${result.count} địa điểm. Bây giờ bạn có thể quét QR offline!`);
+            } else {
+                Alert.alert('Thất bại', 'Không thể đồng bộ dữ liệu. Kiểm tra mạng và thử lại.');
+            }
+        } catch (error) {
+            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi đồng bộ.');
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const menuItems = [
         { icon: <QrCode size={20} color="#64748b" />, label: 'Quét mã QR địa điểm', show: true, onPress: () => router.push('/scanner') },
+        { icon: <Database size={20} color="#64748b" />, label: 'Đồng bộ dữ liệu Offline', show: true, onPress: handleSyncOffline },
         { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn, onPress: () => router.push('/favorites') },
         { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: setAutoPlay },
         { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true },
@@ -32,6 +70,13 @@ export default function MoreScreen() {
                 <Text style={styles.headerTitle}>Cá nhân</Text>
             </View>
 
+            {isSyncing && (
+                <View style={{ padding: 16, alignItems: 'center', backgroundColor: '#e0f2fe', marginHorizontal: 16, borderRadius: 12, marginBottom: 16 }}>
+                    <ActivityIndicator size="small" color="#0284c7" />
+                    <Text style={{ marginTop: 8, color: '#0284c7', fontWeight: '500' }}>Đang tải dữ liệu offline...</Text>
+                </View>
+            )}
+
             {!isLoggedIn && (
                 <View style={styles.authCard}>
                     <View style={styles.authIconContainer}>
@@ -41,7 +86,7 @@ export default function MoreScreen() {
                         <Text style={styles.authTitle}>Đăng nhập</Text>
                         <Text style={styles.authDesc}>Để lưu điểm yêu thích và lịch sử trải nghiệm</Text>
                     </View>
-                    <TouchableOpacity style={styles.authButton}>
+                    <TouchableOpacity style={styles.authButton} onPress={() => router.push('/login')}>
                         <Text style={styles.authButtonText}>Đăng nhập</Text>
                     </TouchableOpacity>
                 </View>
@@ -50,15 +95,16 @@ export default function MoreScreen() {
             {isLoggedIn && (
                 <View style={styles.profileCard}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>T</Text>
+                        <Text style={styles.avatarText}>{userProfile?.displayName?.charAt(0)?.toUpperCase() || 'T'}</Text>
                     </View>
                     <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>Tourist User</Text>
-                        <Text style={styles.profileEmail}>tourist@gpstours.com</Text>
+                        <Text style={styles.profileName}>{userProfile?.displayName || 'Tourist User'}</Text>
+                        <Text style={styles.profileEmail}>{userProfile?.email || 'tourist@gpstours.com'}</Text>
                     </View>
                     <TouchableOpacity style={styles.logoutButton} onPress={async () => {
                         await AsyncStorage.removeItem('accessToken');
                         setIsLoggedIn(false);
+                        setUserProfile(null);
                     }}>
                         <Text style={styles.logoutText}>Đăng xuất</Text>
                     </TouchableOpacity>

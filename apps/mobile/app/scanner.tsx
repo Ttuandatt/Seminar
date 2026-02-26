@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { publicService } from '../services/publicService';
+import { getOfflinePoi } from '../services/database';
 import { XCircle } from 'lucide-react-native';
 
 export default function ScannerScreen() {
@@ -21,6 +22,38 @@ export default function ScannerScreen() {
 
     const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
         setScanned(true);
+
+        const match = data.match(/^gpstours:poi:(.+)$/);
+        if (match) {
+            const poiId = match[1];
+
+            // Check SQLite first
+            const offlinePoi = getOfflinePoi(poiId);
+
+            if (offlinePoi) {
+                if (offlinePoi.hasLargeAudio === 1) {
+                    // TH2: Require WiFi/Network
+                    Alert.alert(
+                        "Dữ liệu lớn",
+                        "Địa điểm này có chứa âm аудіо/video chất lượng cao. Cần kết nối mạng để trải nghiệm tốt nhất.",
+                        [
+                            { text: "Tiếp tục", onPress: () => router.replace(`/poi/${poiId}`) }
+                        ]
+                    );
+                } else {
+                    // TH1: Use SQLite directly
+                    Alert.alert(
+                        "Chế độ Offline",
+                        "Hiển thị dữ liệu từ máy của bạn.",
+                        [
+                            { text: "Tiếp tục", onPress: () => router.replace(`/poi/${poiId}?offline=true`) }
+                        ]
+                    );
+                }
+                return;
+            }
+        }
+
         try {
             const response = await publicService.validateQr(data);
             if (response && response.valid && response.poi) {
@@ -33,7 +66,7 @@ export default function ScannerScreen() {
             }
         } catch (error) {
             console.error("QR Validation Error:", error);
-            Alert.alert("Lỗi", "Mã QR không hợp lệ hoặc không thuộc hệ thống!", [
+            Alert.alert("Lỗi", "Mã QR không hợp lệ hoặc không thể kết nối server!", [
                 { text: "Thử lại", onPress: () => setScanned(false) }
             ]);
         }

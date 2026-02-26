@@ -1,9 +1,9 @@
 # ✅ Acceptance Criteria
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-18  
+> **Cập nhật:** 2026-02-25  
 > **Format:** Given-When-Then (Gherkin)
 
 ---

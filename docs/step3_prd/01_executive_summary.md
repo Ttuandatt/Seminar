@@ -145,10 +145,13 @@
 
 ## 9. Các bước tiếp theo
 
-1. ☐ Hoàn thành PRD Documents (Phase 1)
-2. ☐ Tạo Diagrams (Phase 2)
-3. ☐ Gate 1 Approval từ Stakeholders
-4. ☐ Chuyển sang Step 2: Low-code (UI + Flow)
+1. ✅ Hoàn thành PRD Documents (Phase 1)
+2. ✅ Tạo Diagrams (Phase 2)
+3. ✅ Gate 1 Approval từ Stakeholders
+4. ✅ Chuyển sang Step 2: Low-code (UI + Flow)
+5. ✅ Step 4: POC Implementation — MVP 100% Complete
+6. ☐ Step 5: Refactor & Testing (Unit Test > 70%)
+7. ☐ Step 6: Deployment & UAT
 
 ---
 

@@ -213,7 +213,7 @@ export default function MapScreen() {
 
                         {audioMedia?.url && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioMedia.url} autoPlay={true} />
+                                <AudioPlayer audioUrl={audioMedia.url} poiId={selectedPoi.id} autoPlay={true} />
                             </View>
                         )}
                     </View>
