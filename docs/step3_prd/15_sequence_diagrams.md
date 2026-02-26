@@ -35,6 +35,7 @@
 
 ```mermaid
 sequenceDiagram
+    title SD-01: Admin Login
     actor Admin
     participant UI as Admin Dashboard
     participant API as NestJS API
@@ -90,6 +91,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-02: Shop Owner Register + Login
     actor SO as Shop Owner
     participant UI as Web Dashboard
     participant API as NestJS API
@@ -132,6 +134,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-03: Admin Create POI
     actor Admin
     participant UI as Admin Dashboard
     participant API as NestJS API
@@ -183,6 +186,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-04: Shop Owner Create POI
     actor SO as Shop Owner
     participant UI as Shop Dashboard
     participant API as NestJS API
@@ -217,6 +221,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-05: Create Tour
     actor Admin
     participant UI as Admin Dashboard
     participant API as NestJS API
@@ -256,6 +261,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-06: Tourist View Map + Auto-trigger
     actor Tourist
     participant App as Mobile App [Expo]
     participant Map as react-native-maps
@@ -298,6 +304,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-07: Tourist Follow Tour
     actor Tourist
     participant App as Mobile App
     participant Map as Mapbox GL
@@ -349,6 +356,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-08: Overlap Zone Handling
     actor Tourist
     participant App as Mobile App
     participant GPS as GPS Service
@@ -384,6 +392,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-09: Forgot Password
     actor User as Admin / Shop Owner
     participant UI as Web Dashboard
     participant API as NestJS API
@@ -450,6 +459,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-10: Edit POI
     actor Admin
     participant UI as Admin Dashboard
     participant API as NestJS API
@@ -521,6 +531,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-11: Delete POI + Cascade
     actor Admin
     participant UI as Admin Dashboard
     participant API as NestJS API
@@ -566,6 +577,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-12: Tourist Save Favorite POI
     actor Tourist
     participant App as Mobile App (Expo)
     participant API as NestJS API
@@ -619,6 +631,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-13: Shop Owner View Analytics
     actor SO as Shop Owner
     participant UI as Shop Dashboard
     participant API as NestJS API
@@ -670,6 +683,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-14: Tourist Language Switch
     actor Tourist
     participant App as Mobile App (Expo)
     participant i18n as i18n Service
@@ -722,6 +736,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-15: Tourist Register and Login
     actor Tourist
     participant App as Mobile App [Expo]
     participant Auth as authService.ts
@@ -773,6 +788,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-16: Global Audio Singleton
     actor Tourist
     participant App as Mobile App [Expo]
     participant Ctx as AudioContext [Singleton]
@@ -815,6 +831,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    title SD-17: QR Code Offline Fallback SQLite
     actor Tourist
     participant App as Mobile App [Expo]
     participant Scanner as CameraView
