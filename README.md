@@ -98,11 +98,11 @@ DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=pu
 # Ở apps/api
 npm install
 
-# Tạo bảng trong database
-npx prisma migrate deploy
-
-# Generate Prisma Client
+# Generate Prisma Client (Chạy trước để tránh lỗi EPERM nếu Server đang bật)
 npx prisma generate
+
+# Tạo bảng trong database
+npx prisma migrate dev
 ```
 
 ### Bước 5: Chạy Backend
@@ -131,8 +131,12 @@ npm run dev
 ```bash
 # Mở terminal mới
 cd apps/mobile
+
+# Bắt buộc thêm --legacy-peer-deps để tránh lỗi xung đột phiên bản thư viện
 npm install --legacy-peer-deps
-npx expo start
+
+# Chạy app và xóa cache cũ
+npx expo start -c
 ```
 
 > Quét **QR code** trên terminal bằng app **Expo Go** trên điện thoại (cùng mạng Wi-Fi).
@@ -265,8 +269,8 @@ POST http://localhost:3000/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@gpstours.com",
-  "password": "Admin@123",
+  "email": "admin@gpstours.vn",
+  "password": "admin123",
   "fullName": "System Admin",
   "role": "ADMIN"
 }
