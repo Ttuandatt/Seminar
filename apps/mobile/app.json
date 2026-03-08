@@ -28,6 +28,11 @@
         "backgroundColor": "#3b82f6"
       },
       "edgeToEdgeEnabled": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKeyPleaseReplaceWithRealOne"
+        }
+      },
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
