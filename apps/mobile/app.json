@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "GPS Tours",
+    "slug": "gpstours",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,18 +10,29 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#3b82f6"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gpstours.tourist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "GPS Tours cần vị trí để tự động phát thuyết minh khi bạn đến gần các điểm tham quan.",
+        "NSLocationAlwaysUsageDescription": "GPS Tours cần vị trí để phát thuyết minh ngay cả khi ứng dụng chạy nền.",
+        "NSCameraUsageDescription": "GPS Tours cần camera để quét mã QR tại các điểm tham quan."
+      }
     },
     "android": {
+      "package": "com.gpstours.tourist",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#3b82f6"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,7 +40,19 @@
     "scheme": "gpstours",
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "GPS Tours cần vị trí để phát thuyết minh tự động."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "GPS Tours cần camera để quét mã QR."
+        }
+      ]
     ]
   }
 }
