@@ -31,7 +31,11 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -53,6 +57,13 @@
           "cameraPermission": "GPS Tours cần camera để quét mã QR."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f974b33e-b891-4137-90ac-50adf6c851d9"
+      }
+    },
+    "owner": "danielpcanh"
   }
 }
