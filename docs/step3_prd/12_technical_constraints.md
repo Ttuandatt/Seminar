@@ -1,9 +1,9 @@
 # ⚙️ Technical Constraints
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
+> **Phiên bản:** 2.2  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-24
+> **Cập nhật:** 2026-03-07
 
 ---
 
@@ -30,13 +30,14 @@
 | Layer | Technology | Version | Notes |
 |-------|------------|---------|-------|
 | Framework | React Native (Expo) | SDK 54 | Cross-platform iOS/Android |
-| Navigation | expo-router | 4.x | File-based routing |
+| Navigation | expo-router | 6.x | File-based routing |
 | Maps | react-native-maps | 1.20+ | GPS integration (default provider) |
-| Audio | expo-av | Latest | Playback (migrating to expo-audio in SDK 55) |
+| Audio | expo-audio | 1.x | Global Singleton Context |
+| Offline DB | expo-sqlite | 16.x | QR Offline Fallback (TH1/TH2) |
 | Icons | lucide-react-native | Latest | SVG icons |
 | Storage | AsyncStorage | Latest | JWT token storage |
-| Push | Firebase Cloud Messaging | Latest | Future (P3) |
-| Auth | JWT (Optional) | - | Optional login for favorites/history |
+| Auth | JWT (Optional) | - | Login/Register for Tourist |
+| Distribution | EAS Build | Latest | Standalone APK/AAB |
 
 > **Quyết định:** Chọn React Native (Expo) thay vì PWA vì cần background GPS tracking, offline audio, và native UX. Dùng expo-router (file-based) thay vì React Navigation để đồng bộ với cấu trúc Expo hiện đại.
 
@@ -51,7 +52,7 @@
 | ORM | Prisma | 5.x | Type-safe queries |
 | Cache | Redis | 7.x | Session, rate limiting |
 | Auth | Passport.js + JWT | Latest | Role-based (Admin, Shop Owner, Tourist) |
-| Storage | Local filesystem | Latest | Media files (UPLOAD_DIR) |
+| Storage | Cloud Storage / Local | - | Media files (UPLOAD_DIR or cloud) |
 | API Docs | Swagger (OpenAPI) | 3.0 | Auto-generated from decorators |
 
 > **Quyết định:** Chọn NestJS + Prisma thay vì FastAPI/SQLAlchemy để giữ thống nhất TypeScript stack và type safety từ DB đến frontend.
@@ -63,7 +64,8 @@
 | Git | Version control | GitHub |
 | CI/CD | Automation | GitHub Actions |
 | Containers | Docker | Docker Compose for local |
-| Hosting | Azure / AWS / GCP | TBD |
+| **Cloud Hosting** | **Render.com** | **API + PostgreSQL + Static** |
+| Mobile Build | EAS Build (Expo) | APK/AAB cloud build |
 | Monitoring | Sentry | Error tracking |
 | APM | New Relic / Datadog | Performance (P2) |
 

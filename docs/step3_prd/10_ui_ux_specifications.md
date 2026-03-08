@@ -393,6 +393,7 @@ More Menu ─── Bottom Tab: More
 **Refs:** FR-201~205, UC-11~12, BR-10~21
 
 **UX Notes:**
+- Location search field shows up to 5 geocoding suggestions (type ≥3 characters). Selecting a suggestion fills Latitude/Longitude, updates the address line, and drops the marker on the map. Same component is reused for Shop Owner POI form (S14).
 - Saving shows a full-width loading state on the primary button; once API returns, a success toast confirms "Đã tạo/Đã cập nhật POI" before redirecting to the POI list.
 - API/validation failures surface inline error text and an error toast summarizing the issue (merged for multi-error responses).
 - `Preview` requires at least Vietnamese Name + Description; missing fields trigger an error toast instead of a blocking alert.

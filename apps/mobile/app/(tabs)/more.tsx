@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode, Database } from 'lucide-react-native';
+import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode, Database, Info, Pencil } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { syncOfflinePois } from '../../services/database';
 import { touristService } from '../../services/touristService';
@@ -59,9 +59,10 @@ export default function MoreScreen() {
         { icon: <QrCode size={20} color="#64748b" />, label: 'Quét mã QR địa điểm', show: true, onPress: () => router.push('/scanner') },
         { icon: <Database size={20} color="#64748b" />, label: 'Đồng bộ dữ liệu Offline', show: true, onPress: handleSyncOffline },
         { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn, onPress: () => router.push('/favorites') },
-        { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: setAutoPlay },
-        { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true },
         { icon: <User size={20} color="#64748b" />, label: 'Lịch sử xem', show: isLoggedIn, onPress: () => router.push('/history') },
+        { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: setAutoPlay },
+        { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true, onPress: () => router.push('/language') },
+        { icon: <Info size={20} color="#64748b" />, label: 'Giới thiệu ứng dụng', show: true, onPress: () => router.push('/about') },
     ];
 
     return (
@@ -108,6 +109,10 @@ export default function MoreScreen() {
                     }}>
                         <Text style={styles.logoutText}>Đăng xuất</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity style={styles.editProfileButton} onPress={() => router.push('/edit-profile')}>
+                        <Pencil size={14} color="#3b82f6" />
+                        <Text style={styles.editProfileText}>Chỉnh sửa</Text>
+                    </TouchableOpacity>
                 </View>
             )}
 
@@ -139,7 +144,7 @@ export default function MoreScreen() {
                 ))}
             </View>
 
-            <Text style={styles.versionText}>Phiên bản 1.0.0 (POC)</Text>
+            <Text style={styles.versionText}>GPS Tours v1.0.0</Text>
         </ScrollView>
     );
 }
@@ -294,8 +299,19 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#94a3b8',
     },
+    editProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginTop: 8,
+    },
+    editProfileText: {
+        fontSize: 13,
+        color: '#3b82f6',
+        fontWeight: '500',
+    },
     versionText: {
-        textAlign: 'center',
+        textAlign: 'center' as const,
         color: '#94a3b8',
         fontSize: 12,
         marginTop: 40,

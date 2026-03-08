@@ -249,7 +249,7 @@ Admin có thể chọn vị trí POI bằng cách click trên bản đồ hoặc
 **Features:**
 - Interactive map with click to place marker
 - Manual coordinate input fields
-- Address search (geocoding)
+- Address search (geocoding) with live suggestions (>=3 characters) and auto-fill of lat/lng/address when a suggestion is selected
 - Show trigger radius preview
 
 ---

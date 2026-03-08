@@ -80,6 +80,10 @@ export default function LoginScreen() {
                         )}
                     </TouchableOpacity>
 
+                    <TouchableOpacity onPress={() => router.push('/forgot-password')} style={styles.forgotContainer}>
+                        <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+                    </TouchableOpacity>
+
                     <View style={styles.registerContainer}>
                         <Text style={styles.registerText}>Chưa có tài khoản? </Text>
                         <TouchableOpacity onPress={() => router.replace('/register')}>
@@ -151,6 +155,14 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    forgotContainer: {
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    forgotText: {
+        color: '#3b82f6',
+        fontSize: 14,
     },
     registerContainer: {
         flexDirection: 'row',

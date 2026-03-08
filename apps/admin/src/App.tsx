@@ -64,7 +64,7 @@ function App() {
           <Route path="settings" element={<PlaceholderPage title="System Settings" />} />
         </Route>
 
-        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

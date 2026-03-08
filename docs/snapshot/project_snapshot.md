@@ -1,6 +1,6 @@
 # Project Snapshot: Seminar GPS Tours
 
-> **Last updated**: 2026-02-24 21:43  
+> **Last updated**: 2026-03-01 10:05  
 > **Monorepo root**: `D:\IT\Projects\Seminar`
 
 ---
@@ -112,6 +112,11 @@ Redis 7:       port 6379, container gpstours-cache
 - `apps/admin/src/lib/api.ts` — Axios instance + JWT interceptors
 - `apps/admin/vite.config.ts` — Vite configuration
 - `apps/admin/tailwind.config.js` — Tailwind config
+
+### Recent Highlights (Q1 2026)
+- Root route now redirects to `/login` so every session lands on the authentication screen before accessing admin tools.
+- `MapPicker` (Leaflet + Nominatim) supports live geocoding suggestions (≥3 characters, max 5 results) with debounce, abort handling, and auto-fill of latitude/longitude/address per FR-204.
+- The same map picker UX is shared with the Shop Owner POI form (S14), keeping admin and merchant flows consistent with the latest UI spec updates.
 
 ---
 

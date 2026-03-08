@@ -178,7 +178,7 @@ Admin có thể chọn vị trí POI bằng cách click trên bản đồ hoặc
 Features:
   - Interactive map with click to place marker
   - Manual coordinate input fields
-  - Address search (geocoding)
+  - Address search (geocoding) với danh sách gợi ý realtime (nhập ≥3 ký tự) và tự động điền lại lat/lng/address khi chọn
   - Show trigger radius preview
 
   FR-205: Upload Media

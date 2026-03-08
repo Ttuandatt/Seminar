@@ -1,9 +1,9 @@
 # 📋 Executive Summary
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-03-07
 
 ---
 
@@ -102,9 +102,10 @@
 | Phase | Duration | Deliverables |
 |-------|----------|--------------|
 | Phase 0 | 1 tuần | Requirements Intake ✅ |
-| Phase 1 | 1 tuần | PRD Documents |
-| Step 2-4 | 4-6 tuần | MVP Development |
-| Step 5-6 | 1-2 tuần | Refactor & Delivery |
+| Phase 1 | 1 tuần | PRD Documents ✅ |
+| Step 2-4 | 4-6 tuần | MVP Development ✅ |
+| Step 5 | 1-2 tuần | Refactor & Testing |
+| **Step 6** | **1 tuần** | **Cloud Deployment + APK Build** 🔄 |
 
 **Tổng MVP estimate:** 8-10 tuần
 
@@ -151,7 +152,7 @@
 4. ✅ Chuyển sang Step 2: Low-code (UI + Flow)
 5. ✅ Step 4: POC Implementation — MVP 100% Complete
 6. ☐ Step 5: Refactor & Testing (Unit Test > 70%)
-7. ☐ Step 6: Deployment & UAT
+7. 🔄 **Step 6: Cloud Deployment (Render) + Build APK (EAS Build)**
 
 ---
 

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -28,6 +35,8 @@ interface GeocodeResult {
 }
 
 const DEFAULT_CENTER: [number, number] = [10.7615, 106.7059]; // Quận 4, Hồ Chí Minh
+const MIN_QUERY_LENGTH = 3;
+const DEBOUNCE_MS = 400;
 
 const MapViewUpdater = ({ latitude, longitude }: { latitude?: number; longitude?: number }) => {
     const map = useMap();
@@ -54,6 +63,8 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<GeocodeResult[]>([]);
     const [searchError, setSearchError] = useState('');
+    const searchControllerRef = useRef<AbortController | null>(null);
+    const skipNextFetchRef = useRef(false);
 
     const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
     const center = useMemo<[number, number]>(() => {
@@ -65,17 +76,27 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
 
     const zoom = hasCoordinates ? 16 : 13;
 
-    const handleSearch = useCallback(async (event: React.FormEvent) => {
-        event.preventDefault();
-        if (!searchQuery.trim()) {
+    const fetchSuggestions = useCallback(async (rawQuery: string) => {
+        const normalized = rawQuery.trim();
+        if (normalized.length < MIN_QUERY_LENGTH) {
+            searchControllerRef.current?.abort();
             setSearchResults([]);
+            setIsSearching(false);
+            setSearchError(normalized.length > 0 ? 'Nhập ít nhất 3 ký tự để tìm kiếm.' : '');
             return;
         }
 
+        searchControllerRef.current?.abort();
+        const controller = new AbortController();
+        searchControllerRef.current = controller;
         setIsSearching(true);
         setSearchError('');
+
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(searchQuery)}`);
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(normalized)}`,
+                { signal: controller.signal },
+            );
             if (!response.ok) {
                 throw new Error('Failed to search address');
             }
@@ -85,12 +106,46 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
                 setSearchError('Không tìm thấy địa điểm phù hợp. Thử từ khóa khác.');
             }
         } catch (err) {
+            if ((err as DOMException)?.name === 'AbortError') {
+                return;
+            }
             console.error('Geocoding error:', err);
             setSearchError('Không thể tìm kiếm địa chỉ. Vui lòng thử lại.');
         } finally {
-            setIsSearching(false);
+            if (!controller.signal.aborted) {
+                setIsSearching(false);
+            }
         }
-    }, [searchQuery]);
+    }, []);
+
+    const handleSearch = useCallback((event: FormEvent) => {
+        event.preventDefault();
+        fetchSuggestions(searchQuery);
+    }, [fetchSuggestions, searchQuery]);
+
+    useEffect(() => {
+        if (skipNextFetchRef.current) {
+            skipNextFetchRef.current = false;
+            return;
+        }
+
+        const normalized = searchQuery.trim();
+        if (normalized.length < MIN_QUERY_LENGTH) {
+            searchControllerRef.current?.abort();
+            setSearchResults([]);
+            setSearchError(normalized.length > 0 ? 'Nhập ít nhất 3 ký tự để tìm kiếm.' : '');
+            setIsSearching(false);
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            fetchSuggestions(normalized);
+        }, DEBOUNCE_MS);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [fetchSuggestions, searchQuery]);
 
     const handleSelectResult = (result: GeocodeResult) => {
         const lat = parseFloat(result.lat);
@@ -99,7 +154,10 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
             onCoordinateChange(lat, lng);
             onAddressSelect?.(result.display_name);
             setSearchResults([]);
+            skipNextFetchRef.current = true;
             setSearchQuery(result.display_name);
+            setSearchError('');
+            setIsSearching(false);
         }
     };
 

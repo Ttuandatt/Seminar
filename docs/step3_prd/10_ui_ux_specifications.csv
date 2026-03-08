@@ -317,6 +317,8 @@ More Menu ─── Bottom Tab: More
 **Screen ID:** S05
 "**States:** Loading (pre-fill), Error (validation inline errors), Error (upload fail), Success (toast), Unsaved changes warning"
 "**Refs:** FR-201~205, UC-11~12, BR-10~21"
+UX Notes:
+  - Ô tìm địa chỉ hiển thị tối đa 5 gợi ý geocoding sau khi nhập ≥3 ký tự; chọn gợi ý sẽ tự điền Latitude/Longitude, cập nhật trường Address và đặt lại marker trên bản đồ (được tái sử dụng cho form Shop Owner S14).
 
   4.6 Tour List (S07)
 "┌──────────┬──────────────────────────────────────────────────────┐
