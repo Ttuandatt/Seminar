@@ -4,7 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
-import { LocateFixed, Layers, Headphones, MapPin } from 'lucide-react-native';
+import { LocateFixed, Layers } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
 import AudioPlayer from '../../components/AudioPlayer';
 import { getMediaUrl } from '../../services/api';
@@ -160,20 +160,11 @@ export default function MapScreen() {
                     <Marker
                         key={poi.id}
                         coordinate={{ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }}
+                        title={poi.nameVi}
+                        description={poi.poiType}
+                        pinColor={poi.poiType === 'MAIN' ? 'red' : 'gold'}
                         onPress={() => handleMarkerPress(poi)}
-                    >
-                        <View style={[
-                            styles.customMarker,
-                            selectedPoi?.id === poi.id && styles.customMarkerSelected,
-                            poi.poiType === 'MAIN' ? styles.customMarkerMain : styles.customMarkerSub
-                        ]}>
-                            {poi.poiType === 'MAIN' ? (
-                                <Headphones size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#F97316'} />
-                            ) : (
-                                <MapPin size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#64748B'} />
-                            )}
-                        </View>
-                    </Marker>
+                    />
                 ))}
             </MapView>
 
@@ -247,29 +238,7 @@ const styles = StyleSheet.create({
         right: 16,
         zIndex: 2,
     },
-    customMarker: {
-        backgroundColor: '#ffffff',
-        padding: 8,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: '#ffffff',
-        shadowColor: '#0C4A6E',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    customMarkerMain: {
-        borderColor: '#F97316',
-    },
-    customMarkerSub: {
-        borderColor: '#E2E8F0',
-    },
-    customMarkerSelected: {
-        backgroundColor: '#F97316',
-        borderColor: '#F97316',
-        transform: [{ scale: 1.1 }],
-    },
+
     controlButton: {
         backgroundColor: '#ffffff',
         width: 52,

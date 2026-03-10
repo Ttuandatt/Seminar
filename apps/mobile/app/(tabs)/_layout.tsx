@@ -16,7 +16,7 @@ export default function TabLayout() {
                 tabBarInactiveTintColor: '#94A3B8',
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: 24,
+                    bottom: Platform.OS === 'android' ? 36 : 24,
                     left: 20,
                     right: 20,
                     elevation: 10,
