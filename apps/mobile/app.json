@@ -40,6 +40,13 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -69,6 +76,12 @@
         "projectId": "f974b33e-b891-4137-90ac-50adf6c851d9"
       }
     },
-    "owner": "danielpcanh"
+    "owner": "danielpcanh",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f974b33e-b891-4137-90ac-50adf6c851d9"
+    }
   }
 }
