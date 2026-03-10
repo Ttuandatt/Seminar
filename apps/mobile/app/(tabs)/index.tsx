@@ -4,11 +4,12 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
-import { LocateFixed, Layers } from 'lucide-react-native';
+import { LocateFixed, Layers, Headphones, MapPin } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
 import AudioPlayer from '../../components/AudioPlayer';
 import { getMediaUrl } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { organicMapStyle } from '../../utils/mapStyle';
 
 const { width } = Dimensions.get('window');
 const VINH_KHANH_REGION = {
@@ -153,20 +154,30 @@ export default function MapScreen() {
                 initialRegion={VINH_KHANH_REGION}
                 showsUserLocation
                 showsMyLocationButton={false}
+                customMapStyle={organicMapStyle}
             >
                 {pois.map((poi) => (
                     <Marker
                         key={poi.id}
                         coordinate={{ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }}
-                        title={poi.nameVi}
-                        description={poi.poiType}
-                        pinColor={poi.poiType === 'MAIN' ? 'red' : 'gold'}
                         onPress={() => handleMarkerPress(poi)}
-                    />
+                    >
+                        <View style={[
+                            styles.customMarker,
+                            selectedPoi?.id === poi.id && styles.customMarkerSelected,
+                            poi.poiType === 'MAIN' ? styles.customMarkerMain : styles.customMarkerSub
+                        ]}>
+                            {poi.poiType === 'MAIN' ? (
+                                <Headphones size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#2563EB'} />
+                            ) : (
+                                <MapPin size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#64748B'} />
+                            )}
+                        </View>
+                    </Marker>
                 ))}
             </MapView>
 
-            <View style={[styles.mapControls, { bottom: selectedPoi ? 160 : 30 }]}>
+            <View style={[styles.mapControls, { bottom: selectedPoi ? 260 : 120 }]}>
                 <TouchableOpacity
                     style={styles.controlButton}
                     onPress={toggleMapType}
@@ -233,8 +244,31 @@ const styles = StyleSheet.create({
     },
     mapControls: {
         position: 'absolute',
-        right: 20,
+        right: 16,
         zIndex: 2,
+    },
+    customMarker: {
+        backgroundColor: '#ffffff',
+        padding: 8,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#ffffff',
+        shadowColor: '#2563EB',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    customMarkerMain: {
+        borderColor: '#2563EB',
+    },
+    customMarkerSub: {
+        borderColor: '#E2E8F0',
+    },
+    customMarkerSelected: {
+        backgroundColor: '#2563EB',
+        borderColor: '#2563EB',
+        transform: [{ scale: 1.1 }],
     },
     controlButton: {
         backgroundColor: '#ffffff',
