@@ -7,6 +7,7 @@ export default function RootLayout() {
         <AudioProvider>
             <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
                 <Stack.Screen name="poi/[id]" options={{ title: 'Khám phá' }} />
                 <Stack.Screen name="tour/[id]" options={{ title: 'Tour' }} />

@@ -10,21 +10,21 @@ const slides = [
     {
         id: '1',
         icon: MapPin,
-        color: '#3b82f6',
+        color: '#0C4A6E',
         title: 'Chào mừng đến GPS Tours',
         description: 'Khám phá Phố Ẩm thực Vĩnh Khánh với hướng dẫn viên thông minh ngay trên điện thoại của bạn.',
     },
     {
         id: '2',
         icon: Headphones,
-        color: '#8b5cf6',
+        color: '#0284c7',
         title: 'Thuyết minh tự động',
         description: 'Khi bạn đi ngang qua một địa điểm, app sẽ tự động phát audio thuyết minh. Không cần thao tác gì cả!',
     },
     {
         id: '3',
         icon: QrCode,
-        color: '#10b981',
+        color: '#F97316',
         title: 'Quét QR khi cần',
         description: 'Nếu GPS không chính xác, bạn có thể quét mã QR tại mỗi địa điểm để nghe thuyết minh ngay lập tức.',
     },
@@ -173,11 +173,11 @@ const styles = StyleSheet.create({
         marginHorizontal: 6,
     },
     dotActive: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#0C4A6E',
         width: 28,
     },
     nextButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#F97316',
         marginHorizontal: 24,
         borderRadius: 16,
         height: 56,
