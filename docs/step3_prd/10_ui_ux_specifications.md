@@ -1,9 +1,9 @@
 # 🎨 UI/UX Specifications
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-18
+> **Cập nhật:** 2026-03-10
 
 ---
 
@@ -13,9 +13,11 @@
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--primary` | #2563EB | Primary actions, links |
-| `--primary-dark` | #1D4ED8 | Hover states |
-| `--primary-light` | #DBEAFE | Selected backgrounds, highlights |
+| `--primary` | #0C4A6E | Primary actions, links (Deep Sky Blue) |
+| `--primary-dark` | #083A57 | Hover states |
+| `--primary-light` | #E0F2FE | Selected backgrounds, highlights |
+| `--accent` | #F97316 | CTA buttons, active states (Adventure Orange) |
+| `--accent-light` | #FFF7ED | Accent backgrounds |
 | `--secondary` | #64748B | Secondary text, icons |
 | `--success` | #10B981 | Success states, published badges |
 | `--warning` | #F59E0B | Warning states, draft badges |
@@ -26,6 +28,8 @@
 | `--text-primary` | #1E293B | Primary text |
 | `--text-secondary` | #64748B | Secondary text |
 | `--overlay` | rgba(0,0,0,0.5) | Modal/drawer overlays |
+
+> **Theme:** "Ocean & Sunset" — Deep Sky Blue (#0C4A6E) cho nền tảng tin cậy, Adventure Orange (#F97316) cho CTA nổi bật.
 
 ### 1.2 Typography
 
@@ -143,10 +147,11 @@
 
 | Component | Usage |
 |-----------|-------|
-| Bottom Tab Bar | Main nav: Map, POIs, Tours, More |
+| Floating Bottom Tab Bar | Main nav: Map, Tours, More — floating 36px above bottom (Android), 24px (iOS), rounded corners (32px), white background with Deep Sky Blue shadow |
 | Stack Navigator | Push/pop screens |
 | Header | Title, back button, action buttons |
 | Bottom Sheet | POI preview, action menus |
+| Landing Page | Initial screen shown on app open (full-screen background image) |
 
 ---
 
@@ -189,14 +194,16 @@ SO Dashboard (S13) ─── Top Tab Navigation
 ### 3.3 Tourist App — Sitemap
 
 ```
-Map Screen (S17) ─── Bottom Tab: Map
-  ├── [Tap marker] → Bottom Sheet (preview)
-  │   └── [Tap card] → POI Detail (S18)
-  └── [Auto-trigger] → Notification Popup (S22)
-      └── [Tap] → POI Detail (S18)
+Landing Page (S00) — Initial screen
+  ├── [Bắt đầu hành trình] → Onboarding (first-time) or (tabs)/Map
+  └── [Tôi đã có tài khoản] → Login (S27)
 
-POI List (via tabs) ─── Bottom Tab: POIs
-  └── [Tap] → POI Detail (S18)
+Onboarding (3 slides) → (tabs)/Map
+
+Map Screen (S17) ─── Bottom Tab: Map
+  ├── [Tap marker] → Bottom Sheet (preview + autoPlay audio)
+  │   └── [Tap card] → POI Detail (S18)
+  └── [Auto-trigger] → Bottom Sheet popup (autoPlay)
 
 Tour List (S19) ─── Bottom Tab: Tours
   └── Tour Detail (S20)
@@ -206,7 +213,8 @@ More Menu ─── Bottom Tab: More
   ├── Favorites (S24)
   ├── History (S25)
   ├── QR Scanner (S23)
-  ├── Settings (S26)
+  ├── Language (S26)
+  ├── About
   └── Login/Register (S27)
 ```
 
@@ -744,12 +752,13 @@ More Menu ─── Bottom Tab: More
 │ │    │ Tap to view details    ▶      ││
 │ └─────────────────────────────────────┘│
 ├─────────────────────────────────────────┤
-│   🗺️ Map    📍 POIs    🗺️ Tours   ⋯   │
+│   🗺️ Map    🗺️ Tours    ⋯ More   │
 └─────────────────────────────────────────┘
 ```
 
 **Screen ID:** S17  
-**Legend:** 🔴 Dining, 🟠 Street Food, 🟡 Cafes & Desserts, 🟣 Bars & Nightlife, 🟤 Markets & Specialty Stores, 🔵 Cultural Landmarks, 🟢 Experiences & Workshops, ⚪ Outdoor & Scenic (halo turns blue when triggered)  
+**Marker Style:** Native pins — Red (MAIN/Primary POIs), Gold (Secondary POIs). Custom map style applied (muted palette for contrast).  
+**Tab Bar:** Floating design — white background, borderRadius 32px, Deep Sky Blue shadow, Adventure Orange active tint.  
 **States:** Loading GPS, Error (no GPS → S30), Empty (no nearby POIs), Success  
 **Refs:** FR-401~402, UC-40, BR-28~29
 
@@ -819,7 +828,7 @@ More Menu ─── Bottom Tab: More
 │ └─────────────────────────────────────┘│
 │                                         │
 ├─────────────────────────────────────────┤
-│   🗺️ Map    📍 POIs    🗺️ Tours   ⋯   │
+│   🗺️ Map    🗺️ Tours    ⋯ More   │
 └─────────────────────────────────────────┘
 ```
 

@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25
+> **Cập nhật:** 2026-03-10
 
 ---
 
@@ -490,16 +490,19 @@ App theo dõi vị trí người dùng để trigger nội dung tự động.
 Khi user đi vào vùng trigger của POI, app tự động thông báo và hỏi có muốn nghe audio không.
 
 **Business Rules:**
-- BR-505: Trigger radius mặc định 15m (configurable per POI)
-- BR-506: Hysteresis: không trigger lại trong 5 phút
+- BR-505: Trigger radius mặc định **50m** (configurable per POI, range 5-100m)
+- BR-506: Hysteresis: khi user **rời khỏi vùng trigger**, POI được reset và có thể trigger lại khi quay lại (exit-based, không dùng timer)
 - BR-507: Conflict resolution: trigger POI gần nhất nếu overlap
 - BR-508: User có thể tắt auto-play trong settings
+- BR-508b: Khi trigger, hệ thống **tự động phát audio** mà không hỏi. Bottom sheet hiển thị thông tin + audio player (autoPlay=true)
 
 **State Machine:**
 ```
-IDLE → (enter zone) → TRIGGERED → (user accepts) → PLAYING
-                   ↘ (user skips) → COOLDOWN → (5min) → IDLE
+IDLE → (enter zone) → TRIGGERED → auto-play audio → PLAYING
+     ↗ (exit zone) ← PLAYING
 ```
+
+> **Note:** Không có bước hỏi user. Audio tự động phát khi vào vùng trigger.
 
 ---
 
@@ -538,10 +541,11 @@ User có thể quét mã QR tại vị trí thực tế của POI để xem thô
 User lần đầu mở app sẽ thấy các màn hình hướng dẫn cách sử dụng.
 
 **Screens:**
-1. Welcome screen với app intro
-2. Giải thích tính năng auto-trigger
-3. Request GPS permission với lý do
-4. Let's start → vào Map
+1. Welcome screen với app intro (icon: MapPin, color: Deep Sky Blue)
+2. Giải thích tính năng auto-trigger (icon: Headphones, color: Sky Blue)
+3. Giới thiệu QR fallback (icon: QrCode, color: Adventure Orange)
+
+> **Note:** GPS permission được request khi vào Map Screen, không trong Onboarding.
 
 **Business Rules:**
 - BR-512: Chỉ hiển thị 1 lần (lưu flag vào storage)
@@ -755,7 +759,7 @@ Shop Owner xem thống kê lượt xem và lượt nghe audio của POI(s) mình
 | **User Story** | US-404 |
 
 **Description:**  
-Hệ thống sử dụng `Location.watchPositionAsync` để liên tục giám sát vị trí GPS của du khách. Khi khoảng cách đến POI < `triggerRadius` (mặc định 50m), tự động hiển thị thông tin và phát audio.
+Hệ thống sử dụng `Location.watchPositionAsync` để liên tục giám sát vị trí GPS của du khách. Khi khoảng cách đến POI < `triggerRadius` (mặc định **50m**), tự động hiển thị bottom sheet thông tin và **auto-play audio** (không hỏi user).
 
 **Business Rules:**
 - BR-801: Tính khoảng cách bằng công thức Haversine (trong `utils/distance.ts`)

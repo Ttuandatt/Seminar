@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-24
+> **Cập nhật:** 2026-03-10
 
 ---
 
@@ -86,6 +86,7 @@
 | TA-012 | Chế độ Offline | P1 | Cached data |
 | TA-013 | Favorites | P1 | Save/unsave POIs |
 | TA-014 | View History | P1 | Xem lịch sử POIs đã xem |
+| TA-015 | Landing Page | P1 | Trang đón khách full-screen với background image, nút “Bắt đầu hành trình” + “Đã có tài khoản” |
 
 ### 2.4 Backend
 

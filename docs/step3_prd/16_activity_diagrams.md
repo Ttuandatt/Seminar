@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.0  
 > **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-03-10
 
 ---
 
@@ -222,8 +222,8 @@ flowchart TD
     A6 -->|Không| A7[Không trigger, tiếp tục tracking]
     A7 --> A1
     
-    A6 -->|Có 1 POI| B1{POI đã xem trong 30 phút qua?}
-    B1 -->|Có| B2[Skip - cooldown active]
+    A6 -->|Đúng 1 POI| B1{POI trước đó còn trong triggered set?}
+    B1 -->|Có - vẫn trong vùng| B2[Skip - chưa rời vùng]
     B2 --> A1
     B1 -->|Không| B3[Trigger POI content]
     B3 --> B4[Gửi notification]

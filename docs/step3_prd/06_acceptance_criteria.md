@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25  
+> **Cập nhật:** 2026-03-10  
 > **Format:** Given-When-Then (Gherkin)
 
 ---
@@ -485,19 +485,19 @@ Feature: GPS Auto-trigger
 
 Scenario: Enter POI geofence
   Given I am walking near POI "Chùa XYZ"
-  And my location is outside the trigger radius (25m)
-  When I walk closer and enter the 15m radius
-  Then I should receive a notification
-  And the notification should ask "Play audio for Chùa XYZ?"
-  When I tap "Yes"
-  Then audio for that POI should start playing
+  And my location is outside the trigger radius
+  When I walk closer and enter the 50m radius (default)
+  Then a bottom sheet should appear showing POI info
+  And audio should start playing automatically (autoPlay)
+  And I should NOT be asked whether to play
 
-Scenario: Trigger cooldown
-  Given I just triggered POI "Chùa XYZ" 2 minutes ago
-  And I walked away and came back
-  When I enter the trigger radius again
-  Then I should NOT receive a notification
-  And the cooldown indicator should show "3 min remaining"
+Scenario: Exit-based cooldown
+  Given I just triggered POI "Chùa XYZ"
+  And I am still inside the trigger zone
+  When I walk away and exit the trigger radius
+  Then the POI is reset (removed from triggered set)
+  When I walk back into the trigger zone
+  Then the POI should trigger again
 
 Scenario: Overlapping POI zones
   Given there are 2 POIs within 10m of each other
@@ -548,15 +548,16 @@ Feature: First-time User Onboarding
 
 Scenario: Complete onboarding
   Given I am opening the app for the first time
-  Then I should see welcome screen
-  When I tap "Next"
-  Then I should see explanation of auto-trigger feature
-  When I tap "Next"
-  Then I should see GPS permission request with explanation
-  When I allow GPS permission
-  And I tap "Get Started"
+  And I tap "Bắt đầu hành trình" on the Landing Page
+  Then I should see welcome screen (slide 1: MapPin)
+  When I tap "Tiếp tục"
+  Then I should see explanation of auto-trigger feature (slide 2: Headphones)
+  When I tap "Tiếp tục"
+  Then I should see QR fallback explanation (slide 3: QrCode)
+  When I tap "Bắt đầu khám phá"
   Then I should be taken to the map screen
   And I should not see onboarding again
+  And GPS permission is requested on Map Screen entry, not during onboarding
 
 Scenario: Skip onboarding
   Given I am on any onboarding screen
