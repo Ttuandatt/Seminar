@@ -16,8 +16,19 @@ export default function MoreScreen() {
     useFocusEffect(
         React.useCallback(() => {
             checkLoginStatus();
+            loadAutoPlay();
         }, [])
     );
+
+    const loadAutoPlay = async () => {
+        const saved = await AsyncStorage.getItem('autoPlayAudio');
+        if (saved !== null) setAutoPlay(saved === 'true');
+    };
+
+    const handleAutoPlayChange = async (value: boolean) => {
+        setAutoPlay(value);
+        await AsyncStorage.setItem('autoPlayAudio', String(value));
+    };
 
     const checkLoginStatus = async () => {
         const token = await AsyncStorage.getItem('accessToken');
@@ -60,7 +71,7 @@ export default function MoreScreen() {
         { icon: <Database size={20} color="#64748b" />, label: 'Đồng bộ dữ liệu Offline', show: true, onPress: handleSyncOffline },
         { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn, onPress: () => router.push('/favorites') },
         { icon: <User size={20} color="#64748b" />, label: 'Lịch sử xem', show: isLoggedIn, onPress: () => router.push('/history') },
-        { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: setAutoPlay },
+        { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: handleAutoPlayChange },
         { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true, onPress: () => router.push('/language') },
         { icon: <Info size={20} color="#64748b" />, label: 'Giới thiệu ứng dụng', show: true, onPress: () => router.push('/about') },
     ];
@@ -81,7 +92,7 @@ export default function MoreScreen() {
             {!isLoggedIn && (
                 <View style={styles.authCard}>
                     <View style={styles.authIconContainer}>
-                        <LogIn size={24} color="#3b82f6" />
+                        <LogIn size={24} color="#0C4A6E" />
                     </View>
                     <View style={styles.authTextContainer}>
                         <Text style={styles.authTitle}>Đăng nhập</Text>
@@ -135,7 +146,8 @@ export default function MoreScreen() {
                             <Switch
                                 value={item.value}
                                 onValueChange={item.onValueChange}
-                                trackColor={{ false: "#e2e8f0", true: "#3b82f6" }}
+                                trackColor={{ false: "#e2e8f0", true: "#0C4A6E" }}
+                                thumbColor={item.value ? '#F97316' : '#f4f3f4'}
                             />
                         ) : (
                             <Text style={styles.menuItemValue}>{item.valueText}</Text>
@@ -172,13 +184,13 @@ const styles = StyleSheet.create({
         padding: 16,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#bfdbfe',
+        borderColor: '#b5d8f0',
     },
     authIconContainer: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#dbeafe',
+        backgroundColor: '#E0F2FE',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
@@ -190,16 +202,16 @@ const styles = StyleSheet.create({
     authTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#1e3a8a',
+        color: '#0C4A6E',
     },
     authDesc: {
         fontSize: 13,
-        color: '#3b82f6',
+        color: '#0284c7',
         textAlign: 'center',
         marginTop: 4,
     },
     authButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#F97316',
         paddingVertical: 10,
         paddingHorizontal: 24,
         borderRadius: 8,

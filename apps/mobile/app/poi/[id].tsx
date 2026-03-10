@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Dimensions, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, Globe } from 'lucide-react-native';
 import { publicService, Poi } from '../../services/publicService';
@@ -20,6 +20,7 @@ export default function PoiDetailScreen() {
     const [lang, setLang] = useState<'vi' | 'en'>('vi');
     const [isFavorite, setIsFavorite] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     useEffect(() => {
         fetchData();
@@ -97,7 +98,7 @@ export default function PoiDetailScreen() {
     if (loading) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#0f172a" />
+                <ActivityIndicator size="large" color="#F97316" />
             </View>
         );
     }
@@ -118,7 +119,16 @@ export default function PoiDetailScreen() {
             {/* Image Carousel */}
             <View style={styles.carouselContainer}>
                 {images.length > 0 ? (
-                    <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+                    <ScrollView
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                            const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                            setActiveImageIndex(index);
+                        }}
+                        scrollEventThrottle={16}
+                    >
                         {images.map((img, index) => (
                             <Image
                                 key={img.id || index}
@@ -130,6 +140,19 @@ export default function PoiDetailScreen() {
                 ) : (
                     <View style={[styles.carouselImage, styles.placeholderImage]}>
                         <Text style={styles.placeholderText}>NO IMAGE</Text>
+                    </View>
+                )}
+                {images.length > 1 && (
+                    <View style={styles.dotsContainer}>
+                        {images.map((_, i) => (
+                            <View
+                                key={i}
+                                style={[
+                                    styles.dot,
+                                    i === activeImageIndex && styles.dotActive,
+                                ]}
+                            />
+                        ))}
                     </View>
                 )}
             </View>
@@ -184,11 +207,30 @@ const styles = StyleSheet.create({
         color: '#ef4444',
     },
     carouselContainer: {
-        height: 250,
+        height: 280,
     },
     carouselImage: {
         width: width,
-        height: 250,
+        height: 280,
+    },
+    dotsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        position: 'absolute',
+        bottom: 12,
+        left: 0,
+        right: 0,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255,255,255,0.5)',
+        marginHorizontal: 4,
+    },
+    dotActive: {
+        backgroundColor: '#F97316',
+        width: 20,
     },
     placeholderImage: {
         backgroundColor: '#e2e8f0',

@@ -28,12 +28,15 @@ export default function MapScreen() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
     const [lang, setLang] = useState<'vi' | 'en'>('vi');
+    const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
     const triggeredPoiIds = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         const loadLang = async () => {
             const savedLang = await AsyncStorage.getItem('appLanguage');
             if (savedLang === 'en' || savedLang === 'vi') setLang(savedLang);
+            const autoPlay = await AsyncStorage.getItem('autoPlayAudio');
+            if (autoPlay !== null) setAutoPlayEnabled(autoPlay === 'true');
         };
         loadLang();
     }, []);
@@ -186,6 +189,13 @@ export default function MapScreen() {
             {selectedPoi && (() => {
                 const imageMedia = selectedPoi.media?.find(m => m.type === 'IMAGE');
                 const audioMedia = selectedPoi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'));
+                const distanceM = location ? getDistance(
+                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    { latitude: Number(selectedPoi.latitude), longitude: Number(selectedPoi.longitude) }
+                ) : null;
+                const distanceText = distanceM !== null
+                    ? distanceM < 1000 ? `${Math.round(distanceM)}m` : `${(distanceM / 1000).toFixed(1)}km`
+                    : null;
 
                 return (
                     <View style={styles.bottomSheet}>
@@ -203,7 +213,10 @@ export default function MapScreen() {
                             />
                             <View style={styles.poiInfo}>
                                 <Text style={styles.poiTitle} numberOfLines={1}>{selectedPoi.nameVi}</Text>
-                                <Text style={styles.poiType}>{selectedPoi.poiType === 'MAIN' ? 'Cột mốc chính' : 'Điểm lân cận'}</Text>
+                                <Text style={styles.poiType}>
+                                    {selectedPoi.poiType === 'MAIN' ? '📍 Cột mốc chính' : '🛎️ Điểm lân cận'}
+                                    {distanceText && ` • ${distanceText}`}
+                                </Text>
                                 <TouchableOpacity
                                     style={styles.detailButton}
                                     onPress={() => router.push(`/poi/${selectedPoi.id}`)}
@@ -215,7 +228,7 @@ export default function MapScreen() {
 
                         {audioMedia?.url && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioMedia.url} poiId={selectedPoi.id} autoPlay={true} />
+                                <AudioPlayer audioUrl={audioMedia.url} poiId={selectedPoi.id} autoPlay={autoPlayEnabled} />
                             </View>
                         )}
                     </View>
