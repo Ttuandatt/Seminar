@@ -1,31 +1,34 @@
 {
-    "cli": {
-        "version": ">= 15.0.0",
-        "appVersionSource": "local"
+  "cli": {
+    "version": ">= 15.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development"
     },
-    "build": {
-        "development": {
-            "developmentClient": true,
-            "distribution": "internal"
-        },
-        "preview": {
-            "distribution": "internal",
-            "android": {
-                "buildType": "apk"
-            }
-        },
-        "production": {
-            "android": {
-                "buildType": "app-bundle"
-            }
-        }
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
     },
-    "submit": {
-        "production": {
-            "android": {
-                "serviceAccountKeyPath": "./google-services.json",
-                "track": "internal"
-            }
-        }
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "channel": "production"
     }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-services.json",
+        "track": "internal"
+      }
+    }
+  }
 }
