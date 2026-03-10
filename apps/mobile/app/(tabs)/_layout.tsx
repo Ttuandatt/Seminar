@@ -12,7 +12,7 @@ export default function TabLayout() {
         <Tabs
             screenOptions={{
                 headerShown: true,
-                tabBarActiveTintColor: '#2563EB',
+                tabBarActiveTintColor: '#F97316',
                 tabBarInactiveTintColor: '#94A3B8',
                 tabBarStyle: {
                     position: 'absolute',
@@ -25,7 +25,7 @@ export default function TabLayout() {
                     height: 64,
                     paddingBottom: Platform.OS === 'android' ? 0 : 8,
                     paddingTop: Platform.OS === 'android' ? 0 : 8,
-                    shadowColor: '#2563EB',
+                    shadowColor: '#0C4A6E',
                     shadowOffset: { width: 0, height: 8 },
                     shadowOpacity: 0.15,
                     shadowRadius: 20,

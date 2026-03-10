@@ -168,7 +168,7 @@ export default function MapScreen() {
                             poi.poiType === 'MAIN' ? styles.customMarkerMain : styles.customMarkerSub
                         ]}>
                             {poi.poiType === 'MAIN' ? (
-                                <Headphones size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#2563EB'} />
+                                <Headphones size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#F97316'} />
                             ) : (
                                 <MapPin size={16} color={selectedPoi?.id === poi.id ? '#fff' : '#64748B'} />
                             )}
@@ -182,7 +182,7 @@ export default function MapScreen() {
                     style={styles.controlButton}
                     onPress={toggleMapType}
                 >
-                    <Layers size={24} color={mapType === 'satellite' ? '#2563eb' : '#0f172a'} />
+                    <Layers size={24} color={mapType === 'satellite' ? '#F97316' : '#0f172a'} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.controlButton, { marginTop: 12 }]}
@@ -253,21 +253,21 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 2,
         borderColor: '#ffffff',
-        shadowColor: '#2563EB',
+        shadowColor: '#0C4A6E',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 5,
     },
     customMarkerMain: {
-        borderColor: '#2563EB',
+        borderColor: '#F97316',
     },
     customMarkerSub: {
         borderColor: '#E2E8F0',
     },
     customMarkerSelected: {
-        backgroundColor: '#2563EB',
-        borderColor: '#2563EB',
+        backgroundColor: '#F97316',
+        borderColor: '#F97316',
         transform: [{ scale: 1.1 }],
     },
     controlButton: {
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
         borderRadius: 26,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#2563EB',
+        shadowColor: '#0C4A6E',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.96)',
         borderRadius: 24,
         padding: 20,
-        shadowColor: '#2563EB',
+        shadowColor: '#0C4A6E',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.15,
         shadowRadius: 20,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     detailButton: {
-        backgroundColor: '#2563EB',
+        backgroundColor: '#F97316',
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 12,
