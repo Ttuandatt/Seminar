@@ -150,45 +150,36 @@
 
 | Role | Description | Platform | Permissions |
 |------|-------------|----------|-------------|
-| **Super Admin** | System administrator | Web | Full access, user management |
-| **Admin** | Content manager | Web | CRUD POI, Tour, Media |
-| **Viewer** | Read-only access | Web | View reports only |
-| **Shop Owner** | Chủ quán/cửa hàng | Web | CRUD own POI(s), view own analytics |
-| **Tourist (Guest)** | Du khách (anonymous) | Mobile App | View content, play audio |
-| **Tourist (Registered)** | Du khách (đã đăng ký) | Mobile App | + Favorites, History, Sync |
+| **Admin** | Quản trị viên nội dung (cao nhất) | Web | Toàn quyền CRUD POI, Tour, media, duyệt nội dung, xem báo cáo |
+| **Shop Owner** | Chủ quán/cửa hàng | Web | CRUD POI thuộc sở hữu, upload media, xem analytics của quán |
+| **Tourist** | Du khách (guest + đăng nhập) | Mobile App | Xem bản đồ/POI, nghe audio, dùng tour; khi đăng nhập thêm Favorites/History/Sync |
 
 ### 2.2 Permission Details
 
 #### Admin Dashboard Permissions
 
-| Action | Super Admin | Admin | Viewer | Shop Owner |
-|--------|-------------|-------|--------|------------|
-| Login | ✅ | ✅ | ✅ | ✅ |
-| Create POI | ✅ | ✅ | ❌ | ✅ (own) |
-| Edit POI | ✅ | ✅ | ❌ | ✅ (own) |
-| Delete POI | ✅ | ✅ | ❌ | ❌ |
-| Create Tour | ✅ | ✅ | ❌ | ❌ |
-| Edit Tour | ✅ | ✅ | ❌ | ❌ |
-| Delete Tour | ✅ | ✅ | ❌ | ❌ |
-| Upload Media | ✅ | ✅ | ❌ | ✅ (own POI) |
-| View Reports | ✅ | ✅ | ✅ | ✅ (own POI) |
-| Manage Users | ✅ | ❌ | ❌ | ❌ |
-| System Settings | ✅ | ❌ | ❌ | ❌ |
+| Action | Admin | Shop Owner |
+|--------|-------|------------|
+| Login | ✅ | ✅ |
+| Create POI | ✅ | ✅ (own) |
+| Edit POI | ✅ | ✅ (own) |
+| Delete POI | ✅ | ❌ |
+| Create Tour | ✅ | ❌ |
+| Edit Tour | ✅ | ❌ |
+| Delete Tour | ✅ | ❌ |
+| Upload Media | ✅ | ✅ (own POI) |
+| View Reports | ✅ (tất cả) | ✅ (own POI) |
+
+> Admin giữ toàn quyền vận hành dashboard; Shop Owner chỉ thao tác trên dữ liệu của mình.
 
 #### Tourist App Permissions
 
-| Action | Tourist (Guest) | Tourist (Registered) |
-|--------|-----------------|----------------------|
-| View POIs | ✅ | ✅ |
-| Play Audio | ✅ | ✅ |
-| Select Tour | ✅ | ✅ |
-| Change Language | ✅ | ✅ |
-| Download Offline | ✅ | ✅ |
-| QR Code Scan | ✅ | ✅ |
-| Save Favorites | ❌ | ✅ (P1) |
-| View History | ❌ (device only) | ✅ (P1, synced) |
-| Sync across devices | ❌ | ✅ (P1) |
-| Social Login | ❌ | ✅ (P1) |
+| Action | Tourist | Notes |
+|--------|---------|-------|
+| View POIs, Play Audio, Select Tour, Change Language, Download Offline, QR Scan | ✅ | Dùng được ở chế độ guest |
+| Save Favorites | ✅* | *Cần đăng nhập |
+| View History | ✅* | *Cần đăng nhập để đồng bộ đa thiết bị |
+| Sync across devices, Social Login | ✅* | *Phụ thuộc tính năng đăng nhập (P1) |
 
 ---
 

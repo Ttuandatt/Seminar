@@ -1,9 +1,9 @@
 # 📐 Sequence Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-02-26
+> **Cập nhật:** 2026-03-13
 
 ---
 
@@ -38,6 +38,7 @@ sequenceDiagram
     title SD-01: Admin Login
     actor Admin
     participant UI as Admin Dashboard
+    participant Geo as Nominatim API
     participant API as NestJS API
     participant Auth as Auth Service
     participant DB as PostgreSQL
@@ -147,6 +148,11 @@ sequenceDiagram
     UI->>Admin: Hiển thị form (name, desc, coords, category, media)
     
     Admin->>UI: Điền thông tin POI
+    Admin->>UI: Nhập ≥3 ký tự vào ô "Tìm địa chỉ"
+    UI->>Geo: GET /search?format=json&limit=5&q={query}
+    Geo-->>UI: Danh sách gợi ý (tối đa 5)
+    UI->>Admin: Hiển thị suggestion dropdown
+    Admin->>UI: Chọn một gợi ý → tự động điền địa chỉ/lat/lng
 
     Note over Admin, S3: Upload Images
     Admin->>UI: Drag & drop images
@@ -189,6 +195,7 @@ sequenceDiagram
     title SD-04: Shop Owner Create POI
     actor SO as Shop Owner
     participant UI as Shop Dashboard
+    participant Geo as Nominatim API
     participant API as NestJS API
     participant Guard as Auth Guard
     participant POI as POI Service
@@ -198,6 +205,11 @@ sequenceDiagram
     UI->>Admin: Hiển thị form (simplified, không có category)
 
     SO->>UI: Điền thông tin, upload media
+    SO->>UI: Nhập ≥3 ký tự vào ô "Tìm địa chỉ"
+    UI->>Geo: GET /search?format=json&limit=5&q={query}
+    Geo-->>UI: Danh sách gợi ý (tối đa 5)
+    UI->>SO: Hiển thị suggestion dropdown
+    SO->>UI: Chọn một gợi ý → tự động điền địa chỉ/lat/lng
     UI->>API: POST /shop-owner/pois {name, desc, lat, lng, images, audio}
     
     API->>Guard: Verify JWT + role = 'shop_owner'

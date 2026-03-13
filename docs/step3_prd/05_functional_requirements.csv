@@ -75,10 +75,10 @@ Field,Description
 **Priority**,P1
 **User Story**,US-106
 Description:
-"Mọi người dùng đã xác thực (Super Admin, Admin, Shop Owner) có một trang hồ sơ hợp nhất để xem/ cập nhật thông tin cá nhân (họ tên, avatar, số điện thoại, ngày sinh, địa chỉ, thông tin cửa hàng nếu có)."
+"Mọi người dùng đã xác thực (Admin, Shop Owner, Tourist đã đăng nhập) có một trang hồ sơ hợp nhất để xem/cập nhật thông tin cá nhân (họ tên, avatar, số điện thoại, ngày sinh, địa chỉ, thông tin cửa hàng nếu có)."
 Business Rules:
   - BR-110: Trường `role`, `email`, `status`, `created_at` chỉ hiển thị read-only
-  - BR-111: Shop Owner thấy thêm section "Shop Details" còn Admin/Super Admin chỉ thấy nếu có dữ liệu liên kết
+  - BR-111: Shop Owner thấy thêm section "Shop Details"; Admin chỉ thấy khi có dữ liệu liên kết với shop
   - BR-112: `birth_date` không được lớn hơn ngày hiện tại và user phải ≥ 18 tuổi
   - BR-113: Avatar ≤2MB, jpg/png/webp; hệ thống tự sinh thumbnail 128x128
   - BR-114: Ghi audit log `profile_audit` cho mọi thay đổi
@@ -103,7 +103,7 @@ avatar,file,No,jpg/png/webp ≤2MB
 Output:
 Field,Type,Description
 id,UUID,User identifier
-role,enum,"SUPER_ADMIN, ADMIN, VIEWER, SHOP_OWNER"
+role,enum,"ADMIN, SHOP_OWNER, TOURIST"
 email,string,Login email/username
 full_name,string,Latest full name
 avatar_url,string,CDN URL of current avatar

@@ -356,7 +356,7 @@ interface Admin {
   username: string;
   email: string;
   fullName: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER';
+  role: 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'LOCKED';
   lastLoginAt?: Date;
   createdAt: Date;

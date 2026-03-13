@@ -1,9 +1,9 @@
 # 📐 Use Case Diagram & Đặc tả
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-03-13
 
 ---
 
@@ -139,7 +139,7 @@ graph TB
 | | Actor Action | System Response |
 |---|---|---|
 | 1 | | Perform {Login Authentication} |
-| 2 | | System hiển thị trang login với các trường email và password. |
+| 2 | | System hiển thị trang login với các trường email và password (router tự động redirect `/` → `/login` khi chưa có session). |
 | 3 | Admin nhập email và password, nhấn nút "Login". | |
 | 4 | | System validate email format và password không rỗng. |
 | 5 | | System gửi credentials đến Auth Service để xác thực. |
@@ -268,8 +268,8 @@ graph TB
 | 6 | | System hiển thị form tạo POI với tabs ngôn ngữ [Vietnamese] [English]. |
 | 7 | Admin nhập tên và mô tả POI (tiếng Việt). | |
 | 8 | Admin chuyển tab sang English và nhập tên, mô tả tiếng Anh. A2 | |
-| 9 | Admin chọn vị trí trên bản đồ (click hoặc nhập tọa độ lat/lng). | |
-| 10 | | System hiển thị marker tại vị trí đã chọn và auto-fill tọa độ. |
+ | 9 | Admin sử dụng MapPicker để chọn vị trí: gõ từ khóa ≥3 ký tự trong ô "Tìm địa chỉ" để lấy gợi ý hoặc click trực tiếp trên bản đồ/nhập tọa độ lat/lng. |
+ | 10 | | System debounce request đến Nominatim, hiển thị tối đa 5 gợi ý, cho phép chọn để auto-fill tọa độ + địa chỉ đồng thời đặt marker đúng vị trí. |
 | 11 | Admin chọn category từ taxonomy: Dining, Street Food, Cafes & Desserts, Bars & Nightlife, Markets & Specialty Stores, Cultural Landmarks, Experiences & Workshops, Outdoor & Scenic. | |
 | 12 | Admin thiết lập trigger_radius (mặc định 15m, tùy chỉnh 5-50m). | |
 | 13 | Admin upload images bằng drag & drop. (Lặp lại nếu cần, tối đa 10 ảnh.) {Upload Media} | |
@@ -310,7 +310,7 @@ graph TB
 | Field | Detail |
 |-------|--------|
 | **Triggers** | Admin cần thêm một điểm tham quan mới vào hệ thống. |
-| **Assumptions** | Admin đã đăng nhập. S3 storage khả dụng. Mapbox API khả dụng cho chọn vị trí. |
+| **Assumptions** | Admin đã đăng nhập. S3 storage khả dụng. Leaflet + OpenStreetMap/Nominatim services khả dụng cho việc chọn vị trí và geocoding. |
 | **Preconditions** | Admin đã xác thực thành công (UC-01). |
 | **Post Conditions** | POI mới được lưu trong database với status draft hoặc published. Media files được upload lên S3. Nếu published, POI hiển thị trên Tourist App. |
 | **Reference: Business Rules** | BR-001, BR-101, BR-102, BR-103 |

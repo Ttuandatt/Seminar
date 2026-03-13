@@ -104,7 +104,7 @@ Scenario: Expired reset link
 Feature: Personal Profile Management
 
 Scenario: View profile info across roles
-  Given I am logged in as Super Admin
+  Given I am logged in as Admin
   When I open the "My Profile" page
   Then I should see my full name, email (read-only), role, status, created date
   And I should see editable fields for phone, birth date, address, avatar

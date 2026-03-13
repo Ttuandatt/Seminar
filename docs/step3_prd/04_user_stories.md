@@ -111,10 +111,10 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 
 ---
 
-### US-105: Quản lý tài khoản Admin (Super Admin)
+### US-105: Quản lý tài khoản Admin
 | Field | Value |
 |-------|-------|
-| **As a** | Super Admin |
+| **As a** | Admin |
 | **I want to** | tạo/chỉnh sửa/vô hiệu hóa tài khoản Admin khác |
 | **So that** | tôi có thể quản lý quyền truy cập hệ thống |
 | **Priority** | P2 |
@@ -125,7 +125,7 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 ### US-106: Quản lý thông tin cá nhân
 | Field | Value |
 |-------|-------|
-| **As a** | Super Admin / Admin / Shop Owner |
+| **As a** | Admin / Shop Owner / Tourist |
 | **I want to** | xem và chỉnh sửa thông tin cá nhân của mình (họ tên, địa chỉ, ngày sinh, cửa hàng, vai trò) |
 | **So that** | hồ sơ luôn chính xác và đồng bộ giữa các hệ thống |
 | **Priority** | P1 |

@@ -112,11 +112,11 @@ Admin có thể reset mật khẩu qua email khi quên.
 | **User Story** | US-106 |
 
 **Description:**  
-Mọi người dùng đã xác thực (Super Admin, Admin, Shop Owner) có một trang hồ sơ hợp nhất để xem/ cập nhật thông tin cá nhân (họ tên, avatar, số điện thoại, ngày sinh, địa chỉ, thông tin cửa hàng nếu có) mà không cần liên hệ IT.
+Mọi người dùng đã xác thực (Admin, Shop Owner, Tourist đã đăng nhập) có một trang hồ sơ hợp nhất để xem/cập nhật thông tin cá nhân (họ tên, avatar, số điện thoại, ngày sinh, địa chỉ, thông tin cửa hàng nếu có) mà không cần liên hệ IT.
 
 **Business Rules:**
 - BR-110: Trường `role`, `email`, `status`, `created_at` chỉ hiển thị read-only.
-- BR-111: Shop Owner thấy thêm section "Shop Details" (shop_name, shop_address, opening_hours) còn Admin/Super Admin chỉ thấy phần này nếu gán với POI.
+- BR-111: Shop Owner thấy thêm section "Shop Details" (shop_name, shop_address, opening_hours); Admin chỉ thấy phần này khi có dữ liệu liên kết với một shop.
 - BR-112: `birth_date` không được lớn hơn ngày hiện tại và user phải ≥ 18 tuổi.
 - BR-113: Avatar tối đa 2MB, định dạng jpg/png/webp; hệ thống tự sinh thumbnail 128x128.
 - BR-114: Mọi thay đổi phải ghi nhận vào audit log (`profile_audit`): user_id, fields_changed, updated_by, updated_at, ip.
@@ -148,7 +148,7 @@ Mọi người dùng đã xác thực (Super Admin, Admin, Shop Owner) có một
 | Field | Type | Description |
 |-------|------|-------------|
 | id | UUID | User identifier |
-| role | enum | SUPER_ADMIN, ADMIN, VIEWER, SHOP_OWNER |
+| role | enum | ADMIN, SHOP_OWNER, TOURIST |
 | email | string | Login email/username |
 | full_name | string | Latest full name |
 | avatar_url | string | CDN URL of current avatar |

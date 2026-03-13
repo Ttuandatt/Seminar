@@ -1,9 +1,9 @@
 # 📐 Component Diagram
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.1  
+> **Phiên bản:** 1.2  
 > **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-02-24
+> **Cập nhật:** 2026-03-13
 
 ---
 
@@ -41,7 +41,8 @@ graph TB
 
     subgraph External["☁️ EXTERNAL SERVICES"]
         S3["AWS S3 / Cloudinary"]
-        Mapbox["Mapbox API"]
+        OSM["OpenStreetMap Tiles + Nominatim"]
+        NativeMaps["Native Maps SDKs (Google/Apple)"]
         CDN["CDN"]
     end
 
@@ -64,8 +65,9 @@ graph TB
     AnalyticsModule --> DB
     UserModule --> DB
 
-    TouristApp --> Mapbox
-    AdminUI --> Mapbox
+    TouristApp --> NativeMaps
+    AdminUI --> OSM
+    ShopUI --> OSM
     S3 --> CDN
 ```
 
@@ -104,7 +106,7 @@ graph TB
         end
 
         subgraph Shared["Shared Components"]
-            MapPicker["MapPicker (Mapbox GL)"]
+            MapPicker["MapPicker (Leaflet + Nominatim)"]
             MediaUpload["MediaUploader (Images + Audio)"]
             DataTable["DataTable (sortable, filterable)"]
             FormComponents["Form Components (shadcn/ui)"]
@@ -137,7 +139,7 @@ graph TB
 | Language | TypeScript | 5.x |
 | Styling | Tailwind CSS | 3.x |
 | UI Library | shadcn/ui | latest |
-| Maps | Mapbox GL JS | 3.x |
+| Maps | Leaflet 1.9 + react-leaflet 5.x | - |
 | State | React Context + hooks | - |
 | HTTP Client | Axios | 1.x |
 | Router | React Router | 6.x |
@@ -397,10 +399,10 @@ graph LR
         CDN2["CloudFront CDN"]
     end
 
-    subgraph Maps["Maps"]
-        MapboxAPI["Mapbox API"]
-        MapboxGL["Mapbox GL JS"]
-        RNMaps["react-native-maps"]
+    subgraph Maps["Maps & Geocoding"]
+        LeafletTiles["OpenStreetMap Tiles"]
+        Nominatim["Nominatim API"]
+        RNMaps["react-native-maps (Google/Apple SDKs)"]
     end
 
     subgraph Infra["Infrastructure"]
@@ -413,10 +415,9 @@ graph LR
     CDN2 -->|Images/Audio| MobileApp2
     CDN2 -->|Images/Audio| WebApp2
 
-    WebApp2 -->|Render maps| MapboxGL
+    WebApp2 -->|Render maps| LeafletTiles
+    WebApp2 -->|Live geocoding| Nominatim
     MobileApp2 -->|Render maps| RNMaps
-    MapboxGL -->|Tiles/Geocoding| MapboxAPI
-    RNMaps -->|Tiles| MapboxAPI
 
     Backend2 -->|CRUD| PG
     Backend2 -->|Cache/Session| Redis2
@@ -426,7 +427,8 @@ graph LR
 
 | Service | Provider | Usage | Rate Limits |
 |---------|----------|-------|-------------|
-| **Map Tiles** | Mapbox | Hiển thị bản đồ, geocoding | 50K loads/month (free) |
+| **Web Map + Geocoding** | OpenStreetMap Tiles + Nominatim | Hiển thị bản đồ Leaflet, gợi ý địa chỉ trực tiếp từ FE | Tuân thủ fair-use (≤1 req/s) |
+| **Mobile Maps** | Google/Apple native (react-native-maps) | Map rendering + user location trên iOS/Android | Theo quota của thiết bị/API key |
 | **Object Storage** | AWS S3 | Images (JPEG/PNG), Audio (MP3/WAV) | No limit |
 | **CDN** | CloudFront | Phân phối media cho Tourist app | No limit |
 | **Database** | PostgreSQL 16 | Dữ liệu chính + PostGIS geo queries | Self-managed |
@@ -454,7 +456,7 @@ graph LR
 │         │   │ +PostGIS │ │  Cache  │   │ +CloudFront│            │
 │         │   └─────────┘ └─────────┘   └───────────┘            │
 │         │                                                        │
-│         └──────────── Mapbox API ────────────────────            │
+│         └──────────── OpenStreetMap + Nominatim ─────────────    │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -470,8 +472,9 @@ graph LR
 | API → PostgreSQL | TCP | PostgreSQL wire protocol | SQL (Prisma) | Connection string |
 | API → Redis | TCP | Redis protocol | Key-Value | Password |
 | API → S3 | HTTPS | AWS SDK | Binary + JSON | IAM credentials |
-| Web → Mapbox | HTTPS | Mapbox GL JS | Vector tiles | API Key |
-| Mobile → Maps | HTTPS | react-native-maps | Vector tiles | API Key |
+| Web Dashboard → OpenStreetMap Tiles | HTTPS | Leaflet tile requests | Raster tiles (PNG) | None (identify via User-Agent) |
+| Web Dashboard → Nominatim | HTTPS | REST | JSON | Custom User-Agent |
+| Mobile App → Native Map SDKs | Platform SDK | react-native-maps | Vector tiles | Device-level API keys |
 
 ---
 

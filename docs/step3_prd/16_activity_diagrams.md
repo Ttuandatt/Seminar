@@ -1,9 +1,9 @@
 # 📐 Activity Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 2.1  
 > **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-03-10
+> **Cập nhật:** 2026-03-13
 
 ---
 
@@ -73,8 +73,14 @@ flowchart TD
     A2 -->|Tạo mới| C1[Nhấn '+ Add New POI']
     C1 --> C2[/Nhập tên + mô tả - tabs VN EN/]
     C2 --> C3[/Chọn vị trí trên bản đồ/]
-    C3 --> C3a[/Chọn category: Dining, Street Food, Cafes, Bars, Markets, Cultural, Experiences, Outdoor/]
-    C3a --> C3b[/Thiết lập trigger_radius 5-50m/]
+    C3 --> C3c[/Nhập ≥3 ký tự trong ô "Tìm địa chỉ"/]
+    C3c --> C3d[FE debounce call → Nominatim (tối đa 5 gợi ý)]
+    C3d --> C3e{Chọn gợi ý?}
+    C3e -->|Có| C3f[Auto-fill lat/lng + đặt marker]
+    C3e -->|Không| C3b1[Tiếp tục click bản đồ/nhập tọa độ thủ công]
+    C3f --> C3a
+    C3b1 --> C3a
+    C3a[/Chọn category: Dining, Street Food, Cafes, Bars, Markets, Cultural, Experiences, Outdoor/] --> C3b[/Thiết lập trigger_radius 5-50m/]
     C3b --> C4[Upload media - xem AD-08]
     C4 --> C5{Validate data?}
     C5 -->|Lỗi| C6[Hiển thị validation errors]
