@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
 import { LocateFixed, Layers } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
@@ -108,9 +109,11 @@ export default function MapScreen() {
         };
     }, [pois]); // Re-subscribe if POIs list changes
 
-    useEffect(() => {
-        fetchPois();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchPois();
+        }, [])
+    );
 
     const fetchPois = async () => {
         try {
