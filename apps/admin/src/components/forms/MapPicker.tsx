@@ -1,5 +1,4 @@
 import {
-    FormEvent,
     useCallback,
     useEffect,
     useMemo,
@@ -118,8 +117,7 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
         }
     }, []);
 
-    const handleSearch = useCallback((event: FormEvent) => {
-        event.preventDefault();
+    const handleSearch = useCallback(() => {
         fetchSuggestions(searchQuery);
     }, [fetchSuggestions, searchQuery]);
 
@@ -163,24 +161,26 @@ export const MapPicker = ({ latitude, longitude, triggerRadius, onCoordinateChan
 
     return (
         <div className="space-y-3">
-            <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                     <input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
                         placeholder="Tìm địa chỉ hoặc địa điểm..."
                         className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                 </div>
                 <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSearch}
                     className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
                     disabled={isSearching}
                 >
                     {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
                 </button>
-            </form>
+            </div>
 
             {searchError && (
                 <p className="text-xs text-red-500">{searchError}</p>
