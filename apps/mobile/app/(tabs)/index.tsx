@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
@@ -155,10 +155,38 @@ export default function MapScreen() {
                 style={styles.map}
                 mapType={mapType}
                 initialRegion={VINH_KHANH_REGION}
-                showsUserLocation
                 showsMyLocationButton={false}
                 customMapStyle={organicMapStyle}
             >
+                {/* User location marker — works in both Expo Go and APK */}
+                {location && (
+                    <>
+                        <Circle
+                            center={{
+                                latitude: location.coords.latitude,
+                                longitude: location.coords.longitude,
+                            }}
+                            radius={20}
+                            fillColor="rgba(12, 74, 110, 0.15)"
+                            strokeColor="rgba(12, 74, 110, 0.3)"
+                            strokeWidth={1}
+                        />
+                        <Marker
+                            coordinate={{
+                                latitude: location.coords.latitude,
+                                longitude: location.coords.longitude,
+                            }}
+                            anchor={{ x: 0.5, y: 0.5 }}
+                            tracksViewChanges={false}
+                            zIndex={999}
+                        >
+                            <View style={styles.userLocationDot}>
+                                <View style={styles.userLocationInner} />
+                            </View>
+                        </Marker>
+                    </>
+                )}
+
                 {pois.map((poi) => (
                     <Marker
                         key={poi.id}
@@ -166,6 +194,7 @@ export default function MapScreen() {
                         title={poi.nameVi}
                         description={poi.poiType}
                         pinColor={poi.poiType === 'MAIN' ? 'red' : 'gold'}
+                        tracksViewChanges={false}
                         onPress={() => handleMarkerPress(poi)}
                     />
                 ))}
@@ -245,6 +274,27 @@ const styles = StyleSheet.create({
     map: {
         width: '100%',
         height: '100%',
+    },
+    userLocationDot: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: '#0C4A6E',
+        borderWidth: 3,
+        borderColor: '#ffffff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+        elevation: 4,
+    },
+    userLocationInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#ffffff',
     },
     mapControls: {
         position: 'absolute',
