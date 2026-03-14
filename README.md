@@ -64,10 +64,10 @@ Lệnh này sẽ tạo 2 containers:
 cp .env.example .env
 ```
 
-Mở file `.env` và cập nhật nếu cần (mặc định đã hoạt động với Docker ở trên):
+Mở file `.env` và cập nhật nếu cần (mặc định đã hoạt động với Docker ở trên, không cần sửa gì):
 
 ```env
-# Database
+# Database (khớp với docker-compose.yml: user=postgres, password=123, db=seminar_gpstour)
 DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=public"
 
 # JWT
@@ -134,9 +134,26 @@ cd apps/mobile
 
 # Bắt buộc thêm --legacy-peer-deps để tránh lỗi xung đột phiên bản thư viện
 npm install --legacy-peer-deps
+```
 
+**Cấu hình API URL cho mobile** — tạo file `apps/mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_URL=http://<LAN_IP_CỦA_BẠN>:3000
+```
+
+> **Tìm LAN IP của máy:**
+> - Windows: `ipconfig` → tìm dòng `IPv4 Address` (ví dụ: `192.168.1.6`)
+> - macOS/Linux: `ifconfig` → tìm `inet` dưới `en0`/`wlan0`
+>
+> Ví dụ: `EXPO_PUBLIC_API_URL=http://192.168.1.6:3000`
+>
+> **Lưu ý**: IP phải là IP của máy chạy backend, không phải `localhost`.
+> Điện thoại và máy tính phải cùng mạng Wi-Fi.
+
+```bash
 # Chạy app và xóa cache cũ
-npx expo start -c
+npx expo start --clear
 ```
 
 > Quét **QR code** trên terminal bằng app **Expo Go** trên điện thoại (cùng mạng Wi-Fi).
@@ -306,8 +323,8 @@ Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với th
 | Script | Mô tả |
 |--------|--------|
 | `npx expo start` | Chạy dev server (quét QR bằng Expo Go) |
-| `npx expo start -c` | Chạy + xóa cache bundler |
-| `npm install --legacy-peer-deps` | Cài dependencies |
+| `npx expo start --clear` | Chạy + xóa cache bundler (dùng khi có lỗi lạ) |
+| `npm install --legacy-peer-deps` | Cài dependencies (bắt buộc dùng flag này) |
 
 ---
 
@@ -320,7 +337,8 @@ Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với th
 | `CORS error` | Đảm bảo frontend chạy đúng port `5173` |
 | `401 Unauthorized` | Token hết hạn, đăng nhập lại |
 | `Prisma Client not generated` | Chạy `npx prisma generate` |
-| Mobile: `AxiosError: Network Error` | Đảm bảo điện thoại và laptop cùng mạng Wi-Fi. API URL auto-detect từ Expo |
-| Mobile: `Cannot find module` | Chạy `npm install --legacy-peer-deps` rồi `npx expo start -c` |
+| Mobile: `AxiosError: Network Error` | Đảm bảo điện thoại và laptop cùng mạng Wi-Fi, và `EXPO_PUBLIC_API_URL` trong `apps/mobile/.env` đúng LAN IP |
+| Mobile: POI không hiện trên bản đồ | Kiểm tra POI có status `ACTIVE` không (Prisma Studio hoặc Admin Dashboard) |
+| Mobile: `Cannot find module` | Chạy `npm install --legacy-peer-deps` rồi `npx expo start --clear` |
 | Mobile: `No Android device found` | Dùng Expo Go quét QR thay vì nhấn `a` (không cần emulator) |
 
