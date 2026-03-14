@@ -108,14 +108,16 @@ npx prisma migrate dev
 ### Bước 5: Chạy Backend
 
 ```bash
-# Development mode (auto-reload)
+# Vẫn ở apps/api — development mode (auto-reload khi sửa code)
 npm run start:dev
 ```
 
-> **API chạy tại**: http://localhost:3000/api/v1
-> **Swagger Docs**: http://localhost:3000/api/docs
+> **Giữ terminal này mở** — backend phải chạy liên tục.
+>
+> - **API**: http://localhost:3000/api/v1
+> - **Swagger Docs** (test API trực tiếp trên trình duyệt): http://localhost:3000/api/docs
 
-### Bước 6: Cài đặt & Chạy Admin Dashboard
+### Bước 6: Cài đặt & Chạy Admin / Shop Owner Dashboard
 
 ```bash
 # Mở terminal mới
@@ -124,9 +126,20 @@ npm install
 npm run dev
 ```
 
-> **Admin Dashboard chạy tại**: http://localhost:5173
+> **Giữ terminal này mở**.
+>
+> **Dashboard chạy tại**: http://localhost:5173
+>
+> Đây là giao diện dùng chung cho cả **Admin** (quản lý toàn hệ thống) và **Shop Owner** (quản lý cửa hàng & POI của mình).
+> Đăng nhập bằng tài khoản tương ứng — hệ thống tự điều hướng theo role.
 
 ### Bước 7: Cài đặt & Chạy Tourist Mobile App
+
+> **Yêu cầu trước**: Cài **Expo Go** trên điện thoại Android/iOS:
+> - Android: [Play Store — Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent)
+> - iOS: [App Store — Expo Go](https://apps.apple.com/app/expo-go/id982107779)
+>
+> Điện thoại và máy tính phải **cùng mạng Wi-Fi**.
 
 ```bash
 # Mở terminal mới
@@ -143,21 +156,22 @@ EXPO_PUBLIC_API_URL=http://<LAN_IP_CỦA_BẠN>:3000
 ```
 
 > **Tìm LAN IP của máy:**
-> - Windows: `ipconfig` → tìm dòng `IPv4 Address` (ví dụ: `192.168.1.6`)
-> - macOS/Linux: `ifconfig` → tìm `inet` dưới `en0`/`wlan0`
+> - Windows: chạy `ipconfig` → tìm dòng `IPv4 Address` (ví dụ: `192.168.1.6`)
+> - macOS/Linux: chạy `ifconfig` → tìm `inet` dưới `en0`/`wlan0`
 >
 > Ví dụ: `EXPO_PUBLIC_API_URL=http://192.168.1.6:3000`
 >
-> **Lưu ý**: IP phải là IP của máy chạy backend, không phải `localhost`.
-> Điện thoại và máy tính phải cùng mạng Wi-Fi.
+> **Lưu ý**: Dùng LAN IP của máy chạy backend, **không dùng `localhost`** — điện thoại không hiểu `localhost`.
 
 ```bash
-# Chạy app và xóa cache cũ
+# Chạy app (--clear xóa cache bundler, nên dùng lần đầu)
 npx expo start --clear
 ```
 
-> Quét **QR code** trên terminal bằng app **Expo Go** trên điện thoại (cùng mạng Wi-Fi).
-> App sẽ tự động tải và hiển thị giao diện bản đồ.
+> Quét **QR code** hiện trên terminal bằng app **Expo Go**.
+> App tải xong sẽ hiển thị giao diện bản đồ với các POI.
+>
+> **Giữ terminal này mở** — tắt terminal sẽ mất kết nối trên điện thoại.
 
 ---
 
