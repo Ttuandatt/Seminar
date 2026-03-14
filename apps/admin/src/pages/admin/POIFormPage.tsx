@@ -270,6 +270,19 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
     const handleSave = async (nextStatus: WorkflowStatus) => {
         if (readOnly) return;
+
+        // Client-side validation to prevent 400 from backend
+        const lat = parseFloat(formData.latitude);
+        const lng = parseFloat(formData.longitude);
+        const errors: string[] = [];
+        if (!formData.name || formData.name.length < 2) errors.push('Tên POI cần ít nhất 2 ký tự.');
+        if (!formData.description || formData.description.length < 10) errors.push('Mô tả tiếng Việt cần ít nhất 10 ký tự.');
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) errors.push('Vui lòng chọn vị trí trên bản đồ.');
+        if (errors.length > 0) {
+            setError(errors.join(' '));
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -279,8 +292,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 nameEn: formData.nameEn,
                 descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
                 descriptionEn: formData.descriptionEn,
-                latitude: parseFloat(formData.latitude),
-                longitude: parseFloat(formData.longitude),
+                latitude: lat,
+                longitude: lng,
                 category: formData.category,
                 triggerRadius: Number(formData.triggerRadius) || 15,
                 status: nextStatus,
