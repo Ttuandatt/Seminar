@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
@@ -159,36 +159,26 @@ export default function MapScreen() {
                 showsMyLocationButton={false}
                 customMapStyle={organicMapStyle}
             >
-                {/* User location marker — works in both Expo Go and APK */}
+                {/* User location marker — dot + range in one Marker for perfect alignment */}
                 {location && (
-                    <>
-                        <Circle
-                            center={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
-                            }}
-                            radius={20}
-                            fillColor="rgba(12, 74, 110, 0.15)"
-                            strokeColor="rgba(12, 74, 110, 0.3)"
-                            strokeWidth={1}
-                        />
-                        <Marker
-                            coordinate={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
-                            }}
-                            anchor={{ x: 0.5, y: 0.5 }}
-                            tracksViewChanges={!userMarkerReady}
-                            zIndex={999}
+                    <Marker
+                        coordinate={{
+                            latitude: location.coords.latitude,
+                            longitude: location.coords.longitude,
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges={!userMarkerReady}
+                        zIndex={999}
+                        flat
+                    >
+                        <View
+                            style={styles.userLocationWrapper}
+                            onLayout={() => setUserMarkerReady(true)}
                         >
-                            <View
-                                style={styles.userLocationDot}
-                                onLayout={() => setUserMarkerReady(true)}
-                            >
-                                <View style={styles.userLocationInner} />
-                            </View>
-                        </Marker>
-                    </>
+                            <View style={styles.userLocationRange} />
+                            <View style={styles.userLocationDot} />
+                        </View>
+                    </Marker>
                 )}
 
                 {pois.map((poi) => (
@@ -279,26 +269,28 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    userLocationDot: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        backgroundColor: '#0C4A6E',
-        borderWidth: 3,
-        borderColor: '#ffffff',
+    userLocationWrapper: {
+        width: 64,
+        height: 64,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 4,
     },
-    userLocationInner: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#ffffff',
+    userLocationRange: {
+        position: 'absolute',
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(249, 115, 22, 0.15)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(249, 115, 22, 0.45)',
+    },
+    userLocationDot: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: '#F97316',
+        borderWidth: 2.5,
+        borderColor: '#ffffff',
     },
     mapControls: {
         position: 'absolute',
