@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
-
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
 import { LocateFixed, Layers } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
@@ -109,20 +107,27 @@ export default function MapScreen() {
         };
     }, [pois]); // Re-subscribe if POIs list changes
 
+    const fetchPois = useCallback(async () => {
+        try {
+            const data = await publicService.getAllPois();
+            console.log('[Map] fetched POIs:', data.length);
+            setPois(data);
+        } catch (error) {
+            console.error('[Map] fetchPois error:', error);
+        }
+    }, []);
+
+    // Initial load
+    useEffect(() => {
+        fetchPois();
+    }, [fetchPois]);
+
+    // Refetch every time user navigates back to this tab
     useFocusEffect(
         useCallback(() => {
             fetchPois();
-        }, [])
+        }, [fetchPois])
     );
-
-    const fetchPois = async () => {
-        try {
-            const data = await publicService.getAllPois();
-            setPois(data);
-        } catch (error) {
-            console.error('Error fetching POIs:', error);
-        }
-    };
 
     const handleMarkerPress = (poi: Poi) => {
         setSelectedPoi(poi);
