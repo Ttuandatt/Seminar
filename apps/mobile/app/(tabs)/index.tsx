@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
@@ -159,26 +159,36 @@ export default function MapScreen() {
                 showsMyLocationButton={false}
                 customMapStyle={organicMapStyle}
             >
-                {/* User location marker — dot + range in one Marker for perfect alignment */}
+                {/* User location: Circle (geographic 50m range) + Marker dot */}
                 {location && (
-                    <Marker
-                        coordinate={{
-                            latitude: location.coords.latitude,
-                            longitude: location.coords.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        tracksViewChanges={!userMarkerReady}
-                        zIndex={999}
-                        flat
-                    >
-                        <View
-                            style={styles.userLocationWrapper}
-                            onLayout={() => setUserMarkerReady(true)}
+                    <>
+                        <Circle
+                            center={{
+                                latitude: location.coords.latitude,
+                                longitude: location.coords.longitude,
+                            }}
+                            radius={50}
+                            fillColor="rgba(249, 115, 22, 0.12)"
+                            strokeColor="rgba(249, 115, 22, 0.4)"
+                            strokeWidth={1.5}
+                            zIndex={1}
+                        />
+                        <Marker
+                            coordinate={{
+                                latitude: location.coords.latitude,
+                                longitude: location.coords.longitude,
+                            }}
+                            anchor={{ x: 0.5, y: 0.5 }}
+                            tracksViewChanges={!userMarkerReady}
+                            zIndex={999}
+                            flat
                         >
-                            <View style={styles.userLocationRange} />
-                            <View style={styles.userLocationDot} />
-                        </View>
-                    </Marker>
+                            <View
+                                style={styles.userLocationDot}
+                                onLayout={() => setUserMarkerReady(true)}
+                            />
+                        </Marker>
+                    </>
                 )}
 
                 {pois.map((poi) => (
@@ -268,21 +278,6 @@ const styles = StyleSheet.create({
     map: {
         width: '100%',
         height: '100%',
-    },
-    userLocationWrapper: {
-        width: 64,
-        height: 64,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    userLocationRange: {
-        position: 'absolute',
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(249, 115, 22, 0.15)',
-        borderWidth: 1.5,
-        borderColor: 'rgba(249, 115, 22, 0.45)',
     },
     userLocationDot: {
         width: 18,
