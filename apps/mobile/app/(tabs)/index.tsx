@@ -181,7 +181,7 @@ export default function MapScreen() {
                             tracksViewChanges={false}
                             zIndex={999}
                         >
-                            <View style={styles.userLocationDot} />
+                            <View collapsable={false} style={styles.userLocationDot} />
                         </Marker>
                     </>
                 )}
