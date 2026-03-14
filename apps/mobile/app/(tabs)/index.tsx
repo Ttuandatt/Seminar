@@ -29,7 +29,6 @@ export default function MapScreen() {
     const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
     const [lang, setLang] = useState<'vi' | 'en'>('vi');
     const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-    const [userMarkerReady, setUserMarkerReady] = useState(false);
     const triggeredPoiIds = useRef<Set<string>>(new Set());
 
     useEffect(() => {
@@ -179,14 +178,10 @@ export default function MapScreen() {
                                 longitude: location.coords.longitude,
                             }}
                             anchor={{ x: 0.5, y: 0.5 }}
-                            tracksViewChanges={!userMarkerReady}
+                            tracksViewChanges={false}
                             zIndex={999}
-                            flat
                         >
-                            <View
-                                style={styles.userLocationDot}
-                                onLayout={() => setUserMarkerReady(true)}
-                            />
+                            <View style={styles.userLocationDot} />
                         </Marker>
                     </>
                 )}
