@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
+
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { publicService, Poi } from '../../services/publicService';
@@ -155,35 +156,23 @@ export default function MapScreen() {
                 style={styles.map}
                 mapType={mapType}
                 initialRegion={VINH_KHANH_REGION}
+                showsUserLocation
                 showsMyLocationButton={false}
                 customMapStyle={organicMapStyle}
             >
-                {/* User location: Circle (geographic 50m range) + Marker dot */}
+                {/* Range circle — geographic 50m, matches POI trigger radius */}
                 {location && (
-                    <>
-                        <Circle
-                            center={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
-                            }}
-                            radius={50}
-                            fillColor="rgba(249, 115, 22, 0.12)"
-                            strokeColor="rgba(249, 115, 22, 0.4)"
-                            strokeWidth={1.5}
-                            zIndex={1}
-                        />
-                        <Marker
-                            coordinate={{
-                                latitude: location.coords.latitude,
-                                longitude: location.coords.longitude,
-                            }}
-                            anchor={{ x: 0.5, y: 0.5 }}
-                            tracksViewChanges={false}
-                            zIndex={999}
-                        >
-                            <View collapsable={false} style={styles.userLocationDot} />
-                        </Marker>
-                    </>
+                    <Circle
+                        center={{
+                            latitude: location.coords.latitude,
+                            longitude: location.coords.longitude,
+                        }}
+                        radius={50}
+                        fillColor="rgba(249, 115, 22, 0.12)"
+                        strokeColor="rgba(249, 115, 22, 0.4)"
+                        strokeWidth={1.5}
+                        zIndex={1}
+                    />
                 )}
 
                 {pois.map((poi) => (
@@ -273,14 +262,6 @@ const styles = StyleSheet.create({
     map: {
         width: '100%',
         height: '100%',
-    },
-    userLocationDot: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: '#F97316',
-        borderWidth: 2.5,
-        borderColor: '#ffffff',
     },
     mapControls: {
         position: 'absolute',

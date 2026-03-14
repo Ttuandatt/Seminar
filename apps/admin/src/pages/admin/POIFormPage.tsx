@@ -71,7 +71,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         latitude: '',
         longitude: '',
         triggerRadius: 15,
-        status: 'DRAFT' as WorkflowStatus,
+        status: 'ACTIVE' as WorkflowStatus,
         ownerId: '',
     });
 
