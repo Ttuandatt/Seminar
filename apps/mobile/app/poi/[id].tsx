@@ -112,7 +112,8 @@ export default function PoiDetailScreen() {
     }
 
     const images = poi.media?.filter(m => m.type === 'IMAGE') || [];
-    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'));
+    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
+        ?? poi.media?.find(m => m.type === 'AUDIO');
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -174,11 +175,18 @@ export default function PoiDetailScreen() {
                 </View>
 
                 <Text style={styles.typeText}>
-                    {poi.poiType === 'MAIN' ? '📍 Cột mốc chính' : '🛎️ Điểm lân cận'}
+                    {poi.category === 'CULTURAL_LANDMARKS' ? '📍 Di tích văn hóa' :
+                     poi.category === 'DINING' ? '🍽️ Ăn uống' :
+                     poi.category === 'CAFES_DESSERTS' ? '☕ Cà phê & tráng miệng' :
+                     poi.category === 'STREET_FOOD' ? '🥢 Ẩm thực đường phố' :
+                     poi.category === 'BARS_NIGHTLIFE' ? '🍸 Bar & giải trí đêm' :
+                     poi.category === 'MARKETS_SPECIALTY' ? '🛒 Chợ & đặc sản' :
+                     poi.category === 'EXPERIENCES_WORKSHOPS' ? '🎨 Trải nghiệm' :
+                     poi.category === 'OUTDOOR_SCENIC' ? '🌿 Ngoài trời' : '📍 Điểm tham quan'}
                 </Text>
 
                 {/* Audio Player Component */}
-                {audio && <AudioPlayer audioUrl={audio.url} poiId={poi.id} />}
+                {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} />}
                 {!audio && <Text style={styles.noAudioText}>No audio guide available for this language.</Text>}
 
                 <View style={styles.descriptionCard}>

@@ -111,6 +111,7 @@ export default function MapScreen() {
         try {
             const data = await publicService.getAllPois();
             console.log('[Map] fetched POIs:', data.length);
+            data.forEach(p => console.log(`[Map] POI: ${p.nameVi} | lat=${p.latitude} lng=${p.longitude} | cat=${p.category}`));
             setPois(data);
         } catch (error) {
             console.error('[Map] fetchPois error:', error);
@@ -188,8 +189,8 @@ export default function MapScreen() {
                         key={poi.id}
                         coordinate={{ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }}
                         title={poi.nameVi}
-                        description={poi.poiType}
-                        pinColor={poi.poiType === 'MAIN' ? 'red' : 'gold'}
+                        description={poi.category}
+                        pinColor={poi.category === 'CULTURAL_LANDMARKS' ? '#EF4444' : '#F97316'}
                         tracksViewChanges={false}
                         onPress={() => handleMarkerPress(poi)}
                     />
@@ -213,7 +214,8 @@ export default function MapScreen() {
 
             {selectedPoi && (() => {
                 const imageMedia = selectedPoi.media?.find(m => m.type === 'IMAGE');
-                const audioMedia = selectedPoi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'));
+                const audioMedia = selectedPoi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
+                    ?? selectedPoi.media?.find(m => m.type === 'AUDIO');
                 const distanceM = location ? getDistance(
                     { latitude: location.coords.latitude, longitude: location.coords.longitude },
                     { latitude: Number(selectedPoi.latitude), longitude: Number(selectedPoi.longitude) }
@@ -233,13 +235,20 @@ export default function MapScreen() {
 
                         <View style={styles.poiPreviewRow}>
                             <Image
-                                source={{ uri: imageMedia?.url || 'https://via.placeholder.com/150' }}
+                                source={{ uri: imageMedia ? getMediaUrl(imageMedia.url) : 'https://via.placeholder.com/150' }}
                                 style={styles.poiImage}
                             />
                             <View style={styles.poiInfo}>
                                 <Text style={styles.poiTitle} numberOfLines={1}>{selectedPoi.nameVi}</Text>
                                 <Text style={styles.poiType}>
-                                    {selectedPoi.poiType === 'MAIN' ? '📍 Cột mốc chính' : '🛎️ Điểm lân cận'}
+                                    {selectedPoi.category === 'CULTURAL_LANDMARKS' ? '📍 Di tích văn hóa' :
+                                     selectedPoi.category === 'DINING' ? '🍽️ Ăn uống' :
+                                     selectedPoi.category === 'CAFES_DESSERTS' ? '☕ Cà phê & tráng miệng' :
+                                     selectedPoi.category === 'STREET_FOOD' ? '🥢 Ẩm thực đường phố' :
+                                     selectedPoi.category === 'BARS_NIGHTLIFE' ? '🍸 Bar & giải trí đêm' :
+                                     selectedPoi.category === 'MARKETS_SPECIALTY' ? '🛒 Chợ & đặc sản' :
+                                     selectedPoi.category === 'EXPERIENCES_WORKSHOPS' ? '🎨 Trải nghiệm' :
+                                     selectedPoi.category === 'OUTDOOR_SCENIC' ? '🌿 Ngoài trời' : '📍 Điểm tham quan'}
                                     {distanceText && ` • ${distanceText}`}
                                 </Text>
                                 <TouchableOpacity
@@ -253,7 +262,7 @@ export default function MapScreen() {
 
                         {audioMedia?.url && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioMedia.url} poiId={selectedPoi.id} autoPlay={autoPlayEnabled} />
+                                <AudioPlayer audioUrl={getMediaUrl(audioMedia.url)} poiId={selectedPoi.id} autoPlay={autoPlayEnabled} />
                             </View>
                         )}
                     </View>

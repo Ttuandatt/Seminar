@@ -8,7 +8,7 @@ export interface Poi {
     descriptionEn?: string;
     latitude: number;
     longitude: number;
-    poiType: string;
+    category: string;
     media: any[];
     distance?: number;
     triggerRadius?: number;
