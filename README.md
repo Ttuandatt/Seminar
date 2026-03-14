@@ -149,22 +149,28 @@ cd apps/mobile
 npm install --legacy-peer-deps
 ```
 
-**Cấu hình API URL cho mobile** — tạo file `apps/mobile/.env`:
-
-```env
-EXPO_PUBLIC_API_URL=http://<LAN_IP_CỦA_BẠN>:3000
-```
-
-> **Tìm LAN IP của máy:**
-> - Windows: chạy `ipconfig` → tìm dòng `IPv4 Address` (ví dụ: `192.168.1.6`)
-> - macOS/Linux: chạy `ifconfig` → tìm `inet` dưới `en0`/`wlan0`
->
-> Ví dụ: `EXPO_PUBLIC_API_URL=http://192.168.1.6:3000`
->
-> **Lưu ý**: Dùng LAN IP của máy chạy backend, **không dùng `localhost`** — điện thoại không hiểu `localhost`.
+**Bước 1 — Lấy LAN IP**: chạy thử Expo để terminal tự hiện IP:
 
 ```bash
-# Chạy app (--clear xóa cache bundler, nên dùng lần đầu)
+npx expo start
+```
+
+Terminal sẽ hiện dòng:
+```
+Metro waiting on exp://192.168.1.6:8081
+                        ^^^^^^^^^^^
+                        Đây là LAN IP của bạn
+```
+
+Nhấn `Ctrl+C` để tắt, rồi **tạo file `apps/mobile/.env`** với IP vừa lấy:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.6:3000
+```
+
+**Bước 2 — Chạy lại với clear cache**:
+
+```bash
 npx expo start --clear
 ```
 
