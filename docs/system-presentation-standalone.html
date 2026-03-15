@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS Tours — System Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+--bg:#060d18;
+--bg-card:#0a1628;
+--bg-card-hover:#0f1f3a;
+--surface:#111d35;
+--surface-light:#162544;
+--border:#1e3a5f;
+--border-light:#2a4a6f;
+--text:#e8edf5;
+--text-muted:#8899b4;
+--text-dim:#5a6f8e;
+--primary:#0c4a6e;
+--primary-light:#0e6498;
+--primary-bright:#1e90c8;
+--accent:#f97316;
+--accent-glow:#f9731640;
+--accent-light:#fb923c;
+--success:#22c55e;
+--danger:#ef4444;
+--purple:#a78bfa;
+--cyan:#22d3ee;
+--font-display:'Plus Jakarta Sans','Be Vietnam Pro',system-ui,sans-serif;
+--font-body:'Be Vietnam Pro',system-ui,sans-serif;
+--font-mono:'JetBrains Mono','Fira Code',monospace;
+--ease-out-expo:cubic-bezier(0.16,1,0.3,1);
+--ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+}
+
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--primary) var(--bg)}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+::selection{background:var(--accent);color:var(--bg)}
+
+body::before{
+content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+opacity:0.025;
+}
+
+.nav{
+position:fixed;top:0;left:0;right:0;z-index:1000;
+padding:0 2rem;height:64px;
+display:flex;align-items:center;justify-content:space-between;
+background:rgba(6,13,24,0.85);backdrop-filter:blur(20px) saturate(1.5);
+border-bottom:1px solid rgba(30,58,95,0.4);
+transition:all 0.4s var(--ease-out-expo);
+}
+.nav.scrolled{box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.nav-brand{
+font-family:var(--font-display);font-size:1.15rem;font-weight:800;
+background:linear-gradient(135deg,var(--accent),var(--accent-light));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+letter-spacing:-0.02em;
+}
+.nav-links{display:flex;gap:0.25rem;overflow-x:auto;max-width:70vw;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{
+color:var(--text-muted);text-decoration:none;font-size:0.72rem;font-weight:500;
+padding:0.4rem 0.65rem;border-radius:6px;white-space:nowrap;
+transition:all 0.25s ease;letter-spacing:0.01em;text-transform:uppercase;
+}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);background:var(--accent-glow)}
+
+.scroll-top{
+position:fixed;bottom:2rem;right:2rem;z-index:999;
+width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;
+background:linear-gradient(135deg,var(--accent),#e65100);color:#fff;
+font-size:1.2rem;display:flex;align-items:center;justify-content:center;
+box-shadow:0 4px 24px var(--accent-glow);
+transform:translateY(100px);opacity:0;
+transition:all 0.4s var(--ease-spring);
+}
+.scroll-top.visible{transform:translateY(0);opacity:1}
+.scroll-top:hover{transform:translateY(-3px) scale(1.08);box-shadow:0 8px 32px var(--accent-glow)}
+
+section{padding:6rem 2rem;position:relative}
+.container{max-width:1200px;margin:0 auto}
+
+.section-label{
+font-family:var(--font-mono);font-size:0.7rem;font-weight:600;
+color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;
+margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;
+}
+.section-label::before{content:'';width:24px;height:1px;background:var(--accent)}
+
+.section-title{
+font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);
+font-weight:800;line-height:1.15;margin-bottom:1rem;
+letter-spacing:-0.03em;
+}
+.section-subtitle{color:var(--text-muted);max-width:640px;margin-bottom:3rem;font-size:0.95rem}
+
+.divider{
+height:1px;margin:0 2rem;
+background:linear-gradient(90deg,transparent,var(--border),var(--primary-light),var(--border),transparent);
+}
+
+.reveal{opacity:0;transform:translateY(40px);transition:all 0.8s var(--ease-out-expo)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:0.1s}
+.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}
+
+.hero{
+min-height:100vh;display:flex;align-items:center;justify-content:center;
+text-align:center;position:relative;overflow:hidden;padding:2rem;
+}
+.hero::before{
+content:'';position:absolute;inset:0;
+background:
+  radial-gradient(ellipse 80% 60% at 50% 30%,rgba(12,74,110,0.3),transparent),
+  radial-gradient(ellipse 60% 40% at 20% 80%,rgba(249,115,22,0.08),transparent),
+  radial-gradient(ellipse 50% 50% at 80% 70%,rgba(14,100,152,0.15),transparent);
+}
+
+.hero-grid{
+position:absolute;inset:0;
+background-image:
+  linear-gradient(rgba(30,58,95,0.15) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(30,58,95,0.15) 1px,transparent 1px);
+background-size:60px 60px;
+mask-image:radial-gradient(ellipse 70% 50% at 50% 50%,#000,transparent);
+animation:gridFloat 20s ease infinite;
+}
+@keyframes gridFloat{0%,100%{background-position:0 0}50%{background-position:30px 30px}}
+
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.5;animation:orbFloat 15s ease-in-out infinite}
+.orb-1{width:400px;height:400px;background:var(--primary);top:-100px;left:-100px}
+.orb-2{width:300px;height:300px;background:var(--accent);bottom:-50px;right:-50px;opacity:0.2;animation-delay:-5s}
+.orb-3{width:250px;height:250px;background:var(--cyan);top:50%;right:10%;opacity:0.1;animation-delay:-10s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-30px) scale(1.05)}66%{transform:translate(-20px,20px) scale(0.95)}}
+
+.hero-content{position:relative;z-index:1}
+.hero-badge{
+display:inline-flex;align-items:center;gap:0.5rem;
+padding:0.5rem 1.25rem;border-radius:100px;
+background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);
+font-size:0.75rem;font-weight:600;color:var(--accent-light);
+margin-bottom:2rem;letter-spacing:0.05em;text-transform:uppercase;
+animation:fadeInDown 0.8s var(--ease-out-expo) 0.2s both;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+
+.hero h1{
+font-family:var(--font-display);
+font-size:clamp(2.5rem,6vw,4.5rem);
+font-weight:900;line-height:1.05;
+letter-spacing:-0.04em;margin-bottom:1.5rem;
+animation:fadeInUp 1s var(--ease-out-expo) 0.4s both;
+}
+.hero h1 .highlight{
+background:linear-gradient(135deg,var(--accent),var(--accent-light),#fbbf24);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+.hero-subtitle{
+font-size:clamp(1rem,2vw,1.3rem);color:var(--text-muted);
+max-width:700px;margin:0 auto 2.5rem;font-weight:300;
+animation:fadeInUp 1s var(--ease-out-expo) 0.6s both;
+}
+
+.hero-stats{
+display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;
+animation:fadeInUp 1s var(--ease-out-expo) 0.8s both;
+}
+.hero-stat{text-align:center}
+.hero-stat .num{font-family:var(--font-mono);font-size:2rem;font-weight:700;color:var(--accent);display:block}
+.hero-stat .label{font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+.card{
+background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
+padding:2rem;position:relative;overflow:hidden;
+transition:all 0.4s var(--ease-out-expo);
+}
+.card::before{
+content:'';position:absolute;top:0;left:0;right:0;height:1px;
+background:linear-gradient(90deg,transparent,var(--border-light),transparent);
+}
+.card:hover{
+border-color:var(--border-light);background:var(--bg-card-hover);
+transform:translateY(-4px);
+box-shadow:0 16px 48px rgba(0,0,0,0.3);
+}
+
+.card-icon{
+font-size:2rem;margin-bottom:1rem;
+width:56px;height:56px;display:flex;align-items:center;justify-content:center;
+background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(12,74,110,0.1));
+border-radius:14px;border:1px solid var(--border);
+}
+.card h3{font-size:1.15rem;font-weight:700;margin-bottom:0.5rem}
+.card p{color:var(--text-muted);font-size:0.88rem;line-height:1.6}
+
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.grid-5{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+
+.role-card{text-align:center;padding:2.5rem 2rem}
+.role-card .card-icon{margin:0 auto 1.25rem;font-size:2.4rem;width:72px;height:72px;border-radius:50%}
+.role-card h3{font-size:1.25rem}
+.role-features{list-style:none;margin-top:1rem;text-align:left}
+.role-features li{padding:0.4rem 0;font-size:0.85rem;color:var(--text-muted);display:flex;align-items:flex-start;gap:0.5rem}
+.role-features li::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:0.55rem}
+
+.arch-diagram{display:flex;flex-direction:column;gap:0;align-items:center}
+.arch-layer{
+width:100%;max-width:900px;padding:1.5rem 2rem;
+border:1px solid var(--border);text-align:center;
+transition:all 0.3s ease;
+}
+.arch-layer:hover{border-color:var(--accent);background:rgba(249,115,22,0.03)}
+.arch-layer:first-child{border-radius:16px 16px 0 0}
+.arch-layer:last-child{border-radius:0 0 16px 16px}
+.arch-layer-label{font-family:var(--font-mono);font-size:0.65rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.5rem}
+.arch-layer-title{font-weight:700;font-size:1.05rem;margin-bottom:0.75rem}
+.arch-items{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap}
+.arch-item{padding:0.4rem 0.9rem;border-radius:8px;font-size:0.78rem;font-weight:500;background:var(--surface);border:1px solid var(--border);transition:all 0.2s ease}
+.arch-item:hover{border-color:var(--accent);color:var(--accent)}
+.arch-arrow{width:2px;height:32px;background:linear-gradient(to bottom,var(--border-light),var(--accent));position:relative}
+.arch-arrow::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--accent)}
+
+.tech-card{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem}
+.tech-card .tech-icon{font-size:1.6rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:12px;border:1px solid var(--border);flex-shrink:0}
+.tech-card h3{font-size:0.95rem;margin-bottom:0.15rem}
+
+.module-card{padding:1.5rem}
+.module-card .module-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.module-card .module-prefix{font-family:var(--font-mono);font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:4px;background:var(--surface);color:var(--accent)}
+.module-card .module-count{font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim)}
+.module-card h3{font-size:1rem}
+
+.flow-container{margin-bottom:2.5rem}
+.flow-title{font-size:1.15rem;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.75rem}
+.flow-title .flow-num{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#e65100);color:#fff;font-size:0.8rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.flow-steps{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.flow-step{flex:1;min-width:140px;padding:1.25rem;background:var(--bg-card);border:1px solid var(--border);text-align:center;position:relative;transition:all 0.3s ease}
+.flow-step:first-child{border-radius:12px 0 0 12px}
+.flow-step:last-child{border-radius:0 12px 12px 0}
+.flow-step:hover{border-color:var(--accent);z-index:1}
+.flow-step .step-icon{font-size:1.5rem;margin-bottom:0.5rem;display:block}
+.flow-step .step-label{font-size:0.78rem;font-weight:600;margin-bottom:0.25rem}
+.flow-step .step-desc{font-size:0.7rem;color:var(--text-muted)}
+.flow-step:not(:last-child)::after{content:'';position:absolute;right:-12px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:12px solid var(--border);border-top:16px solid transparent;border-bottom:16px solid transparent;z-index:2}
+
+.pipeline{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center}
+.pipeline-node{padding:1.25rem 1.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;text-align:center;min-width:130px;transition:all 0.3s ease}
+.pipeline-node:hover{border-color:var(--accent);transform:translateY(-2px)}
+.pipeline-node .node-icon{font-size:1.8rem;margin-bottom:0.5rem;display:block}
+.pipeline-node .node-label{font-size:0.85rem;font-weight:600}
+.pipeline-node .node-sub{font-size:0.7rem;color:var(--text-muted);margin-top:0.25rem}
+.pipeline-arrow{font-size:1.5rem;color:var(--accent);padding:0 0.5rem;flex-shrink:0}
+
+.ner-demo{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:2rem;overflow:hidden}
+.ner-row{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:1.5rem}
+.ner-col{flex:1;min-width:280px}
+.ner-label{font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.75rem}
+.ner-text{font-size:1.05rem;line-height:1.8;padding:1rem;background:var(--surface);border-radius:8px;border:1px solid var(--border)}
+.ner-entity{padding:0.15rem 0.5rem;border-radius:4px;font-weight:600}
+.ner-proper{background:rgba(249,115,22,0.15);color:var(--accent-light);border-bottom:2px solid var(--accent)}
+.ner-landmark{background:rgba(34,211,238,0.1);color:var(--cyan);border-bottom:2px solid var(--cyan)}
+.ner-wrong{text-decoration:line-through;color:var(--danger);opacity:0.7}
+.ner-correct{color:var(--success);font-weight:700}
+
+.fallback-stack{display:flex;flex-direction:column;gap:0;max-width:700px;margin:0 auto}
+.fallback-layer{padding:1.5rem 2rem;border:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;transition:all 0.3s ease}
+.fallback-layer:first-child{border-radius:16px 16px 0 0}
+.fallback-layer:last-child{border-radius:0 0 16px 16px}
+.fallback-layer:hover{background:var(--bg-card-hover);border-color:var(--border-light)}
+.fallback-num{font-family:var(--font-mono);font-size:0.75rem;font-weight:700;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fb-1 .fallback-num{background:rgba(34,197,94,0.15);color:var(--success)}
+.fb-2 .fallback-num{background:rgba(251,191,36,0.15);color:#fbbf24}
+.fb-3 .fallback-num{background:rgba(249,115,22,0.15);color:var(--accent)}
+.fb-4 .fallback-num{background:rgba(239,68,68,0.15);color:var(--danger)}
+
+.score-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden}
+.score-table th{background:var(--surface);padding:1rem 1.25rem;text-align:left;font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);border-bottom:1px solid var(--border)}
+.score-table td{padding:0.9rem 1.25rem;border-bottom:1px solid rgba(30,58,95,0.3);font-size:0.88rem}
+.score-table tr:last-child td{border-bottom:none}
+.score-table tbody tr{transition:background 0.2s ease}
+.score-table tbody tr:hover{background:var(--bg-card-hover)}
+.score-table .winner{color:var(--accent);font-weight:700}
+.score-bar{height:6px;border-radius:3px;background:var(--surface);overflow:hidden;margin-top:0.25rem}
+.score-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary-bright),var(--accent))}
+
+.map-card{padding:2rem}
+.map-card .map-status{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1rem}
+.map-cloud .map-status{background:rgba(34,211,238,0.15);color:var(--cyan)}
+.map-offline .map-status{background:rgba(34,197,94,0.15);color:var(--success)}
+.map-hybrid .map-status{background:rgba(249,115,22,0.15);color:var(--accent)}
+
+.lang-drawer{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:500px;margin:0 auto}
+.drawer-slot{padding:1rem 1.25rem;border:1px solid var(--border);border-radius:10px;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s ease}
+.drawer-slot:hover{border-color:var(--accent)}
+.drawer-slot .slot-info{display:flex;align-items:center;gap:0.75rem}
+.drawer-slot .slot-flag{font-size:1.5rem}
+.drawer-slot .slot-name{font-weight:600;font-size:0.9rem}
+.drawer-slot .slot-count{font-size:0.75rem;color:var(--text-muted)}
+.drawer-slot .slot-size{font-family:var(--font-mono);font-size:0.8rem;color:var(--accent)}
+.drawer-rules{margin-top:1.5rem;padding:1rem;background:var(--surface);border-radius:8px}
+.drawer-rules li{font-size:0.82rem;color:var(--text-muted);padding:0.3rem 0;list-style:none;display:flex;align-items:center;gap:0.5rem}
+
+.heat-bar{display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid rgba(30,58,95,0.2)}
+.heat-bar:last-child{border-bottom:none}
+.heat-rank{font-family:var(--font-mono);font-size:0.8rem;font-weight:700;width:28px;text-align:center}
+.heat-name{flex:1;font-size:0.88rem;font-weight:500}
+.heat-meter{flex:2;height:8px;background:var(--surface);border-radius:4px;overflow:hidden}
+.heat-fill{height:100%;border-radius:4px;transition:width 1s var(--ease-out-expo)}
+.heat-val{font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted);width:60px;text-align:right}
+
+.pricing-card{text-align:center;padding:2rem;position:relative}
+.pricing-card.featured{border-color:var(--accent);background:linear-gradient(to bottom,rgba(249,115,22,0.05),var(--bg-card))}
+.pricing-card.featured::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.pricing-badge{display:inline-block;padding:0.2rem 0.75rem;border-radius:100px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem}
+.pricing-card.free .pricing-badge{background:rgba(34,197,94,0.15);color:var(--success)}
+.pricing-card.featured .pricing-badge{background:rgba(249,115,22,0.15);color:var(--accent)}
+.pricing-card.business .pricing-badge{background:rgba(167,139,250,0.15);color:var(--purple)}
+.pricing-price{font-family:var(--font-mono);font-size:2rem;font-weight:800;margin:0.5rem 0}
+.pricing-price span{font-size:0.85rem;font-weight:400;color:var(--text-muted)}
+.pricing-features{list-style:none;text-align:left;margin-top:1.5rem}
+.pricing-features li{padding:0.4rem 0;font-size:0.82rem;color:var(--text-muted);display:flex;align-items:flex-start;gap:0.5rem}
+
+.load-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden}
+.load-table th{background:var(--surface);padding:0.9rem 1.25rem;text-align:left;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);border-bottom:1px solid var(--border)}
+.load-table td{padding:0.85rem 1.25rem;border-bottom:1px solid rgba(30,58,95,0.3);font-size:0.85rem}
+.load-table tbody tr{transition:background 0.2s ease}
+.load-table tbody tr:hover{background:var(--bg-card-hover)}
+
+.qr-flow{display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap}
+.qr-step{text-align:center;padding:2rem;min-width:160px}
+.qr-step .qr-icon{font-size:3rem;margin-bottom:1rem;display:block}
+.qr-arrow{font-size:2rem;color:var(--accent)}
+
+.endpoint-group{margin-bottom:2rem}
+.endpoint-group-title{font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:var(--accent);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem}
+.endpoint-list{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.endpoint-item{padding:0.6rem 1.25rem;border-bottom:1px solid rgba(30,58,95,0.2);display:flex;align-items:center;gap:0.75rem;font-family:var(--font-mono);font-size:0.78rem;transition:background 0.2s ease}
+.endpoint-item:last-child{border-bottom:none}
+.endpoint-item:hover{background:var(--bg-card-hover)}
+.endpoint-method{padding:0.15rem 0.5rem;border-radius:4px;font-weight:700;font-size:0.65rem;min-width:46px;text-align:center}
+.method-get{background:rgba(34,197,94,0.15);color:var(--success)}
+.method-post{background:rgba(59,130,246,0.15);color:#60a5fa}
+.method-put,.method-patch{background:rgba(251,191,36,0.15);color:#fbbf24}
+.method-delete{background:rgba(239,68,68,0.15);color:var(--danger)}
+.endpoint-path{color:var(--text)}
+.endpoint-desc{color:var(--text-dim);margin-left:auto;font-size:0.7rem;font-family:var(--font-body)}
+
+.roadmap{display:flex;flex-direction:column;gap:0;max-width:800px;margin:0 auto}
+.roadmap-phase{padding:1.5rem 2rem;border:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;transition:all 0.3s ease}
+.roadmap-phase:first-child{border-radius:16px 16px 0 0}
+.roadmap-phase:last-child{border-radius:0 0 16px 16px}
+.roadmap-phase:hover{background:var(--bg-card-hover)}
+.roadmap-status{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.rm-done{background:rgba(34,197,94,0.15)}
+.rm-next{background:rgba(249,115,22,0.15);animation:pulse 2s ease infinite}
+.rm-future{background:var(--surface)}
+.roadmap-info{flex:1}
+.roadmap-info h4{font-size:1rem;margin-bottom:0.25rem}
+.roadmap-info p{font-size:0.82rem;color:var(--text-muted)}
+
+.footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--border);color:var(--text-dim);font-size:0.8rem}
+
+@media(max-width:768px){
+  section{padding:4rem 1.25rem}
+  .nav-links{display:none}
+  .flow-steps{flex-direction:column}
+  .flow-step{border-radius:0!important}
+  .flow-step:first-child{border-radius:12px 12px 0 0!important}
+  .flow-step:last-child{border-radius:0 0 12px 12px!important}
+  .flow-step:not(:last-child)::after{display:none}
+  .pipeline{flex-direction:column}
+  .pipeline-arrow{transform:rotate(90deg)}
+  .grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr}
+  .hero-stats{gap:2rem}
+  .ner-row{flex-direction:column}
+  .qr-flow{flex-direction:column}
+  .qr-arrow{transform:rotate(90deg)}
+  .endpoint-desc{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-brand">GPS Tours</div>
+  <div class="nav-links">
+    <a href="#overview">Tổng quan</a>
+    <a href="#architecture">Kiến trúc</a>
+    <a href="#modules">Tính năng</a>
+    <a href="#endpoints">API</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+</nav>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span> Seminar Presentation 2026</div>
+    <h1>GPS Tours<br><span class="highlight">Thuyết Minh Du Lịch<br>Ẩm Thực Thông Minh</span></h1>
+    <p class="hero-subtitle">Hệ thống hướng dẫn du lịch tự động dựa trên GPS &#8212; kết hợp audio guide đa ngôn ngữ, Text-to-Speech thông minh, và chế độ offline cho phố ẩm thực Vĩnh Khánh, Quận 4, TP.HCM</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="num">~50</span><span class="label">API Endpoints</span></div>
+      <div class="hero-stat"><span class="num">10</span><span class="label">Backend Modules</span></div>
+      <div class="hero-stat"><span class="num">3</span><span class="label">Applications</span></div>
+      <div class="hero-stat"><span class="num">12</span><span class="label">Mobile Screens</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">01 &#8212; Tổng quan</div>
+      <h2 class="section-title">Ba vai trò,<br>một hệ sinh thái</h2>
+      <p class="section-subtitle">Hệ thống phục vụ 3 đối tượng chính với giao diện riêng biệt, kết nối qua một API Backend duy nhất.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card role-card reveal reveal-delay-1">
+        <div class="card-icon">&#x1F9F3;</div>
+        <h3>Tourist</h3>
+        <p>Du khách sử dụng mobile app</p>
+        <ul class="role-features">
+          <li>Mở app &#8594; đi bộ &#8594; hệ thống tự phát audio</li>
+          <li>Bản đồ GPS với POI markers</li>
+          <li>Audio đa ngôn ngữ (VI/EN)</li>
+          <li>Chế độ offline với SQLite</li>
+          <li>Tour theo lộ trình có sẵn</li>
+          <li>QR Code scan cho POI</li>
+        </ul>
+      </div>
+      <div class="card role-card reveal reveal-delay-2">
+        <div class="card-icon">&#x1F3EA;</div>
+        <h3>Shop Owner</h3>
+        <p>Chủ quán quản lý qua web portal</p>
+        <ul class="role-features">
+          <li>Đăng ký quán &#8594; Admin duyệt pháp lý</li>
+          <li>Nhập text mô tả &#8594; hệ thống tự tạo audio (TTS)</li>
+          <li>Upload hình ảnh &amp; audio chuyên nghiệp</li>
+          <li>Xem analytics (views, audio plays)</li>
+          <li>Quản lý nội dung đa ngôn ngữ</li>
+        </ul>
+      </div>
+      <div class="card role-card reveal reveal-delay-3">
+        <div class="card-icon">&#x1F6E1;</div>
+        <h3>Admin</h3>
+        <p>Quản trị viên hệ thống</p>
+        <ul class="role-features">
+          <li>Dashboard real-time (users online by role)</li>
+          <li>CRUD POIs, Tours, Merchants</li>
+          <li>Duyệt quán ăn mới (pháp lý)</li>
+          <li>Analytics &amp; Heatmap</li>
+          <li>Quản lý nội dung &amp; media</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">02 &#8212; Kiến trúc hệ thống</div>
+      <h2 class="section-title">Layered Architecture<br><span style="color:var(--accent)">+ Module-based</span></h2>
+      <p class="section-subtitle">N-tier architecture với tách biệt rõ ràng giữa các tầng. Mỗi module là một đơn vị độc lập.</p>
+    </div>
+    <div class="arch-diagram reveal">
+      <div class="arch-layer">
+        <div class="arch-layer-label">Client Layer</div>
+        <div class="arch-layer-title">Giao diện người dùng</div>
+        <div class="arch-items">
+          <div class="arch-item">&#x1F4F1; Mobile App (Expo)</div>
+          <div class="arch-item">&#x1F4BB; Admin Dashboard (React+Vite)</div>
+          <div class="arch-item">&#x1F3EA; Shop Owner Portal (React+Vite)</div>
+        </div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">API Gateway</div>
+        <div class="arch-layer-title">NestJS &#8212; JWT Auth &#8212; RBAC Guard &#8212; Rate Limiter</div>
+        <div class="arch-items">
+          <div class="arch-item">JWT Strategy</div>
+          <div class="arch-item">Roles Guard</div>
+          <div class="arch-item">Validation Pipe</div>
+          <div class="arch-item">Exception Filter</div>
+          <div class="arch-item">CORS</div>
+        </div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">Service Layer</div>
+        <div class="arch-layer-title">10 Business Modules</div>
+        <div class="arch-items">
+          <div class="arch-item">Auth</div><div class="arch-item">POIs</div><div class="arch-item">Tours</div><div class="arch-item">Media</div><div class="arch-item">Public</div>
+          <div class="arch-item">Tourist</div><div class="arch-item">Merchants</div><div class="arch-item">Shop Owner</div><div class="arch-item">Profile</div><div class="arch-item">Analytics</div>
+        </div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">Data Layer</div>
+        <div class="arch-layer-title">Persistence &amp; Storage</div>
+        <div class="arch-items">
+          <div class="arch-item">&#x1F418; PostgreSQL 15 (Prisma)</div>
+          <div class="arch-item">&#x26A1; Redis 7 (Cache/Queue)</div>
+          <div class="arch-item">&#x1F4C1; File Storage (uploads/)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">03 &#8212; Công nghệ</div>
+      <h2 class="section-title">Tech Stack</h2>
+      <p class="section-subtitle">Mỗi công nghệ được chọn có lý do cụ thể, so sánh với các alternatives.</p>
+    </div>
+    <div class="grid-4 reveal">
+      <div class="card tech-card"><div class="tech-icon">&#x1F7E2;</div><div><h3>NestJS 11</h3><p>Backend API Framework</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F537;</div><div><h3>Prisma 5</h3><p>Type-safe ORM</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F418;</div><div><h3>PostgreSQL 15</h3><p>Relational Database</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x26A1;</div><div><h3>Redis 7</h3><p>Cache &amp; Queue</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x269B;</div><div><h3>React 19</h3><p>Admin Dashboard</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x26A1;</div><div><h3>Vite 7</h3><p>Build Tool</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F3A8;</div><div><h3>Tailwind CSS 4</h3><p>Utility-first CSS</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F4F1;</div><div><h3>Expo SDK 54</h3><p>React Native Mobile</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F5FA;</div><div><h3>Maps + PMTiles</h3><p>Cloud &amp; Offline Maps</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F50A;</div><div><h3>Edge TTS</h3><p>Text-to-Speech</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F4B3;</div><div><h3>MoMo / VNPay</h3><p>Payment Gateway</p></div></div>
+      <div class="card tech-card"><div class="tech-icon">&#x1F510;</div><div><h3>JWT + Passport</h3><p>Authentication</p></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MODULES -->
+<section id="modules">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">04 &#8212; Backend Modules</div>
+      <h2 class="section-title">10 Modules, ~50 Endpoints</h2>
+      <p class="section-subtitle">Mỗi module là một NestJS feature module độc lập với controller, service, và DTOs riêng.</p>
+    </div>
+    <div class="grid-5 reveal">
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/auth</span><span class="module-count">6</span></div><h3>&#x1F510; Auth</h3><p>Register, Login, Refresh, Logout, Password Reset</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/pois</span><span class="module-count">6</span></div><h3>&#x1F4CD; POIs</h3><p>Admin CRUD + status workflow</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/tours</span><span class="module-count">6</span></div><h3>&#x1F5FA; Tours</h3><p>Tour CRUD + ordered POI sequences</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/media</span><span class="module-count">2</span></div><h3>&#x1F4F8; Media</h3><p>Upload/Delete images &amp; audio</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/public</span><span class="module-count">7</span></div><h3>&#x1F310; Public</h3><p>POIs, Tours, Nearby, QR, Trigger</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/tourist</span><span class="module-count">7</span></div><h3>&#x1F9F3; Tourist</h3><p>Profile, Favorites, History</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/merchants</span><span class="module-count">5</span></div><h3>&#x1F465; Merchants</h3><p>Admin quản lý Shop Owners</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/shop-owner</span><span class="module-count">7</span></div><h3>&#x1F3EA; Shop Owner</h3><p>Portal: POIs, Media, Analytics</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/me</span><span class="module-count">3</span></div><h3>&#x1F464; Profile</h3><p>Unified profile + avatar</p></div>
+      <div class="card module-card"><div class="module-header"><span class="module-prefix">/analytics</span><span class="module-count">1</span></div><h3>&#x1F4CA; Analytics</h3><p>KPI, Top POIs, Triggers</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FLOWS -->
+<section id="flows">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">05 &#8212; Luồng xử lý tiêu biểu</div>
+      <h2 class="section-title">3 luồng chính</h2>
+      <p class="section-subtitle">Mỗi luồng thể hiện cách hệ thống phối hợp giữa client, API gateway, và data layer.</p>
+    </div>
+    <div class="flow-container reveal">
+      <div class="flow-title"><span class="flow-num">1</span> Tourist: Mở App &#8594; GPS Trigger &#8594; Phát Audio Tự Động</div>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-icon">&#x1F4F1;</span><div class="step-label">Mở App</div><div class="step-desc">Request GPS permission</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F4E1;</span><div class="step-label">GPS Tracking</div><div class="step-desc">watchPosition mỗi 2s</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F4CD;</span><div class="step-label">Fetch POIs</div><div class="step-desc">GET /public/pois</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F4CF;</span><div class="step-label">Distance Check</div><div class="step-desc">Haversine &#8804; triggerRadius</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F3C6;</span><div class="step-label">Criteria Engine</div><div class="step-desc">Score &amp; rank</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F50A;</span><div class="step-label">Auto-play</div><div class="step-desc">Highlight + phát audio</div></div>
+      </div>
+    </div>
+    <div class="flow-container reveal">
+      <div class="flow-title"><span class="flow-num">2</span> Shop Owner: Đăng Ký &#8594; Tạo POI &#8594; TTS Tự Động</div>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-icon">&#x1F4DD;</span><div class="step-label">Đăng ký</div><div class="step-desc">Nhập thông tin quán</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F50D;</span><div class="step-label">Geocoding</div><div class="step-desc">Địa chỉ &#8594; tọa độ GPS</div></div>
+        <div class="flow-step"><span class="step-icon">&#x23F3;</span><div class="step-label">Chờ duyệt</div><div class="step-desc">Admin xét pháp lý</div></div>
+        <div class="flow-step"><span class="step-icon">&#x2705;</span><div class="step-label">Được duyệt</div><div class="step-desc">Quán &#8594; ACTIVE</div></div>
+        <div class="flow-step"><span class="step-icon">&#x270D;</span><div class="step-label">Tạo POI</div><div class="step-desc">Nhập text mô tả</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F916;</span><div class="step-label">TTS Engine</div><div class="step-desc">Text &#8594; Audio .mp3</div></div>
+      </div>
+    </div>
+    <div class="flow-container reveal">
+      <div class="flow-title"><span class="flow-num">3</span> Admin: Duyệt Quán &#8594; Quản Lý &#8594; Monitor</div>
+      <div class="flow-steps">
+        <div class="flow-step"><span class="step-icon">&#x1F514;</span><div class="step-label">Thông báo</div><div class="step-desc">Quán mới chờ duyệt</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F4CB;</span><div class="step-label">Xét duyệt</div><div class="step-desc">Kiểm tra giấy phép</div></div>
+        <div class="flow-step"><span class="step-icon">&#x2705;</span><div class="step-label">Approve/Reject</div><div class="step-desc">5 trạng thái pháp lý</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F4CA;</span><div class="step-label">Dashboard</div><div class="step-desc">Real-time WebSocket</div></div>
+        <div class="flow-step"><span class="step-icon">&#x1F525;</span><div class="step-label">Heatmap</div><div class="step-desc">POI popularity</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TTS PIPELINE -->
+<section id="tts">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">06 &#8212; Audio &amp; TTS Pipeline</div>
+      <h2 class="section-title">Thuyết minh tự động<br><span style="color:var(--accent)">từ text đến audio</span></h2>
+      <p class="section-subtitle">Shop Owner chỉ cần nhập text mô tả. Hệ thống tự tạo audio thuyết minh bằng TTS Engine, hỗ trợ đa ngôn ngữ và giọng vùng miền.</p>
+    </div>
+    <div class="pipeline reveal" style="margin-bottom:3rem">
+      <div class="pipeline-node"><span class="node-icon">&#x270D;</span><div class="node-label">Text Input</div><div class="node-sub">Shop Owner nhập VI</div></div>
+      <div class="pipeline-arrow">&#8594;</div>
+      <div class="pipeline-node"><span class="node-icon">&#x1F50D;</span><div class="node-label">NER</div><div class="node-sub">Phát hiện địa danh</div></div>
+      <div class="pipeline-arrow">&#8594;</div>
+      <div class="pipeline-node"><span class="node-icon">&#x1F310;</span><div class="node-label">Translation</div><div class="node-sub">VI &#8594; EN (thông minh)</div></div>
+      <div class="pipeline-arrow">&#8594;</div>
+      <div class="pipeline-node"><span class="node-icon">&#x1F916;</span><div class="node-label">TTS Engine</div><div class="node-sub">Edge TTS / Google</div></div>
+      <div class="pipeline-arrow">&#8594;</div>
+      <div class="pipeline-node"><span class="node-icon">&#x1F50A;</span><div class="node-label">Audio .mp3</div><div class="node-sub">64kbps mono</div></div>
+    </div>
+    <div class="grid-2 reveal">
+      <div class="card">
+        <h3 style="margin-bottom:1rem">4 tình huống xử lý</h3>
+        <table style="width:100%;font-size:0.82rem">
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.5rem 0;color:var(--text-muted)">Không có kinh phí</td><td style="padding:0.5rem 0">Nhập text &#8594; TTS tự động</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.5rem 0;color:var(--text-muted)">Có kinh phí</td><td style="padding:0.5rem 0">Upload audio chuyên nghiệp</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.5rem 0;color:var(--text-muted)">Cần audio EN</td><td style="padding:0.5rem 0">Text VI &#8594; dịch &#8594; TTS</td></tr>
+          <tr><td style="padding:0.5rem 0;color:var(--text-muted)">Có audio, cần text</td><td style="padding:0.5rem 0">Audio &#8594; STT (Whisper) &#8594; Text</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:1rem">Đặt tên file tự động</h3>
+        <div style="background:var(--surface);padding:1rem;border-radius:8px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.8">
+          <div style="color:var(--text-dim)">Format: {poiId}_{lang}_{version}_{date}.mp3</div><br>
+          <div><span style="color:var(--success)">poi_abc_vi_v1_20260315.mp3</span> <span style="color:var(--text-dim)">&#8592; TTS tiếng Việt</span></div>
+          <div><span style="color:var(--cyan)">poi_abc_en_v1_20260315.mp3</span> <span style="color:var(--text-dim)">&#8592; TTS tiếng Anh</span></div>
+          <div><span style="color:var(--accent)">poi_abc_vi_v2_20260320.mp3</span> <span style="color:var(--text-dim)">&#8592; Upload mới</span></div>
+          <div><span style="color:var(--purple)">poi_abc_vi-south_v1.mp3</span> <span style="color:var(--text-dim)">&#8592; Giọng miền Nam</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TRANSLATION -->
+<section id="translation">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">07 &#8212; Dịch thuật thông minh</div>
+      <h2 class="section-title">NER + Translation Memory</h2>
+      <p class="section-subtitle">"Hai Bà Trưng" KHÔNG được dịch thành "Two Lady Trung". Hệ thống sử dụng Named Entity Recognition để nhận diện địa danh trước khi dịch.</p>
+    </div>
+    <div class="ner-demo reveal">
+      <div class="ner-row">
+        <div class="ner-col">
+          <div class="ner-label">Input (Tiếng Việt)</div>
+          <div class="ner-text">Quán nằm trên đường <span class="ner-entity ner-proper">Hai Bà Trưng</span>, gần <span class="ner-entity ner-landmark">chợ Bến Thành</span></div>
+        </div>
+        <div class="ner-col">
+          <div class="ner-label">Output (English)</div>
+          <div class="ner-text">The restaurant is on <span class="ner-entity ner-proper">Hai Bà Trưng</span> Street, near <span class="ner-entity ner-landmark">Bến Thành Market</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:0.82rem;margin-bottom:0.5rem;font-weight:600">NER Tags</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">
+            <span class="ner-entity ner-proper" style="font-size:0.75rem">PROPER_NOUN</span> &#8594; Giữ nguyên phiên âm<br>
+            <span class="ner-entity ner-landmark" style="font-size:0.75rem;margin-top:0.25rem;display:inline-block">LANDMARK</span> &#8594; Dịch từ generic ("chợ" &#8594; "Market")
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:0.82rem;margin-bottom:0.5rem;font-weight:600">So sánh</div>
+          <div style="font-size:0.8rem">
+            <span class="ner-wrong">Two Lady Trung Street</span> <span style="color:var(--danger)">&#x2717; Sai</span><br>
+            <span class="ner-correct">Hai Bà Trưng Street</span> <span style="color:var(--success)">&#x2713; Đúng</span>
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:0.82rem;margin-bottom:0.5rem;font-weight:600">TTS Pronunciation</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono)">"Hai Ba Trung" &#8594; /ha&#720;j &#595;a&#720; &#648;&#616;&#331;/</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OFFLINE -->
+<section id="offline">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">08 &#8212; Offline &amp; Fallback</div>
+      <h2 class="section-title">Cơ chế phòng ngự<br><span style="color:var(--accent)">4 lớp</span></h2>
+      <p class="section-subtitle">Khi user đang dùng mà bị mất kết nối internet, hệ thống tự động chuyển đổi qua các lớp fallback.</p>
+    </div>
+    <div class="fallback-stack reveal">
+      <div class="fallback-layer fb-1"><div class="fallback-num">L1</div><div><div style="font-weight:700;margin-bottom:0.25rem">Cache Hit</div><div style="font-size:0.82rem;color:var(--text-muted)">Audio/data đã cache &#8594; phát bình thường. User không biết bị mất mạng.</div></div><div style="margin-left:auto;font-size:0.75rem;color:var(--success)">&#x2705; Transparent</div></div>
+      <div class="fallback-layer fb-2"><div class="fallback-num">L2</div><div><div style="font-weight:700;margin-bottom:0.25rem">Stale Data</div><div style="font-size:0.82rem;color:var(--text-muted)">Cache hết hạn nhưng vẫn còn data cũ &#8594; dùng data cũ + tag "Offline".</div></div><div style="margin-left:auto;font-size:0.75rem;color:#fbbf24">&#x26A0; Stale</div></div>
+      <div class="fallback-layer fb-3"><div class="fallback-num">L3</div><div><div style="font-weight:700;margin-bottom:0.25rem">Offline Database (SQLite)</div><div style="font-size:0.82rem;color:var(--text-muted)">SQLite local đã sync &#8594; đọc POI text. Map chuyển sang PMTiles offline.</div></div><div style="margin-left:auto;font-size:0.75rem;color:var(--accent)">&#x26A0; Text only</div></div>
+      <div class="fallback-layer fb-4"><div class="fallback-num">L4</div><div><div style="font-weight:700;margin-bottom:0.25rem">Graceful Degradation</div><div style="font-size:0.82rem;color:var(--text-muted)">Không có data &#8594; bản đồ trống + "Không có kết nối" + [Retry].</div></div><div style="margin-left:auto;font-size:0.75rem;color:var(--danger)">&#x274C; Limited</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MAP MODES -->
+<section id="map">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">09 &#8212; Chế độ bản đồ</div>
+      <h2 class="section-title">Cloud / Offline / Hybrid</h2>
+      <p class="section-subtitle">Tự động chuyển đổi giữa 3 chế độ dựa trên trạng thái kết nối và cấu hình device.</p>
+    </div>
+    <div class="grid-3 reveal">
+      <div class="card map-card map-cloud">
+        <span class="map-status">Default</span>
+        <h3>&#x2601; Cloud</h3>
+        <p style="margin:0.75rem 0;font-size:0.88rem;color:var(--text-muted)">Google Maps API &#8212; chất lượng cao nhất, real-time traffic</p>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.8">
+          <strong style="color:var(--success)">+</strong> Chất lượng cao nhất<br>
+          <strong style="color:var(--danger)">-</strong> Cần internet ổn định<br>
+          <strong style="color:var(--danger)">-</strong> Tốn Google Maps API fee
+        </div>
+      </div>
+      <div class="card map-card map-offline">
+        <span class="map-status">Pre-download</span>
+        <h3>&#x1F4BE; Offline</h3>
+        <p style="margin:0.75rem 0;font-size:0.88rem;color:var(--text-muted)">PMTiles local &#8212; download 50-100MB cho khu vực Q4</p>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.8">
+          <strong style="color:var(--success)">+</strong> Không cần internet<br>
+          <strong style="color:var(--danger)">-</strong> Tốn 50-100MB storage<br>
+          <strong style="color:var(--danger)">-</strong> Không real-time
+        </div>
+      </div>
+      <div class="card map-card map-hybrid">
+        <span class="map-status">Khuyến nghị</span>
+        <h3>&#x1F504; Hybrid</h3>
+        <p style="margin:0.75rem 0;font-size:0.88rem;color:var(--text-muted)">Cache tiles đã xem + PMTiles fallback. Tự chuyển khi mất mạng.</p>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.8">
+          <strong style="color:var(--success)">+</strong> Cân bằng tốt nhất<br>
+          <strong style="color:var(--danger)">-</strong> Phức tạp implementation
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LANGUAGE PACKAGE -->
+<section id="language">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">10 &#8212; Language Package</div>
+      <h2 class="section-title">Kiến trúc "Ngăn Kéo"</h2>
+      <p class="section-subtitle">Mỗi ngôn ngữ = 1 ngăn kéo (Language Drawer) trên device. Hệ thống tự quản lý dung lượng bằng LRU eviction.</p>
+    </div>
+    <div class="grid-2 reveal">
+      <div class="lang-drawer">
+        <div class="drawer-slot"><div class="slot-info"><span class="slot-flag">&#x1F1FB;&#x1F1F3;</span><div><div class="slot-name">Tiếng Việt</div><div class="slot-count">245 / 300 files</div></div></div><div class="slot-size">50 MB</div></div>
+        <div class="drawer-slot"><div class="slot-info"><span class="slot-flag">&#x1F1EC;&#x1F1E7;</span><div><div class="slot-name">English</div><div class="slot-count">198 / 300 files</div></div></div><div class="slot-size">45 MB</div></div>
+        <div class="drawer-slot"><div class="slot-info"><span class="slot-flag">&#x1F1EF;&#x1F1F5;</span><div><div class="slot-name">Japanese <span style="font-size:0.7rem;color:var(--purple)">(Premium)</span></div><div class="slot-count">120 / 300 files</div></div></div><div class="slot-size">48 MB</div></div>
+        <div class="drawer-rules">
+          <li>&#x2713; Max <strong>300 files</strong> / ngôn ngữ</li>
+          <li>&#x2713; Max <strong>3 ngôn ngữ</strong> đồng thời trên device</li>
+          <li>&#x2713; Quá 3 &#8594; <strong>xóa ngôn ngữ ít dùng nhất</strong> (LRU)</li>
+          <li>&#x2713; User có thể chọn giữ ngôn ngữ nào</li>
+        </div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;justify-content:center">
+        <h3 style="margin-bottom:1.5rem">Premium: Giọng vùng miền</h3>
+        <table style="width:100%;font-size:0.85rem">
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0"><span style="color:var(--success)">Free</span></td><td>Giọng chuẩn (Bắc) VI + Standard EN</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0"><span style="color:var(--accent)">Premium</span></td><td>Giọng miền Nam, miền Trung VI</td></tr>
+          <tr><td style="padding:0.6rem 0"><span style="color:var(--purple)">Premium+</span></td><td>Giọng vùng miền + kể chuyện narrative</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CRITERIA -->
+<section id="criteria">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">11 &#8212; Audio Criteria Engine</div>
+      <h2 class="section-title">Scoring khi nhiều POI<br>cùng trigger</h2>
+      <p class="section-subtitle">Khi user đứng tại vị trí mà trigger radius của nhiều POI chồng nhau, hệ thống chấm điểm để chọn POI phát trước.</p>
+    </div>
+    <div class="reveal" style="overflow-x:auto">
+      <table class="score-table">
+        <thead><tr><th>Criteria</th><th>Weight</th><th>Quán Bún Mắm (15m)</th><th>Ốc Đào (12m)</th><th>Chùa Xá Lợi (20m)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Priority</strong></td><td>30%</td><td>5<div class="score-bar"><div class="score-bar-fill" style="width:50%"></div></div></td><td>5<div class="score-bar"><div class="score-bar-fill" style="width:50%"></div></div></td><td>8<div class="score-bar"><div class="score-bar-fill" style="width:80%"></div></div></td></tr>
+          <tr><td><strong>Distance</strong></td><td>30%</td><td>8<div class="score-bar"><div class="score-bar-fill" style="width:80%"></div></div></td><td>9<div class="score-bar"><div class="score-bar-fill" style="width:90%"></div></div></td><td>6<div class="score-bar"><div class="score-bar-fill" style="width:60%"></div></div></td></tr>
+          <tr><td><strong>Not played</strong></td><td>25%</td><td>10<div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div></td><td>0<div class="score-bar"><div class="score-bar-fill" style="width:0%"></div></div></td><td>10<div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div></td></tr>
+          <tr><td><strong>Autoplay</strong></td><td>15%</td><td>10<div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div></td><td>10<div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div></td><td>10<div class="score-bar"><div class="score-bar-fill" style="width:100%"></div></div></td></tr>
+          <tr style="font-weight:700;background:rgba(249,115,22,0.05)"><td>TOTAL</td><td></td><td>7.9</td><td>5.7</td><td class="winner">8.2 &#x2605;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HEATMAP -->
+<section id="heatmap">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">12 &#8212; Heatmap &amp; Analytics</div>
+      <h2 class="section-title">POI Popularity Tracking</h2>
+      <p class="section-subtitle">User chưa đăng ký vẫn được track bằng Anonymous Trigger Logging (deviceId fingerprint).</p>
+    </div>
+    <div class="grid-2 reveal">
+      <div class="card">
+        <h3 style="margin-bottom:0.5rem">&#x1F525; Heatmap &#8212; Top POIs tuần này</h3>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:1rem">Dựa trên trigger_logs (anonymous)</p>
+        <div class="heat-bar"><div class="heat-rank" style="color:var(--danger)">1</div><div class="heat-name">Ốc Đào</div><div class="heat-meter"><div class="heat-fill" style="width:100%;background:linear-gradient(90deg,var(--danger),var(--accent))"></div></div><div class="heat-val">342</div></div>
+        <div class="heat-bar"><div class="heat-rank" style="color:var(--accent)">2</div><div class="heat-name">Quán Bún Mắm Tùng</div><div class="heat-meter"><div class="heat-fill" style="width:84%;background:linear-gradient(90deg,var(--accent),var(--accent-light))"></div></div><div class="heat-val">287</div></div>
+        <div class="heat-bar"><div class="heat-rank" style="color:#fbbf24">3</div><div class="heat-name">Cà Phê Vợt Sài Gòn</div><div class="heat-meter"><div class="heat-fill" style="width:46%;background:linear-gradient(90deg,#fbbf24,var(--accent-light))"></div></div><div class="heat-val">156</div></div>
+        <div class="heat-bar"><div class="heat-rank" style="color:var(--success)">4</div><div class="heat-name">Hải Sản Bé Mận</div><div class="heat-meter"><div class="heat-fill" style="width:26%;background:linear-gradient(90deg,var(--success),var(--cyan))"></div></div><div class="heat-val">89</div></div>
+        <div class="heat-bar"><div class="heat-rank" style="color:var(--primary-bright)">5</div><div class="heat-name">Chùa Xá Lợi</div><div class="heat-meter"><div class="heat-fill" style="width:13%;background:linear-gradient(90deg,var(--primary-bright),var(--cyan))"></div></div><div class="heat-val">45</div></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:1rem">Anonymous Trigger Log</h3>
+        <div style="background:var(--surface);padding:1rem;border-radius:8px;font-family:var(--font-mono);font-size:0.75rem;line-height:1.8">
+          <span style="color:var(--text-dim)">POST /public/trigger-log</span><br><span style="color:var(--text-dim)">(Không cần auth)</span><br><br>
+          {<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"deviceId"</span>: <span style="color:var(--success)">"abc-123-xyz"</span>,<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"poiId"</span>: <span style="color:var(--success)">"poi_001"</span>,<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"triggerType"</span>: <span style="color:var(--success)">"GPS"</span>,<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"userAction"</span>: <span style="color:var(--success)">"ACCEPTED"</span>,<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"userLat"</span>: <span style="color:var(--accent)">10.7568</span>,<br>
+          &nbsp;&nbsp;<span style="color:var(--cyan)">"userLng"</span>: <span style="color:var(--accent)">106.6988</span><br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PAYMENT -->
+<section id="payment">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">13 &#8212; Payment Module</div>
+      <h2 class="section-title">MoMo / VNPay Integration</h2>
+      <p class="section-subtitle">Hỗ trợ ví điện tử cho cả Tourist (premium) và Shop Owner (quảng cáo nổi bật).</p>
+    </div>
+    <div class="grid-3 reveal">
+      <div class="card pricing-card free">
+        <div class="pricing-badge">Free</div><h3>Cơ bản</h3><div class="pricing-price">0đ</div>
+        <ul class="pricing-features">
+          <li><span style="color:var(--success)">&#x2713;</span> Audio cơ bản VI/EN</li>
+          <li><span style="color:var(--success)">&#x2713;</span> 2 ngôn ngữ</li>
+          <li><span style="color:var(--text-dim)">&#8212;</span> <span style="color:var(--text-dim)">Giọng vùng miền</span></li>
+          <li style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);font-weight:600;color:var(--text)">Shop Owner: 1 POI, text-only</li>
+        </ul>
+      </div>
+      <div class="card pricing-card featured">
+        <div class="pricing-badge">Popular</div><h3>Premium</h3><div class="pricing-price">49K<span>/tháng</span></div>
+        <ul class="pricing-features">
+          <li><span style="color:var(--success)">&#x2713;</span> Giọng vùng miền</li>
+          <li><span style="color:var(--success)">&#x2713;</span> Offline đầy đủ</li>
+          <li><span style="color:var(--success)">&#x2713;</span> Không quảng cáo</li>
+          <li style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);font-weight:600;color:var(--text)">Shop Owner: 5 POIs + TTS + Analytics</li>
+        </ul>
+      </div>
+      <div class="card pricing-card business">
+        <div class="pricing-badge">Business</div><h3>Doanh nghiệp</h3><div class="pricing-price">199K<span>/tháng</span></div>
+        <ul class="pricing-features">
+          <li><span style="color:var(--success)">&#x2713;</span> Unlimited POIs</li>
+          <li><span style="color:var(--success)">&#x2713;</span> Boost POI lên top</li>
+          <li><span style="color:var(--success)">&#x2713;</span> Analytics nâng cao</li>
+          <li style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);font-weight:600;color:var(--text)">Dành cho Shop Owner</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LOAD -->
+<section id="load">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">14 &#8212; Xử lý tải hệ thống</div>
+      <h2 class="section-title">Load &amp; Scalability</h2>
+      <p class="section-subtitle">Từ 50 đến 5000 concurrent users. Audio streaming qua CDN giảm 90% server load.</p>
+    </div>
+    <div class="reveal" style="overflow-x:auto">
+      <table class="load-table">
+        <thead><tr><th>Cấu hình server</th><th>Max concurrent</th><th>Response p95</th><th>CPU</th></tr></thead>
+        <tbody>
+          <tr><td><span style="font-family:var(--font-mono);font-size:0.8rem">1 vCPU, 512MB</span> <span style="color:var(--text-dim)">(free)</span></td><td style="font-weight:700">~50</td><td>&lt; 500ms</td><td>80%</td></tr>
+          <tr><td><span style="font-family:var(--font-mono);font-size:0.8rem">1 vCPU, 1GB</span> <span style="color:var(--text-dim)">(starter)</span></td><td style="font-weight:700">~200</td><td>&lt; 300ms</td><td>60%</td></tr>
+          <tr><td><span style="font-family:var(--font-mono);font-size:0.8rem">2 vCPU, 2GB + CDN</span></td><td style="font-weight:700;color:var(--accent)">~1,000</td><td>&lt; 200ms</td><td>40%</td></tr>
+          <tr><td><span style="font-family:var(--font-mono);font-size:0.8rem">4 vCPU, 4GB + CDN + Redis</span></td><td style="font-weight:700;color:var(--success)">~5,000</td><td>&lt; 150ms</td><td>30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- QR -->
+<section id="qr">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">15 &#8212; QR Code Demo</div>
+      <h2 class="section-title">Quét QR để trải nghiệm</h2>
+      <p class="section-subtitle">Khi thuyết trình, classmate quét QR trên slide &#8594; mở app &#8594; xem POI detail ngay lập tức.</p>
+    </div>
+    <div class="qr-flow reveal">
+      <div class="card qr-step"><span class="qr-icon">&#x1F4F1;</span><h3>Mở Camera</h3><p style="font-size:0.82rem;color:var(--text-muted)">Expo Go</p></div>
+      <div class="qr-arrow">&#8594;</div>
+      <div class="card qr-step"><span class="qr-icon">&#x1F4F7;</span><h3>Quét QR</h3><p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted)">gpstours:poi:{id}</p></div>
+      <div class="qr-arrow">&#8594;</div>
+      <div class="card qr-step"><span class="qr-icon">&#x2705;</span><h3>Validate</h3><p style="font-size:0.82rem;color:var(--text-muted)">POST /public/qr/validate</p></div>
+      <div class="qr-arrow">&#8594;</div>
+      <div class="card qr-step"><span class="qr-icon">&#x1F50A;</span><h3>Xem &amp; Nghe</h3><p style="font-size:0.82rem;color:var(--text-muted)">Chi tiết POI + audio</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ENDPOINTS -->
+<section id="endpoints">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">16 &#8212; API Endpoints</div>
+      <h2 class="section-title">~50 Endpoints</h2>
+      <p class="section-subtitle">RESTful API theo chuẩn NestJS, phân nhóm theo role và chức năng.</p>
+    </div>
+    <div class="grid-2 reveal">
+      <div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F310; Public (No Auth)</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/public/pois</span><span class="endpoint-desc">All active POIs</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/public/pois/nearby</span><span class="endpoint-desc">Haversine</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/public/pois/:id</span><span class="endpoint-desc">POI detail</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/public/trigger-log</span><span class="endpoint-desc">Log trigger</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/public/qr/validate</span><span class="endpoint-desc">QR validate</span></div>
+          </div>
+        </div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F510; Auth</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/auth/register</span><span class="endpoint-desc">Register</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/auth/login</span><span class="endpoint-desc">Login &#8594; JWT</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/auth/refresh</span><span class="endpoint-desc">Refresh</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/auth/logout</span><span class="endpoint-desc">Revoke</span></div>
+          </div>
+        </div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F9F3; Tourist (JWT)</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/tourist/me</span><span class="endpoint-desc">Profile</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-patch">PATCH</span><span class="endpoint-path">/tourist/me</span><span class="endpoint-desc">Update</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/tourist/me/favorites</span><span class="endpoint-desc">Favorites</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/tourist/me/history</span><span class="endpoint-desc">History</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F3EA; Shop Owner (JWT)</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/shop-owner/pois</span><span class="endpoint-desc">My POIs</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/shop-owner/pois</span><span class="endpoint-desc">Create</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-put">PUT</span><span class="endpoint-path">/shop-owner/pois/:id</span><span class="endpoint-desc">Update</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/shop-owner/pois/:id/media</span><span class="endpoint-desc">Media</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/shop-owner/analytics</span><span class="endpoint-desc">Stats</span></div>
+          </div>
+        </div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F6E1; Admin (JWT + ADMIN)</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/pois</span><span class="endpoint-desc">Create POI</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/pois</span><span class="endpoint-desc">List POIs</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-put">PUT</span><span class="endpoint-path">/pois/:id</span><span class="endpoint-desc">Update</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-delete">DEL</span><span class="endpoint-path">/pois/:id</span><span class="endpoint-desc">Delete</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/admin/analytics/overview</span><span class="endpoint-desc">KPIs</span></div>
+          </div>
+        </div>
+        <div class="endpoint-group">
+          <div class="endpoint-group-title">&#x1F464; Profile (Any Auth)</div>
+          <div class="endpoint-list">
+            <div class="endpoint-item"><span class="endpoint-method method-get">GET</span><span class="endpoint-path">/me</span><span class="endpoint-desc">Profile</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-put">PUT</span><span class="endpoint-path">/me</span><span class="endpoint-desc">Update</span></div>
+            <div class="endpoint-item"><span class="endpoint-method method-post">POST</span><span class="endpoint-path">/me/avatar</span><span class="endpoint-desc">Avatar</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">17 &#8212; Roadmap</div>
+      <h2 class="section-title">Lộ trình phát triển</h2>
+      <p class="section-subtitle">Từ MVP hoàn chỉnh đến hệ thống production-ready với payment, premium features, và load testing.</p>
+    </div>
+    <div class="roadmap reveal">
+      <div class="roadmap-phase"><div class="roadmap-status rm-done">&#x2705;</div><div class="roadmap-info"><h4>Phase 1 &#8212; MVP Core</h4><p>Auth, POI CRUD, Tour CRUD, Media, Public API, Tourist API, Admin Dashboard, Shop Owner Portal, Mobile App (12 screens)</p></div><div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--success)">DONE</div></div>
+      <div class="roadmap-phase"><div class="roadmap-status rm-next">&#x1F525;</div><div class="roadmap-info"><h4>Phase 2A &#8212; Core Features</h4><p>TTS Engine, Audio Criteria Engine, Shop Approval Flow, Frontend POI Highlight, QR Generator</p></div><div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--accent)">NEXT</div></div>
+      <div class="roadmap-phase"><div class="roadmap-status rm-future">&#x1F7E6;</div><div class="roadmap-info"><h4>Phase 2B &#8212; Advanced</h4><p>Translation NER, Offline Map (PMTiles), Language Package, WebSocket Dashboard, Geocoding API, Heatmap UI</p></div><div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim)">PLANNED</div></div>
+      <div class="roadmap-phase"><div class="roadmap-status rm-future">&#x1F7E6;</div><div class="roadmap-info"><h4>Phase 3 &#8212; Premium &amp; Scale</h4><p>Payment (MoMo/VNPay), Load Testing (k6), Premium Voices, STT (Whisper)</p></div><div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-dim)">FUTURE</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>GPS Tours &#8212; Seminar 2026 &nbsp;|&nbsp; Built with NestJS + React + Expo</p>
+  <p style="margin-top:0.5rem">Phố Ẩm Thực Vĩnh Khánh, Quận 4, TP.HCM</p>
+</footer>
+
+<script>
+const reveals=document.querySelectorAll('.reveal');
+const observer=new IntersectionObserver(e=>{e.forEach(i=>{if(i.isIntersecting)i.target.classList.add('visible')})},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});
+reveals.forEach(r=>observer.observe(r));
+
+const nav=document.getElementById('nav');
+const scrollTop=document.getElementById('scrollTop');
+window.addEventListener('scroll',()=>{
+  nav.classList.toggle('scrolled',window.scrollY>50);
+  scrollTop.classList.toggle('visible',window.scrollY>600);
+});
+
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('.nav-links a');
+const sectionGroup={
+  overview:'overview',
+  architecture:'architecture',tech:'architecture',
+  modules:'modules',flows:'modules',tts:'modules',translation:'modules',
+  offline:'modules',map:'modules',language:'modules',criteria:'modules',
+  heatmap:'modules',payment:'modules',load:'modules',qr:'modules',
+  endpoints:'endpoints',
+  roadmap:'roadmap'
+};
+window.addEventListener('scroll',()=>{
+  let current='';
+  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-200)current=s.id});
+  const active=sectionGroup[current]||'';
+  navLinks.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+active)});
+});
+</script>
+</body>
+</html>
