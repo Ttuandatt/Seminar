@@ -554,9 +554,55 @@ transition:all 0.3s ease;
   <div class="container">
     <div class="reveal">
       <div class="section-label">02 &#8212; Kiến trúc hệ thống</div>
-      <h2 class="section-title">Layered Architecture<br><span style="color:var(--accent)">+ Module-based</span></h2>
-      <p class="section-subtitle">N-tier architecture với tách biệt rõ ràng giữa các tầng. Mỗi module là một đơn vị độc lập.</p>
+      <h2 class="section-title">Modular Monolith<br><span style="color:var(--accent)">+ Layered Architecture (N-tier)</span></h2>
+      <p class="section-subtitle">Toàn bộ backend chạy trên 1 NestJS process duy nhất, bên trong chia thành các module độc lập với ranh giới rõ ràng. Các module dùng chung 1 database và giao tiếp qua dependency injection trong cùng process.</p>
     </div>
+
+    <!-- Why Modular Monolith -->
+    <div class="reveal" style="margin-bottom:2.5rem">
+      <h3 style="font-size:1.1rem;margin-bottom:1.2rem;color:var(--accent-light)">Tại sao chọn Modular Monolith?</h3>
+      <div class="grid-3" style="gap:1rem">
+        <div class="card" style="text-align:center;padding:1.5rem">
+          <div style="font-size:2rem;margin-bottom:0.5rem">&#x1F3AF;</div>
+          <h4 style="color:var(--success);margin-bottom:0.5rem">Phù hợp quy mô</h4>
+          <p style="font-size:0.82rem;color:var(--text-muted)">Seminar/startup, team 2-5 người. Microservice chỉ cần khi team 10+ và &gt; 10.000 CCU</p>
+        </div>
+        <div class="card" style="text-align:center;padding:1.5rem">
+          <div style="font-size:2rem;margin-bottom:0.5rem">&#x26A1;</div>
+          <h4 style="color:var(--success);margin-bottom:0.5rem">Hiệu suất cao</h4>
+          <p style="font-size:0.82rem;color:var(--text-muted)">Giao tiếp giữa modules = gọi hàm trong process. Không qua HTTP/gRPC/message queue</p>
+        </div>
+        <div class="card" style="text-align:center;padding:1.5rem">
+          <div style="font-size:2rem;margin-bottom:0.5rem">&#x1F4B0;</div>
+          <h4 style="color:var(--success);margin-bottom:0.5rem">Chi phí thấp</h4>
+          <p style="font-size:0.82rem;color:var(--text-muted)">1 server, 1 DB, 1 deploy. Không cần service discovery hay container orchestration</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="reveal" style="margin-bottom:2.5rem">
+      <div class="card" style="overflow-x:auto">
+        <table style="width:100%;font-size:0.82rem;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:0.7rem;text-align:left;color:var(--text-muted)">Tiêu chí</th>
+              <th style="padding:0.7rem;text-align:left;color:var(--accent)">Modular Monolith &#x2705;</th>
+              <th style="padding:0.7rem;text-align:left;color:var(--text-dim)">Microservice</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0.7rem">Triển khai</td><td style="padding:0.6rem 0.7rem;color:var(--success)">1 server, 1 DB</td><td style="padding:0.6rem 0.7rem;color:var(--text-dim)">Nhiều server, service discovery</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0.7rem">Giao tiếp</td><td style="padding:0.6rem 0.7rem;color:var(--success)">Gọi hàm (ns)</td><td style="padding:0.6rem 0.7rem;color:var(--text-dim)">HTTP/gRPC (ms)</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0.7rem">Debug</td><td style="padding:0.6rem 0.7rem;color:var(--success)">1 log stream</td><td style="padding:0.6rem 0.7rem;color:var(--text-dim)">Distributed tracing</td></tr>
+            <tr style="border-bottom:1px solid var(--border)"><td style="padding:0.6rem 0.7rem">Chi phí</td><td style="padding:0.6rem 0.7rem;color:var(--success)">Thấp (Render free/starter)</td><td style="padding:0.6rem 0.7rem;color:var(--text-dim)">Cao (nhiều container)</td></tr>
+            <tr><td style="padding:0.6rem 0.7rem">Mở rộng</td><td style="padding:0.6rem 0.7rem;color:var(--success)">&lt; 5.000 CCU</td><td style="padding:0.6rem 0.7rem;color:var(--text-dim)">Cần khi &gt; 10.000 CCU</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Architecture Diagram -->
     <div class="arch-diagram reveal">
       <div class="arch-layer">
         <div class="arch-layer-label">Client Layer</div>
@@ -568,9 +614,9 @@ transition:all 0.3s ease;
         </div>
       </div>
       <div class="arch-arrow"></div>
-      <div class="arch-layer">
-        <div class="arch-layer-label">API Gateway</div>
-        <div class="arch-layer-title">NestJS &#8212; JWT Auth &#8212; RBAC Guard &#8212; Rate Limiter</div>
+      <div class="arch-layer" style="border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)">
+        <div class="arch-layer-label" style="color:var(--accent)">Modular Monolith &#8212; 1 NestJS Process</div>
+        <div class="arch-layer-title">API Layer: JWT Auth &#8212; RBAC Guard &#8212; Rate Limiter</div>
         <div class="arch-items">
           <div class="arch-item">JWT Strategy</div>
           <div class="arch-item">Roles Guard</div>
@@ -578,14 +624,14 @@ transition:all 0.3s ease;
           <div class="arch-item">Exception Filter</div>
           <div class="arch-item">CORS</div>
         </div>
-      </div>
-      <div class="arch-arrow"></div>
-      <div class="arch-layer">
-        <div class="arch-layer-label">Service Layer</div>
-        <div class="arch-layer-title">10 Business Modules</div>
-        <div class="arch-items">
-          <div class="arch-item">Auth</div><div class="arch-item">POIs</div><div class="arch-item">Tours</div><div class="arch-item">Media</div><div class="arch-item">Public</div>
-          <div class="arch-item">Tourist</div><div class="arch-item">Merchants</div><div class="arch-item">Shop Owner</div><div class="arch-item">Profile</div><div class="arch-item">Analytics</div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--border)">
+          <div class="arch-layer-title" style="margin-bottom:0.5rem">Service Layer &#8212; Business Modules</div>
+          <div class="arch-items">
+            <div class="arch-item">Auth</div><div class="arch-item">POIs</div><div class="arch-item">Tours</div><div class="arch-item">Media</div><div class="arch-item">Public</div>
+            <div class="arch-item">Tourist</div><div class="arch-item">Merchants</div><div class="arch-item">Shop Owner</div><div class="arch-item">Profile</div><div class="arch-item">Analytics</div>
+            <div class="arch-item" style="border-color:var(--accent);color:var(--accent)">TTS</div>
+            <div class="arch-item" style="border-color:var(--accent);color:var(--accent)">Translation</div>
+          </div>
         </div>
       </div>
       <div class="arch-arrow"></div>
@@ -596,6 +642,25 @@ transition:all 0.3s ease;
           <div class="arch-item">&#x1F418; PostgreSQL 15 (Prisma)</div>
           <div class="arch-item">&#x26A1; Redis 7 (Cache/Queue)</div>
           <div class="arch-item">&#x1F4C1; File Storage (uploads/)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folder Structure -->
+    <div class="reveal" style="margin-top:2.5rem">
+      <div class="card">
+        <h3 style="margin-bottom:1rem;color:var(--accent-light)">Tổ chức thư mục (phản ánh kiến trúc)</h3>
+        <div style="background:var(--surface);padding:1.2rem;border-radius:8px;font-family:var(--font-mono);font-size:0.78rem;line-height:2">
+          <div>apps/</div>
+          <div style="padding-left:1.2rem"><span style="color:var(--accent)">api/</span> <span style="color:var(--text-dim)">&#8592; Modular Monolith backend</span></div>
+          <div style="padding-left:2.4rem">src/modules/ <span style="color:var(--text-dim)">&#8592; Mỗi module = 1 thư mục</span></div>
+          <div style="padding-left:3.6rem"><span style="color:var(--success)">auth/ pois/ tours/ media/ public/</span></div>
+          <div style="padding-left:3.6rem"><span style="color:var(--success)">tourist/ merchants/ shop-owner/ profile/ analytics/</span></div>
+          <div style="padding-left:3.6rem"><span style="color:var(--accent)">tts/ translation/</span> <span style="color:var(--text-dim)">&#8592; Giai đoạn 2</span></div>
+          <div style="padding-left:2.4rem">common/ <span style="color:var(--text-dim)">&#8592; Shared guards, decorators, utils</span></div>
+          <div style="padding-left:2.4rem">app.module.ts <span style="color:var(--text-dim)">&#8592; Root module (đăng ký tất cả)</span></div>
+          <div style="padding-left:1.2rem"><span style="color:var(--cyan)">admin/</span> <span style="color:var(--text-dim)">&#8592; React SPA (Admin + Shop Owner)</span></div>
+          <div style="padding-left:1.2rem"><span style="color:var(--purple)">mobile/</span> <span style="color:var(--text-dim)">&#8592; Expo app (Tourist)</span></div>
         </div>
       </div>
     </div>
