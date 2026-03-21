@@ -1,9 +1,9 @@
 # 📋 Executive Summary
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-07
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-21
 
 ---
 
@@ -40,17 +40,22 @@
 - Quản lý Users (Admin, Shop Owner)
 - Đặt POI trên bản đồ (click hoặc nhập tọa độ)
 - Upload hình ảnh và audio
-- Quản lý nội dung đa ngôn ngữ (VN/EN)
+- **Tạo audio TTS tự động** từ nội dung mô tả (VI/EN/ZH) bằng Microsoft Edge TTS
+- Quản lý nội dung đa ngôn ngữ (VI/EN/ZH)
+- Duyệt cửa hàng và quản lý tài khoản Shop Owner
 
 ### 3.2 Shop Owner Dashboard
-- Quản lý POI(s) của mình (Create, Edit)
+- Quản lý POI(s) của mình (Create, Edit, Delete)
 - Upload hình ảnh và audio giới thiệu
+- **Tạo audio TTS tự động** cho POI của mình
 - Xem analytics (lượt xem, audio plays)
 
 ### 3.3 Tourist App
+- **Kiểm tra cấu hình thiết bị** khi khởi động (GPS + Internet)
 - Hiển thị POIs trên bản đồ
 - Tự động phát audio khi đến POI (GPS trigger)
-- Chọn ngôn ngữ (VN/EN)
+- **Criteria Engine**: chọn POI tốt nhất khi nhiều vùng âm thanh trùng nhau
+- Chọn ngôn ngữ (VI/EN/ZH)
 - Chế độ Offline
 - Optional Login: đăng ký/đăng nhập để lưu favorites + sync history
 - QR Code fallback khi GPS không chính xác
@@ -68,7 +73,10 @@
 | Tourist App (Mobile) | P0 | MVP |
 | Backend API (RESTful) | P0 | MVP |
 | Quản lý nội dung cơ bản | P0 | MVP |
-| Đa ngôn ngữ (VN/EN) | P1 | MVP |
+| Đa ngôn ngữ (VI/EN/ZH) | P1 | MVP |
+| TTS Audio Generation (msedge-tts) | P1 | MVP |
+| Criteria Engine (GPS overlap) | P1 | MVP |
+| Device Capability Check | P1 | MVP |
 | Chế độ Offline | P1 | MVP |
 | Optional Login (Tourist) | P1 | MVP |
 | QR Code Management | P1 | MVP |

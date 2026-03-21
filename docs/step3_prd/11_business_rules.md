@@ -1,9 +1,9 @@
 ﻿# Business Rules
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-21
 
 ---
 
@@ -98,7 +98,7 @@
 | BR-503 | High Accuracy | Constraint | Location request | Use HIGH_ACCURACY mode | Fallback to BALANCED nếu indoor | FR-501 |
 | BR-504 | Background Tracking | Constraint | App in background | Continue GPS tracking | Respect OS background limits | FR-501 |
 | BR-506 | Hysteresis (Cooldown) | Constraint | Just triggered POI | No re-trigger for 5 minutes | — | FR-502 |
-| BR-507 | Overlap Resolution | Inference | Multiple POIs in range | Trigger closest POI only | — | FR-502 |
+| BR-507 | Criteria Engine — Overlap Resolution | Inference | Multiple POIs in range simultaneously | Tính điểm từng POI theo công thức: `score = priority×0.30 + distanceScore×0.30 + notPlayedBonus×0.25 + autoPlayScore×0.15`. Chọn POI có điểm cao nhất. Chỉ trigger nếu POI đó chưa được play trong session hiện tại. | — | FR-502 |
 | BR-508 | User Preference | Constraint | Auto-play setting OFF | Show notification only, don't auto-play | — | FR-502 |
 | BR-509 | QR Content | Constraint | QR scanned | Must contain valid POI ID or deep link | Return error nếu format sai | FR-503 |
 | BR-510 | QR Validation | Computation | QR scanned | Parse and validate format before processing | Show "Invalid QR" nếu không parse được | FR-503 |
@@ -110,11 +110,11 @@
 
 | ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
 |----|-----------|------|-----------|--------|--------------------------|--------|
-| BR-601 | Auto Detect | Computation | First app open | Detect device language (VI/EN) | Default to VI nếu unsupported language | FR-601 |
-| BR-602 | Fallback Language | Inference | Translation missing | Show Vietnamese content | — | FR-601 |
-| BR-603 | Save Preference | Trigger | Language changed | Store in local storage | — | FR-601 |
-| BR-604 | Hot Reload | Trigger | Language switched | Reload content without app restart | Show loading indicator | FR-601 |
-| BR-605 | Missing Translation Indicator | Inference | Content in fallback lang | Show "(Nội dung bằng Tiếng Việt)" | — | FR-601 |
+| BR-601 | Auto Detect | Computation | First app open | Detect device language (VI/EN/ZH); default VI nếu không match | Default to VI | FR-601 |
+| BR-602 | Fallback Language | Inference | Translation missing | Show Vietnamese content as fallback | Show "(Nội dung bằng Tiếng Việt)" | FR-601 |
+| BR-603 | Save Preference | Trigger | Language changed | Store in AsyncStorage ('app_language') | — | FR-601 |
+| BR-604 | Hot Reload | Trigger | Language switched | Reload content + switch audio player sang ngôn ngữ mới | Show loading indicator | FR-601 |
+| BR-605 | Audio Language Match | Inference | Language switched | Tìm PoiMedia type=AUDIO language=VI/EN/ZH; nếu không có thì dùng language=ALL | Fallback to ALL | FR-601 |
 
 ---
 
@@ -169,7 +169,8 @@
 
 | ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
 |----|-----------|------|-----------|--------|--------------------------|--------|
-| BR-1001 | Self Registration | Constraint | Shop Owner registers | No Admin approval needed, self-service | — | FR-701 |
+| BR-1001 | POI Requires Admin Approval | Constraint | Shop Owner tạo POI | POI của Shop Owner mặc định status=DRAFT; cần Admin đổi sang ACTIVE để hiển thị trên Tourist App | — | FR-702 |
+| BR-1001b | Self Registration | Constraint | Shop Owner registers | No Admin approval needed for account, self-service | — | FR-701 |
 | BR-1002 | Unique Email | Constraint | Register Shop Owner | Email must be unique across all users | Return 409 + "Email already exists" | FR-701 |
 | BR-1003 | Data Isolation | Constraint | Shop Owner accesses POIs | Filter by owner_id = current user | Return 403 + "Access denied" nếu truy cập POI người khác | FR-702 |
 | BR-1004 | Owner Delete Permission | Constraint | Shop Owner attempts delete | Allow delete when the authenticated user owns the POI, otherwise block | Return 403 + "Only the owner or an Admin can delete POIs" | FR-702 |
@@ -178,7 +179,46 @@
 
 ---
 
-## 12. Rule Type Legend
+## 12. TTS Generation Rules
+
+| ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
+|----|-----------|------|-----------|--------|--------------------------|--------|
+| BR-TTS01 | Voice Mapping | Computation | TTS requested | Map language → msedge-tts voice: VI→vi-VN-HoaiMyNeural, EN→en-US-AriaNeural, ZH→zh-CN-XiaoxiaoNeural | Return 400 nếu language không hợp lệ | FR-209 |
+| BR-TTS02 | Description Required | Constraint | TTS requested | POI phải có nội dung mô tả cho ngôn ngữ được chọn (descriptionVi/descriptionEn/descriptionZh) | Return 400 + "No [language] description to convert" | FR-209 |
+| BR-TTS03 | Replace Existing Audio | Trigger | TTS generated | Nếu đã có PoiMedia (type=AUDIO, language=X): xóa record cũ, tạo record mới | — | FR-209 |
+| BR-TTS04 | Owner Check | Constraint | Shop Owner calls TTS | Kiểm tra poi.ownerId === currentUserId | Return 403 nếu không phải chủ POI | FR-209 |
+| BR-TTS05 | File Storage | Computation | TTS audio generated | Lưu file MP3 vào /uploads/; tạo PoiMedia record với url, sizeBytes, originalName | Return 500 nếu ghi file thất bại | FR-209 |
+
+---
+
+## 13. Device Capability Check Rules
+
+| ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
+|----|-----------|------|-----------|--------|--------------------------|--------|
+| BR-DEVICE01 | GPS Required | Constraint | App startup | Kiểm tra Location permission; nếu chưa có → request | Hiển thị màn hình DeviceCheck với hướng dẫn cấp quyền | FR-600 |
+| BR-DEVICE02 | Internet Required | Constraint | App startup | Kiểm tra isConnected && isInternetReachable qua expo-network | Hiển thị màn hình DeviceCheck với hướng dẫn bật WiFi/4G | FR-600 |
+| BR-DEVICE03 | Block On Fail | Trigger | Any check fails | Chặn không cho vào app; hiển thị màn hình DeviceCheck với icon, mô tả, nút "Kiểm tra lại" | — | FR-600 |
+| BR-DEVICE04 | Open Settings | Trigger | User cần cấp quyền thủ công | Nút "Mở cài đặt thiết bị" → Linking.openSettings() | — | FR-600 |
+| BR-DEVICE05 | Auto Proceed | Trigger | All checks pass | Tự động navigate sang (tabs)/map screen | — | FR-600 |
+
+---
+
+## 14. Criteria Engine Rules
+
+| ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
+|----|-----------|------|-----------|--------|--------------------------|--------|
+| BR-CE01 | Scoring Formula | Computation | Multiple POIs in trigger range | `score = (priority/5)×0.30 + (1-dist/radius)×0.30 + notPlayed×0.25 + autoPlay×0.15` | — | FR-502 |
+| BR-CE02 | Priority Normalization | Computation | Calculate priority score | priority field (1–5) normalized: priorityScore = priority / 5 | Default priority=1 nếu null | FR-502 |
+| BR-CE03 | Distance Score | Computation | Calculate distance score | distanceScore = max(0, 1 − distance / triggerRadius). Closer = higher score | 0 nếu distance > radius | FR-502 |
+| BR-CE04 | Not Played Bonus | Inference | POI chưa được play trong session | notPlayedBonus = 1.0 nếu poiId không có trong triggeredPoiIds; 0.0 nếu đã play | — | FR-502 |
+| BR-CE05 | AutoPlay Score | Inference | poi.autoPlay flag | autoPlayScore = 1.0 nếu autoPlay=true, 0.0 nếu false | Default true nếu null | FR-502 |
+| BR-CE06 | Single Winner | Constraint | Scoring complete | Chỉ POI có score cao nhất được trigger; không trigger đồng thời nhiều POI | — | FR-502 |
+| BR-CE07 | Already Played Skip | Constraint | Best POI đã trong triggeredPoiIds | Không re-trigger; giữ audio hiện tại | — | FR-502 |
+| BR-CE08 | Exit Resets | Trigger | User rời khỏi vùng trigger | Xóa poiId khỏi triggeredPoiIds; POI có thể trigger lại khi user quay lại | — | FR-502 |
+
+---
+
+## 16. Rule Type Legend
 
 | Type | Ký hiệu | Mô tả | Số lượng |
 |------|----------|-------|----------|

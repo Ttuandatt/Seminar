@@ -1,9 +1,9 @@
 # 📋 Functional Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-10
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-21
 
 ---
 
@@ -179,15 +179,18 @@ Admin có thể tạo POI mới với đầy đủ thông tin cơ bản.
 |-------|------|----------|------------|
 | name_vi | string | Yes | 1-200 chars |
 | name_en | string | No | 1-200 chars |
+| name_zh | string | No | 1-200 chars |
 | description_vi | text | Yes | 1-5000 chars |
 | description_en | text | No | 1-5000 chars |
+| description_zh | text | No | 1-5000 chars |
 | latitude | decimal | Yes | -90 to 90 |
 | longitude | decimal | Yes | -180 to 180 |
-| trigger_radius | integer | No | 5-100m, default 15m |
+| trigger_radius | integer | No | 5-100m, default 50m |
 | category | enum | Yes | DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
 | images | file[] | No | Max 10, each ≤5MB |
 | audio_vi | file | No | ≤50MB, mp3/wav |
 | audio_en | file | No | ≤50MB, mp3/wav |
+| audio_zh | file | No | ≤50MB, mp3/wav |
 
 **Business Rules:**
 - BR-201: POI name phải unique trong hệ thống
@@ -313,15 +316,78 @@ POI có trạng thái Draft hoặc Published. Chỉ Published POIs hiển thị 
 
 **Status Flow:**
 ```
-DRAFT → (publish) → PUBLISHED
-      ↖ (unpublish) ↙
+DRAFT → (Admin set ACTIVE) → ACTIVE
+ACTIVE → (Admin set ARCHIVED) → ARCHIVED
+ARCHIVED → (Admin set ACTIVE) → ACTIVE
 ```
 
 **Business Rules:**
-- BR-217: POI mới tạo mặc định ở trạng thái Draft
-- BR-218: Cần có đủ name + description + location để Publish
-- BR-219: Unpublish POI đang trong Tour = warning
-- BR-220: Draft POIs không hiển thị trên Tourist App
+- BR-217: POI mới tạo mặc định ở trạng thái DRAFT
+- BR-218: Cần có đủ name + description + location để chuyển ACTIVE
+- BR-219: Unpublish (ARCHIVED) POI đang trong Tour = warning
+- BR-220: Chỉ ACTIVE POIs hiển thị trên Tourist App
+
+---
+
+### FR-208: POI Status Change
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-208 |
+| **Title** | Thay đổi trạng thái POI |
+| **Priority** | P0 |
+
+**Description:**
+Admin thay đổi trạng thái POI giữa DRAFT / ACTIVE / ARCHIVED. Chỉ ACTIVE POIs xuất hiện trên Tourist App và được phép thêm vào Tour.
+
+**Input:**
+| Field | Type | Required | Values |
+|-------|------|----------|--------|
+| status | enum | Yes | DRAFT, ACTIVE, ARCHIVED |
+
+**Business Rules:**
+- BR-304: Chỉ ACTIVE POIs được thêm vào Tour
+- BR-305: Khi POI bị ARCHIVED, tự động remove khỏi tất cả Tours liên quan
+
+---
+
+### FR-209: Generate TTS Audio
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-209 |
+| **Title** | Tạo audio TTS tự động cho POI |
+| **Priority** | P1 |
+| **Actor** | Admin, Shop Owner |
+
+**Description:**
+Admin hoặc Shop Owner nhấn nút "Tạo audio TTS" để hệ thống tự động chuyển đổi nội dung mô tả văn bản của POI thành file audio MP3 sử dụng Microsoft Edge TTS (msedge-tts). Nếu đã có audio cho ngôn ngữ đó, file cũ bị thay thế.
+
+**Input:**
+| Field | Type | Required | Values |
+|-------|------|----------|--------|
+| poiId | UUID | Yes | ID POI hợp lệ |
+| language | enum | Yes | VI, EN, ZH |
+
+**Output:**
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | PoiMedia record ID |
+| url | string | URL file audio MP3 |
+| sizeBytes | integer | Kích thước file (bytes) |
+| language | enum | VI / EN / ZH |
+
+**TTS Voice Mapping:**
+| Language | Voice |
+|----------|-------|
+| VI | vi-VN-HoaiMyNeural |
+| EN | en-US-AriaNeural |
+| ZH | zh-CN-XiaoxiaoNeural |
+
+**Business Rules:**
+- BR-TTS01: Nếu đã có PoiMedia (type=AUDIO, language=X) thì xóa record cũ trước khi tạo mới
+- BR-TTS02: POI phải có nội dung mô tả cho ngôn ngữ được chọn (descriptionVi / descriptionEn / descriptionZh)
+- BR-TTS03: Shop Owner chỉ tạo TTS cho POI do mình sở hữu (ownerId = userId)
 
 ---
 
@@ -492,7 +558,7 @@ Khi user đi vào vùng trigger của POI, app tự động thông báo và hỏ
 **Business Rules:**
 - BR-505: Trigger radius mặc định **50m** (configurable per POI, range 5-100m)
 - BR-506: Hysteresis: khi user **rời khỏi vùng trigger**, POI được reset và có thể trigger lại khi quay lại (exit-based, không dùng timer)
-- BR-507: Conflict resolution: trigger POI gần nhất nếu overlap
+- BR-507: **Criteria Engine** — khi nhiều POI cùng trong vùng trigger, chọn POI có điểm cao nhất theo công thức: `score = priority×0.30 + distanceScore×0.30 + notPlayedBonus×0.25 + autoPlayScore×0.15`
 - BR-508: User có thể tắt auto-play trong settings
 - BR-508b: Khi trigger, hệ thống **tự động phát audio** mà không hỏi. Bottom sheet hiển thị thông tin + audio player (autoPlay=true)
 
@@ -611,6 +677,38 @@ App hiển thị thông báo lỗi rõ ràng với option retry khi có vấn đ
 
 ## 6. Tourist App - Language & Settings
 
+### FR-600: Device Capability Check
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-600 |
+| **Title** | Kiểm tra cấu hình thiết bị khi khởi động |
+| **Priority** | P1 |
+
+**Description:**
+Mỗi lần khởi động ứng dụng, hệ thống kiểm tra hai năng lực thiết bị bắt buộc. Nếu thiếu, màn hình DeviceCheck chặn người dùng và hướng dẫn khắc phục.
+
+**Checks:**
+| Capability | Check Method | Bắt buộc? |
+|-----------|--------------|-----------|
+| GPS / Location | `expo-location.requestForegroundPermissionsAsync()` | ✅ |
+| Internet | `expo-network.getNetworkStateAsync()` | ✅ |
+
+**Flow:**
+```
+App Start → DeviceCheckScreen
+  → Run checks
+  → All pass → navigate to (tabs)
+  → Any fail → show blocking UI + "Kiểm tra lại" button
+```
+
+**Business Rules:**
+- BR-DEVICE01: Cả GPS và Internet đều phải pass mới cho vào app
+- BR-DEVICE02: User có thể nhấn "Mở cài đặt thiết bị" để mở Settings
+- BR-DEVICE03: Khi tất cả pass, navigate thẳng đến màn hình bản đồ
+
+---
+
 ### FR-601: Language Selection
 
 | Field | Description |
@@ -620,11 +718,22 @@ App hiển thị thông báo lỗi rõ ràng với option retry khi có vấn đ
 | **Priority** | P0 |
 | **User Story** | US-405 |
 
+**Description:**
+User chọn ngôn ngữ hiển thị (VI/EN/ZH). Khi đổi ngôn ngữ, **cả nội dung text và audio** của POI đều chuyển sang ngôn ngữ tương ứng.
+
+**Supported Languages:**
+| Code | Language | Flag | TTS Voice |
+|------|----------|------|-----------|
+| vi | Tiếng Việt | 🇻🇳 | vi-VN-HoaiMyNeural |
+| en | English | 🇬🇧 | en-US-AriaNeural |
+| zh | 中文 | 🇨🇳 | zh-CN-XiaoxiaoNeural |
+
 **Business Rules:**
-- BR-601: Auto-detect device language ở lần đầu
-- BR-602: Fallback to Vietnamese nếu không có translation
-- BR-603: Lưu preference vào local storage
+- BR-601: Auto-detect device language ở lần đầu (vi/en/zh); default vi nếu không match
+- BR-602: Fallback to Vietnamese nếu không có translation cho ngôn ngữ được chọn
+- BR-603: Lưu preference vào AsyncStorage ('app_language')
 - BR-604: Reload content khi đổi language
+- BR-605: Audio player tìm PoiMedia theo language code (VI/EN/ZH), nếu không có thì fallback ALL
 
 ---
 

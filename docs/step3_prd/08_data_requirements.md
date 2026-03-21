@@ -1,9 +1,9 @@
 # 🗃️ Data Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.2  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-21
 
 ---
 
@@ -152,8 +152,10 @@
 | `id` | UUID | PK | Primary key |
 | `name_vi` | VARCHAR(200) | NOT NULL | Vietnamese name |
 | `name_en` | VARCHAR(200) | NULL | English name |
+| `name_zh` | VARCHAR(200) | NULL | Chinese name (Simplified) |
 | `description_vi` | TEXT | NOT NULL | Vietnamese description |
 | `description_en` | TEXT | NULL | English description |
+| `description_zh` | TEXT | NULL | Chinese description (Simplified) |
 | `latitude` | FLOAT | NOT NULL | GPS latitude |
 | `longitude` | FLOAT | NOT NULL | GPS longitude |
 | `trigger_radius` | INTEGER | DEFAULT 50 | Radius in meters (5-100) |
@@ -187,7 +189,7 @@
 | `id` | UUID | PK | Primary key |
 | `poi_id` | UUID | FK → POI.id, NOT NULL | Parent POI |
 | `type` | ENUM | NOT NULL | Values: IMAGE, AUDIO |
-| `language` | ENUM | NOT NULL | Values: VI, EN, ALL |
+| `language` | ENUM | NOT NULL | Values: VI, EN, ZH, ALL |
 | `url` | VARCHAR(500) | NOT NULL | CDN URL |
 | `filename` | VARCHAR(255) | NOT NULL | Original filename |
 | `size_bytes` | BIGINT | NOT NULL | File size |
@@ -262,7 +264,7 @@
 | `display_name` | VARCHAR(100) | NULL | Display name |
 | `auth_provider` | ENUM | NULL | Values: EMAIL, GOOGLE, FACEBOOK, APPLE |
 | `password_hash` | VARCHAR(255) | NULL | For email login |
-| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN |
+| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN, ZH |
 | `auto_play_audio` | BOOLEAN | DEFAULT true | Auto-play audio on trigger |
 | `push_token` | VARCHAR(255) | NULL | FCM/APNs token |
 | `push_enabled` | BOOLEAN | DEFAULT false | Push notification enabled |
@@ -410,7 +412,7 @@ interface POIMedia {
   id: string;
   poiId: string;
   type: 'IMAGE' | 'AUDIO';
-  language: 'VI' | 'EN' | 'ALL';
+  language: 'VI' | 'EN' | 'ZH' | 'ALL';
   url: string;
   filename: string;
   sizeBytes: number;
