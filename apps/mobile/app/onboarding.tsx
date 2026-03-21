@@ -3,31 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList, Animate
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MapPin, Headphones, QrCode, ChevronRight } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
 const slides = [
-    {
-        id: '1',
-        icon: MapPin,
-        color: '#0C4A6E',
-        title: 'Chào mừng đến GPS Tours',
-        description: 'Khám phá Phố Ẩm thực Vĩnh Khánh với hướng dẫn viên thông minh ngay trên điện thoại của bạn.',
-    },
-    {
-        id: '2',
-        icon: Headphones,
-        color: '#0284c7',
-        title: 'Thuyết minh tự động',
-        description: 'Khi bạn đi ngang qua một địa điểm, app sẽ tự động phát audio thuyết minh. Không cần thao tác gì cả!',
-    },
-    {
-        id: '3',
-        icon: QrCode,
-        color: '#F97316',
-        title: 'Quét QR khi cần',
-        description: 'Nếu GPS không chính xác, bạn có thể quét mã QR tại mỗi địa điểm để nghe thuyết minh ngay lập tức.',
-    },
+    { id: '1', icon: MapPin, color: '#0C4A6E', titleKey: 'onboarding.slide1Title', descKey: 'onboarding.slide1Desc' },
+    { id: '2', icon: Headphones, color: '#0284c7', titleKey: 'onboarding.slide2Title', descKey: 'onboarding.slide2Desc' },
+    { id: '3', icon: QrCode, color: '#F97316', titleKey: 'onboarding.slide3Title', descKey: 'onboarding.slide3Desc' },
 ];
 
 export default function OnboardingScreen() {
@@ -35,6 +18,7 @@ export default function OnboardingScreen() {
     const flatListRef = useRef<FlatList>(null);
     const scrollX = useRef(new Animated.Value(0)).current;
     const router = useRouter();
+    const { t } = useTranslation();
 
     const finishOnboarding = async () => {
         await AsyncStorage.setItem('onboarding_done', 'true');
@@ -57,8 +41,8 @@ export default function OnboardingScreen() {
                 <View style={[styles.iconCircle, { backgroundColor: item.color + '15' }]}>
                     <IconComp size={64} color={item.color} />
                 </View>
-                <Text style={styles.slideTitle}>{item.title}</Text>
-                <Text style={styles.slideDescription}>{item.description}</Text>
+                <Text style={styles.slideTitle}>{t(item.titleKey)}</Text>
+                <Text style={styles.slideDescription}>{t(item.descKey)}</Text>
             </View>
         );
     };
@@ -69,7 +53,7 @@ export default function OnboardingScreen() {
         <View style={styles.container}>
             {/* Skip button */}
             <TouchableOpacity style={styles.skipButton} onPress={finishOnboarding}>
-                <Text style={styles.skipText}>Bỏ qua</Text>
+                <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
             </TouchableOpacity>
 
             {/* Slides */}
@@ -104,10 +88,10 @@ export default function OnboardingScreen() {
             {/* Next / Start button */}
             <TouchableOpacity style={styles.nextButton} onPress={goNext}>
                 {isLast ? (
-                    <Text style={styles.nextButtonText}>Bắt đầu khám phá</Text>
+                    <Text style={styles.nextButtonText}>{t('onboarding.startExploring')}</Text>
                 ) : (
                     <View style={styles.nextInner}>
-                        <Text style={styles.nextButtonText}>Tiếp tục</Text>
+                        <Text style={styles.nextButtonText}>{t('onboarding.next')}</Text>
                         <ChevronRight size={20} color="#fff" />
                     </View>
                 )}

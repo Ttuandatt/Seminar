@@ -8,16 +8,19 @@ import AudioPlayer from '../../components/AudioPlayer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touristService } from '../../services/touristService';
 import { getMediaUrl } from '../../services/api';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 export default function PoiDetailScreen() {
     const { id, offline } = useLocalSearchParams();
     const router = useRouter();
+    const { t } = useTranslation();
+    const { lang, getPoiName, getPoiDescription } = useLanguage();
 
     const [poi, setPoi] = useState<Poi | null>(null);
     const [loading, setLoading] = useState(true);
-    const [lang, setLang] = useState<'vi' | 'en'>('vi');
     const [isFavorite, setIsFavorite] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -73,13 +76,9 @@ export default function PoiDetailScreen() {
         }
     };
 
-    const toggleLanguage = () => {
-        setLang(prev => prev === 'vi' ? 'en' : 'vi');
-    };
-
     const toggleFavorite = async () => {
         if (!isLoggedIn) {
-            alert('Please log in to add favorites');
+            alert(t('poi.loginToFavorite'));
             return;
         }
         try {
@@ -106,7 +105,7 @@ export default function PoiDetailScreen() {
     if (!poi) {
         return (
             <View style={styles.centered}>
-                <Text style={styles.errorText}>POI not found</Text>
+                <Text style={styles.errorText}>{t('poi.notFound')}</Text>
             </View>
         );
     }
@@ -140,7 +139,7 @@ export default function PoiDetailScreen() {
                     </ScrollView>
                 ) : (
                     <View style={[styles.carouselImage, styles.placeholderImage]}>
-                        <Text style={styles.placeholderText}>NO IMAGE</Text>
+                        <Text style={styles.placeholderText}>{t('poi.noImage')}</Text>
                     </View>
                 )}
                 {images.length > 1 && (
@@ -161,10 +160,10 @@ export default function PoiDetailScreen() {
             <View style={styles.content}>
                 <View style={styles.headerRow}>
                     <Text style={styles.title}>
-                        {lang === 'vi' ? poi.nameVi : (poi.nameEn || poi.nameVi)}
+                        {getPoiName(poi)}
                     </Text>
                     <View style={styles.actionsRow}>
-                        <TouchableOpacity style={styles.iconButton} onPress={toggleLanguage}>
+                        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/language')}>
                             <Globe size={24} color="#64748b" />
                             <Text style={styles.langText}>{lang.toUpperCase()}</Text>
                         </TouchableOpacity>
@@ -175,24 +174,17 @@ export default function PoiDetailScreen() {
                 </View>
 
                 <Text style={styles.typeText}>
-                    {poi.category === 'CULTURAL_LANDMARKS' ? '📍 Di tích văn hóa' :
-                     poi.category === 'DINING' ? '🍽️ Ăn uống' :
-                     poi.category === 'CAFES_DESSERTS' ? '☕ Cà phê & tráng miệng' :
-                     poi.category === 'STREET_FOOD' ? '🥢 Ẩm thực đường phố' :
-                     poi.category === 'BARS_NIGHTLIFE' ? '🍸 Bar & giải trí đêm' :
-                     poi.category === 'MARKETS_SPECIALTY' ? '🛒 Chợ & đặc sản' :
-                     poi.category === 'EXPERIENCES_WORKSHOPS' ? '🎨 Trải nghiệm' :
-                     poi.category === 'OUTDOOR_SCENIC' ? '🌿 Ngoài trời' : '📍 Điểm tham quan'}
+                    {t(`categories.${poi.category}`, t('categories.DEFAULT'))}
                 </Text>
 
                 {/* Audio Player Component */}
                 {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} />}
-                {!audio && <Text style={styles.noAudioText}>No audio guide available for this language.</Text>}
+                {!audio && <Text style={styles.noAudioText}>{t('poi.noAudio')}</Text>}
 
                 <View style={styles.descriptionCard}>
-                    <Text style={styles.descriptionTitle}>About</Text>
+                    <Text style={styles.descriptionTitle}>{t('poi.about')}</Text>
                     <Text style={styles.description}>
-                        {lang === 'vi' ? poi.descriptionVi : (poi.descriptionEn || poi.descriptionVi)}
+                        {getPoiDescription(poi)}
                     </Text>
                 </View>
             </View>

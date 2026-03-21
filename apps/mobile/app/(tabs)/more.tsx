@@ -3,10 +3,14 @@ import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView, Alert, Ac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode, Database, Info, Pencil } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../context/LanguageContext';
 import { syncOfflinePois } from '../../services/database';
 import { touristService } from '../../services/touristService';
 
 export default function MoreScreen() {
+    const { t } = useTranslation();
+    const { lang } = useLanguage();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [autoPlay, setAutoPlay] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -55,37 +59,37 @@ export default function MoreScreen() {
         try {
             const result = await syncOfflinePois();
             if (result.success) {
-                Alert.alert('Thành công', `Đã đồng bộ ${result.count} địa điểm. Bây giờ bạn có thể quét QR offline!`);
+                Alert.alert(t('common.success'), t('more.syncSuccess', { count: result.count }));
             } else {
-                Alert.alert('Thất bại', 'Không thể đồng bộ dữ liệu. Kiểm tra mạng và thử lại.');
+                Alert.alert(t('more.failed'), t('more.syncFail'));
             }
         } catch (error) {
-            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi đồng bộ.');
+            Alert.alert(t('common.error'), t('more.syncError'));
         } finally {
             setIsSyncing(false);
         }
     };
 
     const menuItems = [
-        { icon: <QrCode size={20} color="#64748b" />, label: 'Quét mã QR địa điểm', show: true, onPress: () => router.push('/scanner') },
-        { icon: <Database size={20} color="#64748b" />, label: 'Đồng bộ dữ liệu Offline', show: true, onPress: handleSyncOffline },
-        { icon: <Heart size={20} color="#64748b" />, label: 'Địa điểm yêu thích', show: isLoggedIn, onPress: () => router.push('/favorites') },
-        { icon: <User size={20} color="#64748b" />, label: 'Lịch sử xem', show: isLoggedIn, onPress: () => router.push('/history') },
-        { icon: <Volume2 size={20} color="#64748b" />, label: 'Tự động phát audio', show: true, isSwitch: true, value: autoPlay, onValueChange: handleAutoPlayChange },
-        { icon: <Languages size={20} color="#64748b" />, label: 'Ngôn ngữ', valueText: 'Tiếng Việt', show: true, onPress: () => router.push('/language') },
-        { icon: <Info size={20} color="#64748b" />, label: 'Giới thiệu ứng dụng', show: true, onPress: () => router.push('/about') },
+        { icon: <QrCode size={20} color="#64748b" />, label: t('more.scanQr'), show: true, onPress: () => router.push('/scanner') },
+        { icon: <Database size={20} color="#64748b" />, label: t('more.syncOffline'), show: true, onPress: handleSyncOffline },
+        { icon: <Heart size={20} color="#64748b" />, label: t('more.favorites'), show: isLoggedIn, onPress: () => router.push('/favorites') },
+        { icon: <User size={20} color="#64748b" />, label: t('more.viewHistory'), show: isLoggedIn, onPress: () => router.push('/history') },
+        { icon: <Volume2 size={20} color="#64748b" />, label: t('more.autoPlay'), show: true, isSwitch: true, value: autoPlay, onValueChange: handleAutoPlayChange },
+        { icon: <Languages size={20} color="#64748b" />, label: t('more.language'), valueText: t(`languageScreen.${lang}`), show: true, onPress: () => router.push('/language') },
+        { icon: <Info size={20} color="#64748b" />, label: t('more.aboutApp'), show: true, onPress: () => router.push('/about') },
     ];
 
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Cá nhân</Text>
+                <Text style={styles.headerTitle}>{t('more.title')}</Text>
             </View>
 
             {isSyncing && (
                 <View style={{ padding: 16, alignItems: 'center', backgroundColor: '#e0f2fe', marginHorizontal: 16, borderRadius: 12, marginBottom: 16 }}>
                     <ActivityIndicator size="small" color="#0284c7" />
-                    <Text style={{ marginTop: 8, color: '#0284c7', fontWeight: '500' }}>Đang tải dữ liệu offline...</Text>
+                    <Text style={{ marginTop: 8, color: '#0284c7', fontWeight: '500' }}>{t('more.syncingOffline')}</Text>
                 </View>
             )}
 
@@ -95,11 +99,11 @@ export default function MoreScreen() {
                         <LogIn size={24} color="#0C4A6E" />
                     </View>
                     <View style={styles.authTextContainer}>
-                        <Text style={styles.authTitle}>Đăng nhập</Text>
-                        <Text style={styles.authDesc}>Để lưu điểm yêu thích và lịch sử trải nghiệm</Text>
+                        <Text style={styles.authTitle}>{t('more.login')}</Text>
+                        <Text style={styles.authDesc}>{t('more.loginDesc')}</Text>
                     </View>
                     <TouchableOpacity style={styles.authButton} onPress={() => router.push('/login')}>
-                        <Text style={styles.authButtonText}>Đăng nhập</Text>
+                        <Text style={styles.authButtonText}>{t('more.login')}</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -118,16 +122,16 @@ export default function MoreScreen() {
                         setIsLoggedIn(false);
                         setUserProfile(null);
                     }}>
-                        <Text style={styles.logoutText}>Đăng xuất</Text>
+                        <Text style={styles.logoutText}>{t('more.logout')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.editProfileButton} onPress={() => router.push('/edit-profile')}>
                         <Pencil size={14} color="#3b82f6" />
-                        <Text style={styles.editProfileText}>Chỉnh sửa</Text>
+                        <Text style={styles.editProfileText}>{t('more.edit')}</Text>
                     </TouchableOpacity>
                 </View>
             )}
 
-            <Text style={styles.sectionTitle}>Cài đặt & Tiện ích</Text>
+            <Text style={styles.sectionTitle}>{t('more.settings')}</Text>
 
             <View style={styles.menuContainer}>
                 {menuItems.filter(item => item.show).map((item, index) => (

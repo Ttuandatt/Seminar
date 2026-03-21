@@ -68,7 +68,8 @@
         {
           "cameraPermission": "GPS Tours cần camera để quét mã QR."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "router": {},

@@ -18,6 +18,7 @@ import ShopOwnerDashboardPage from './pages/owner/ShopOwnerDashboardPage';
 import ShopOwnerAnalyticsPage from './pages/owner/ShopOwnerAnalyticsPage';
 import ShopOwnerProfilePage from './pages/owner/ShopOwnerProfilePage';
 import ShopOwnerPOIFormPage from './pages/owner/ShopOwnerPOIFormPage';
+import MapViewPage from './pages/admin/MapViewPage';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
           <Route path="tours/new" element={<TourFormPage />} />
           <Route path="tours/:id" element={<TourFormPage readOnly />} />
           <Route path="tours/:id/edit" element={<TourFormPage />} />
+          <Route path="map" element={<MapViewPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="merchants" element={<MerchantListPage />} />

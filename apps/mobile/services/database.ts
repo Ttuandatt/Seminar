@@ -39,7 +39,7 @@ export const initDatabase = () => {
 export const syncOfflinePois = async () => {
     try {
         console.log("Starting offline POI sync...");
-        const response = await api.get('/pois');
+        const response = await api.get('/public/pois');
         const pois = response.data.data || response.data;
 
         initDatabase();

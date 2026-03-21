@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { Mail, Lock, User } from 'lucide-react-native';
 import { authService } from '../services/authService';
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterScreen() {
     const [fullName, setFullName] = useState('');
@@ -10,35 +11,36 @@ export default function RegisterScreen() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { t } = useTranslation();
 
     const handleRegister = async () => {
         if (!fullName || !email || !password) {
-            Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các thông tin.');
+            Alert.alert(t('common.error'), t('register.errorEmpty'));
             return;
         }
 
         // Basic password validation for the regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$
         const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
         if (!passRegex.test(password)) {
-            Alert.alert('Lỗi mật khẩu', 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số.');
+            Alert.alert(t('common.error'), t('register.errorPassword'));
             return;
         }
 
         if (password.length < 8) {
-            Alert.alert('Lỗi mật khẩu', 'Mật khẩu cần ít nhất 8 ký tự.');
+            Alert.alert(t('common.error'), t('register.errorPasswordLength'));
             return;
         }
 
         setLoading(true);
         try {
             await authService.register({ fullName, email, password });
-            Alert.alert('Thành công', 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.', [
-                { text: 'Chuyển đến Đăng nhập', onPress: () => router.replace('/login') }
+            Alert.alert(t('common.success'), t('register.registerSuccess'), [
+                { text: t('register.goToLogin'), onPress: () => router.replace('/login') }
             ]);
         } catch (error: any) {
             console.error('Register Error:', error);
-            const msg = error.response?.data?.message || 'Đăng ký thất bại. Email có thể đã tồn tại.';
-            Alert.alert('Lỗi', typeof msg === 'string' ? msg : JSON.stringify(msg));
+            const msg = error.response?.data?.message || t('register.registerFailed');
+            Alert.alert(t('common.error'), typeof msg === 'string' ? msg : JSON.stringify(msg));
         } finally {
             setLoading(false);
         }
@@ -51,8 +53,8 @@ export default function RegisterScreen() {
         >
             <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                 <View style={styles.header}>
-                    <Text style={styles.title}>Tạo tài khoản</Text>
-                    <Text style={styles.subtitle}>Để trải nghiệm trọn vẹn mọi tính năng của GPS Tours</Text>
+                    <Text style={styles.title}>{t('register.title')}</Text>
+                    <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
                 </View>
 
                 <View style={styles.form}>
@@ -60,7 +62,7 @@ export default function RegisterScreen() {
                         <User size={20} color="#64748b" style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Họ và tên"
+                            placeholder={t('register.fullNamePlaceholder')}
                             value={fullName}
                             onChangeText={setFullName}
                             autoCapitalize="words"
@@ -83,7 +85,7 @@ export default function RegisterScreen() {
                         <Lock size={20} color="#64748b" style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Mật khẩu"
+                            placeholder={t('register.passwordPlaceholder')}
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
@@ -94,14 +96,14 @@ export default function RegisterScreen() {
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.registerButtonText}>Đăng ký ngay</Text>
+                            <Text style={styles.registerButtonText}>{t('register.registerButton')}</Text>
                         )}
                     </TouchableOpacity>
 
                     <View style={styles.loginContainer}>
-                        <Text style={styles.loginText}>Đã có tài khoản? </Text>
+                        <Text style={styles.loginText}>{t('register.hasAccount')}</Text>
                         <TouchableOpacity onPress={() => router.replace('/login')}>
-                            <Text style={styles.loginLink}>Đăng nhập</Text>
+                            <Text style={styles.loginLink}>{t('register.loginNow')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -128,4 +128,9 @@ export const poiService = {
         const response = await api.delete(`/pois/${poiId}/media/${mediaId}`);
         return response.data;
     },
+
+    generateTts: async (poiId: string, text: string, language: 'VI' | 'EN', voice?: string) => {
+        const response = await api.post(`/tts/generate/${poiId}`, { text, language, voice });
+        return response.data;
+    },
 };

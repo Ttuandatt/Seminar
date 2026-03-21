@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MapPin, X, Headphones, Navigation } from 'lucide-react-native';
 import { getMediaUrl } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface POITriggerSheetProps {
     poi: {
@@ -21,6 +22,7 @@ interface POITriggerSheetProps {
 
 export default function POITriggerSheet({ poi, language, onDismiss, onListen }: POITriggerSheetProps) {
     const router = useRouter();
+    const { t } = useTranslation();
     const displayName = language === 'en' && poi.nameEn ? poi.nameEn : poi.name;
     const imageUrl = poi.images?.[0]?.url ? getMediaUrl(poi.images[0].url) : null;
     const distanceText = poi.distance
@@ -42,7 +44,7 @@ export default function POITriggerSheet({ poi, language, onDismiss, onListen }: 
                     <View style={styles.pinBadge}>
                         <MapPin size={16} color="#fff" />
                     </View>
-                    <Text style={styles.nearbyText}>Bạn đang ở gần</Text>
+                    <Text style={styles.nearbyText}>{t('poi.nearby')}</Text>
                 </View>
 
                 {/* POI Info */}
@@ -65,7 +67,7 @@ export default function POITriggerSheet({ poi, language, onDismiss, onListen }: 
                 <View style={styles.actions}>
                     <TouchableOpacity style={styles.listenButton} onPress={onListen}>
                         <Headphones size={18} color="#fff" />
-                        <Text style={styles.listenText}>Nghe thuyết minh</Text>
+                        <Text style={styles.listenText}>{t('poi.listen')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.detailButton}
@@ -74,7 +76,7 @@ export default function POITriggerSheet({ poi, language, onDismiss, onListen }: 
                             router.push(`/poi/${poi.id}`);
                         }}
                     >
-                        <Text style={styles.detailText}>Xem chi tiết</Text>
+                        <Text style={styles.detailText}>{t('poi.viewDetails')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>

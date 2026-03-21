@@ -7,7 +7,8 @@ import { publicService, Tour } from '../../../services/publicService';
 import { getDistance } from '../../../utils/distance';
 import AudioPlayer from '../../../components/AudioPlayer';
 import { LocateFixed, XCircle, CheckCircle2 } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,14 +21,10 @@ export default function TourFollowScreen() {
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [currentStep, setCurrentStep] = useState(0); // Index of the next POI to reach
     const [triggeredStops, setTriggeredStops] = useState<Set<number>>(new Set());
-    const [lang, setLang] = useState<'vi' | 'en'>('vi');
+    const { t } = useTranslation();
+    const { lang, getPoiName, getPoiDescription } = useLanguage();
 
     useEffect(() => {
-        const loadLang = async () => {
-            const savedLang = await AsyncStorage.getItem('appLanguage');
-            if (savedLang === 'en' || savedLang === 'vi') setLang(savedLang);
-        };
-        loadLang();
         fetchTourData();
     }, [id]);
 
@@ -144,7 +141,7 @@ export default function TourFollowScreen() {
                         <Marker
                             key={tp.id}
                             coordinate={{ latitude: Number(tp.poi.latitude), longitude: Number(tp.poi.longitude) }}
-                            title={`${index + 1}. ${tp.poi.nameVi}`}
+                            title={`${index + 1}. ${getPoiName(tp.poi)}`}
                             pinColor={isPassed ? 'green' : isCurrent ? 'blue' : 'gray'}
                         />
                     );
@@ -163,26 +160,26 @@ export default function TourFollowScreen() {
                 {isFinished ? (
                     <View style={styles.finishedContainer}>
                         <CheckCircle2 size={48} color="#16a34a" />
-                        <Text style={styles.finishedTitle}>Đã hoàn thành Tour!</Text>
-                        <Text style={styles.finishedSubtitle}>Chúc mừng bạn đã đi hết lộ trình.</Text>
+                        <Text style={styles.finishedTitle}>{t('tourFollow.completed')}</Text>
+                        <Text style={styles.finishedSubtitle}>{t('tourFollow.congratulations')}</Text>
                         <TouchableOpacity style={styles.doneButton} onPress={() => router.push('/(tabs)/tours')}>
-                            <Text style={styles.doneButtonText}>Về danh sách Tour</Text>
+                            <Text style={styles.doneButtonText}>{t('tourFollow.backToList')}</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
                     <>
                         <View style={styles.targetHeader}>
-                            <Text style={styles.stepText}>Điểm đến {currentStep + 1}/{tour.tourPois.length}</Text>
+                            <Text style={styles.stepText}>{t('tourFollow.destination')} {currentStep + 1}/{tour.tourPois.length}</Text>
                             {hasArrived ? (
-                                <Text style={styles.arrivedBadge}>Đã tới nơi!</Text>
+                                <Text style={styles.arrivedBadge}>{t('tourFollow.arrived')}</Text>
                             ) : (
-                                <Text style={styles.navigatingBadge}>Đang di chuyển...</Text>
+                                <Text style={styles.navigatingBadge}>{t('tourFollow.navigating')}</Text>
                             )}
                         </View>
 
-                        <Text style={styles.targetTitle}>{targetPoi?.nameVi}</Text>
+                        <Text style={styles.targetTitle}>{targetPoi ? getPoiName(targetPoi) : ''}</Text>
                         <Text style={styles.targetDescription} numberOfLines={2}>
-                            {targetPoi?.descriptionVi || 'Không có mô tả'}
+                            {targetPoi ? (getPoiDescription(targetPoi) || t('common.noDescription')) : ''}
                         </Text>
 
                         {hasArrived && audioMedia && (
@@ -198,7 +195,7 @@ export default function TourFollowScreen() {
                                 disabled={!hasArrived}
                             >
                                 <Text style={styles.nextButtonText}>
-                                    {currentStep === tour.tourPois!.length - 1 ? 'Kết thúc Tour' : 'Đến trạm tiếp theo'}
+                                    {currentStep === tour.tourPois!.length - 1 ? t('tourFollow.endTour') : t('tourFollow.nextStop')}
                                 </Text>
                             </TouchableOpacity>
                         </View>

@@ -1,0 +1,211 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "ok": "OK",
+    "retry": "Thử lại",
+    "continue": "Tiếp tục",
+    "save": "Lưu",
+    "noDescription": "Không có mô tả"
+  },
+  "tabs": {
+    "map": "Bản đồ",
+    "tours": "Tours",
+    "more": "Thêm"
+  },
+  "nav": {
+    "explore": "Khám phá",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "forgotPassword": "Quên mật khẩu",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "language": "Ngôn ngữ",
+    "about": "Giới thiệu"
+  },
+  "landing": {
+    "subtitle": "Khám phá thế giới qua những câu chuyện âm thanh sống động trải dài theo từng bước chân của bạn.",
+    "startJourney": "Bắt đầu hành trình",
+    "haveAccount": "Tôi đã có tài khoản"
+  },
+  "onboarding": {
+    "slide1Title": "Chào mừng đến GPS Tours",
+    "slide1Desc": "Khám phá Phố Ẩm thực Vĩnh Khánh với hướng dẫn viên thông minh ngay trên điện thoại của bạn.",
+    "slide2Title": "Thuyết minh tự động",
+    "slide2Desc": "Khi bạn đi ngang qua một địa điểm, app sẽ tự động phát audio thuyết minh. Không cần thao tác gì cả!",
+    "slide3Title": "Quét QR khi cần",
+    "slide3Desc": "Nếu GPS không chính xác, bạn có thể quét mã QR tại mỗi địa điểm để nghe thuyết minh ngay lập tức.",
+    "skip": "Bỏ qua",
+    "startExploring": "Bắt đầu khám phá",
+    "next": "Tiếp tục"
+  },
+  "categories": {
+    "CULTURAL_LANDMARKS": "Di tích văn hóa",
+    "DINING": "Ăn uống",
+    "CAFES_DESSERTS": "Cà phê & tráng miệng",
+    "STREET_FOOD": "Ẩm thực đường phố",
+    "BARS_NIGHTLIFE": "Bar & giải trí đêm",
+    "MARKETS_SPECIALTY": "Chợ & đặc sản",
+    "EXPERIENCES_WORKSHOPS": "Trải nghiệm",
+    "OUTDOOR_SCENIC": "Ngoài trời",
+    "DEFAULT": "Điểm tham quan"
+  },
+  "map": {
+    "viewDetails": "Xem chi tiết",
+    "nearbyPois": "{{count}} điểm gần bạn"
+  },
+  "tours": {
+    "title": "Khám phá Tours",
+    "destinations": "điểm đến",
+    "minutes": "phút",
+    "empty": "Chưa có tour nào.",
+    "notFound": "Tour không tồn tại hoặc chưa có điểm dừng.",
+    "route": "Lộ trình",
+    "points": "điểm",
+    "mainPoint": "Điểm chính",
+    "nearby": "Lân cận",
+    "startTour": "Bắt đầu Tour"
+  },
+  "tourFollow": {
+    "completed": "Đã hoàn thành Tour!",
+    "congratulations": "Chúc mừng bạn đã đi hết lộ trình.",
+    "backToList": "Về danh sách Tour",
+    "destination": "Điểm đến",
+    "arrived": "Đã tới nơi!",
+    "navigating": "Đang di chuyển...",
+    "endTour": "Kết thúc Tour",
+    "nextStop": "Đến trạm tiếp theo"
+  },
+  "more": {
+    "title": "Cá nhân",
+    "login": "Đăng nhập",
+    "loginDesc": "Để lưu điểm yêu thích và lịch sử trải nghiệm",
+    "logout": "Đăng xuất",
+    "edit": "Chỉnh sửa",
+    "settings": "Cài đặt & Tiện ích",
+    "scanQr": "Quét mã QR địa điểm",
+    "syncOffline": "Đồng bộ dữ liệu Offline",
+    "favorites": "Địa điểm yêu thích",
+    "viewHistory": "Lịch sử xem",
+    "autoPlay": "Tự động phát audio",
+    "language": "Ngôn ngữ",
+    "aboutApp": "Giới thiệu ứng dụng",
+    "syncingOffline": "Đang tải dữ liệu offline...",
+    "syncSuccess": "Đã đồng bộ {{count}} địa điểm. Bây giờ bạn có thể quét QR offline!",
+    "syncFail": "Không thể đồng bộ dữ liệu. Kiểm tra mạng và thử lại.",
+    "syncError": "Đã xảy ra lỗi khi đồng bộ.",
+    "failed": "Thất bại"
+  },
+  "poi": {
+    "notFound": "Không tìm thấy địa điểm",
+    "noImage": "KHÔNG CÓ ẢNH",
+    "about": "Giới thiệu",
+    "noAudio": "Chưa có audio thuyết minh cho ngôn ngữ này.",
+    "loginToFavorite": "Vui lòng đăng nhập để thêm yêu thích",
+    "nearby": "Bạn đang ở gần",
+    "listen": "Nghe thuyết minh",
+    "viewDetails": "Xem chi tiết",
+    "audioError": "Không thể phát audio. Vui lòng thử lại sau."
+  },
+  "favorites": {
+    "title": "Địa điểm yêu thích",
+    "empty": "Bạn chưa có địa điểm yêu thích nào.",
+    "mainPoint": "Cột mốc chính",
+    "nearbyPoint": "Điểm lân cận"
+  },
+  "history": {
+    "title": "Lịch sử trải nghiệm",
+    "empty": "Chưa có lịch sử di chuyển.",
+    "mainPoint": "Cột mốc chính",
+    "nearbyPoint": "Điểm lân cận"
+  },
+  "scanner": {
+    "instruction": "Quét mã QR tại điểm tham quan",
+    "requestingPermission": "Đang yêu cầu quyền sử dụng camera...",
+    "noPermission": "Không có quyền truy cập camera",
+    "largeData": "Dữ liệu lớn",
+    "largeDataMsg": "Địa điểm này có chứa audio/video chất lượng cao. Cần kết nối mạng để trải nghiệm tốt nhất.",
+    "offlineMode": "Chế độ Offline",
+    "offlineMsg": "Hiển thị dữ liệu từ máy của bạn.",
+    "invalidQr": "Mã QR không hợp lệ hoặc không thuộc hệ thống",
+    "invalidQrNetwork": "Mã QR không hợp lệ hoặc không thể kết nối server!"
+  },
+  "login": {
+    "title": "Chào mừng trở lại",
+    "subtitle": "Đăng nhập để theo dõi lịch sử và địa điểm yêu thích của bạn",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "loginButton": "Đăng nhập",
+    "forgotPassword": "Quên mật khẩu?",
+    "noAccount": "Chưa có tài khoản? ",
+    "registerNow": "Đăng ký ngay",
+    "errorEmpty": "Vui lòng nhập đầy đủ email và mật khẩu.",
+    "errorNoToken": "Không nhận được token xác thực.",
+    "errorInvalid": "Email hoặc mật khẩu không đúng.",
+    "loginFailed": "Đăng nhập thất bại",
+    "loginSuccess": "Đăng nhập thành công"
+  },
+  "register": {
+    "title": "Tạo tài khoản",
+    "subtitle": "Để trải nghiệm trọn vẹn mọi tính năng của GPS Tours",
+    "fullNamePlaceholder": "Họ và tên",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "registerButton": "Đăng ký ngay",
+    "hasAccount": "Đã có tài khoản? ",
+    "loginLink": "Đăng nhập",
+    "errorEmpty": "Vui lòng điền đầy đủ các thông tin.",
+    "errorPassword": "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số.",
+    "errorPasswordLength": "Mật khẩu cần ít nhất 8 ký tự.",
+    "registerSuccess": "Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.",
+    "registerFailed": "Đăng ký thất bại. Email có thể đã tồn tại.",
+    "goToLogin": "Chuyển đến Đăng nhập"
+  },
+  "forgotPassword": {
+    "title": "Quên mật khẩu?",
+    "subtitle": "Nhập email đăng ký của bạn, chúng tôi sẽ gửi link đặt lại mật khẩu.",
+    "emailPlaceholder": "Email",
+    "sendLink": "Gửi link đặt lại",
+    "errorEmpty": "Vui lòng nhập email.",
+    "emailSent": "Email đã được gửi!",
+    "emailSentDesc": "Nếu tài khoản với email này tồn tại, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút.",
+    "backToLogin": "Quay về Đăng nhập"
+  },
+  "editProfile": {
+    "fullName": "Họ và tên",
+    "fullNamePlaceholder": "Nhập họ và tên",
+    "email": "Email",
+    "emailHint": "Email không thể thay đổi",
+    "saveChanges": "Lưu thay đổi",
+    "errorEmpty": "Tên không được để trống.",
+    "updateSuccess": "Cập nhật thông tin thành công.",
+    "errorLoad": "Không thể tải thông tin cá nhân.",
+    "errorUpdate": "Không thể cập nhật thông tin."
+  },
+  "about": {
+    "version": "Phiên bản {{version}}",
+    "tagline": "Phố Ẩm thực Vĩnh Khánh",
+    "introTitle": "Giới thiệu",
+    "introText": "GPS Tours là ứng dụng thuyết minh du lịch thông minh, tự động phát audio hướng dẫn khi bạn đến gần các địa điểm tham quan tại Phố Ẩm thực Vĩnh Khánh, Quận 4, TP. Hồ Chí Minh.",
+    "featuresTitle": "Tính năng chính",
+    "feature1": "Bản đồ tương tác với các điểm tham quan",
+    "feature2": "Thuyết minh audio tự động theo GPS",
+    "feature3": "Quét QR tại địa điểm",
+    "feature4": "Hỗ trợ chế độ offline",
+    "feature5": "Đa ngôn ngữ (VN/EN)",
+    "feature6": "Lưu địa điểm yêu thích",
+    "linksTitle": "Liên kết",
+    "copyrightTitle": "Bản quyền",
+    "copyrightText": "© 2026 GPS Tours Team\nĐồ án Seminar — Trường Đại học"
+  },
+  "languageScreen": {
+    "title": "Chọn ngôn ngữ",
+    "subtitle": "Ngôn ngữ hiển thị cho nội dung POI và audio thuyết minh",
+    "note": "Lưu ý: Một số POI có thể chưa có nội dung bằng ngôn ngữ bạn chọn. Khi đó, nội dung Tiếng Việt sẽ được hiển thị.",
+    "changed": "Đã chuyển sang {{name}}",
+    "vi": "Tiếng Việt",
+    "viDesc": "Ngôn ngữ mặc định",
+    "en": "English",
+    "enDesc": "Default language"
+  }
+}

@@ -92,6 +92,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [currentOwnerInfo, setCurrentOwnerInfo] = useState<{ id: string; label: string } | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
+    const [ttsGenerating, setTtsGenerating] = useState<{ VI?: boolean; EN?: boolean }>({});
 
     useEffect(() => {
         if (id) {
@@ -369,6 +370,31 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             return;
         }
         setIsPreviewOpen(true);
+    };
+
+    const handleGenerateTts = async (language: 'VI' | 'EN') => {
+        if (!id) {
+            showToast({ variant: 'error', title: 'Lưu POI trước', description: 'Vui lòng lưu POI trước khi tạo TTS audio.' });
+            return;
+        }
+        const text = language === 'VI' ? formData.description : formData.descriptionEn;
+        if (!text || text.length < 10) {
+            showToast({ variant: 'error', title: 'Thiếu nội dung', description: `Mô tả ${language} cần ít nhất 10 ký tự để tạo audio.` });
+            return;
+        }
+        setTtsGenerating(prev => ({ ...prev, [language]: true }));
+        try {
+            const result = await poiService.generateTts(id, text, language);
+            showToast({ variant: 'success', title: `TTS ${language} đã tạo`, description: `Audio ${language} đã được tạo thành công.` });
+            // Refresh media list
+            const poi = await poiService.getOne(id);
+            setExistingMedia((poi.media as MediaResource[]) || []);
+        } catch (err) {
+            console.error('TTS generation error:', err);
+            showToast({ variant: 'error', title: `TTS ${language} thất bại`, description: 'Không thể tạo audio. Vui lòng thử lại.' });
+        } finally {
+            setTtsGenerating(prev => ({ ...prev, [language]: false }));
+        }
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -796,6 +822,38 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                             Upload {lang} audio
                                         </label>
                                     ))}
+                                </div>
+                            )}
+
+                            {!readOnly && isEditMode && (
+                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-900">
+                                        <Headphones className="h-4 w-4" />
+                                        Auto-generate TTS from Description
+                                    </div>
+                                    <p className="text-xs text-indigo-600">
+                                        Tự động tạo audio thuyết minh từ nội dung mô tả POI bằng Microsoft Edge TTS.
+                                    </p>
+                                    <div className="grid gap-3 md:grid-cols-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleGenerateTts('VI')}
+                                            disabled={ttsGenerating.VI || !formData.description}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {ttsGenerating.VI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
+                                            Generate VI Audio
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleGenerateTts('EN')}
+                                            disabled={ttsGenerating.EN || !formData.descriptionEn}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {ttsGenerating.EN ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
+                                            Generate EN Audio
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>

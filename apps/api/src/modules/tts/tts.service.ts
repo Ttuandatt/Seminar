@@ -60,9 +60,15 @@ export class TtsService {
 
         const fileId = randomUUID();
         const fileName = `${poiId}_${language.toLowerCase()}_${fileId}`;
+        const outputDir = join(UPLOADS_DIR, fileName);
+
+        // msedge-tts toFile() expects the path as a directory and writes audio.mp3 inside it
+        if (!existsSync(outputDir)) {
+            mkdirSync(outputDir, { recursive: true });
+        }
 
         const { audioFilePath } = await tts.toFile(
-            join(UPLOADS_DIR, fileName),
+            outputDir,
             text,
         );
         tts.close();

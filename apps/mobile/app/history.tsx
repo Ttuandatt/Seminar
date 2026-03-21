@@ -4,11 +4,15 @@ import { useRouter } from 'expo-router';
 import { touristService } from '../services/touristService';
 import { getMediaUrl } from '../services/api';
 import { Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function HistoryScreen() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { t } = useTranslation();
+    const { lang, getPoiName } = useLanguage();
 
     useEffect(() => {
         fetchHistory();
@@ -37,20 +41,21 @@ export default function HistoryScreen() {
         return (
             <View style={styles.centered}>
                 <Clock size={48} color="#cbd5e1" />
-                <Text style={styles.emptyText}>Chưa có lịch sử di chuyển.</Text>
+                <Text style={styles.emptyText}>{t('history.empty')}</Text>
             </View>
         );
     }
 
     const formatDate = (dateString: string) => {
         const d = new Date(dateString);
-        return `${d.toLocaleDateString('vi-VN')} ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+        const locale = lang === 'vi' ? 'vi-VN' : 'en-US';
+        return `${d.toLocaleDateString(locale)} ${d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
     };
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Lịch sử trải nghiệm</Text>
+                <Text style={styles.headerTitle}>{t('history.title')}</Text>
             </View>
 
             <FlatList
@@ -68,8 +73,8 @@ export default function HistoryScreen() {
                         >
                             <Image source={{ uri: imageUrl }} style={styles.cardImage} />
                             <View style={styles.cardContent}>
-                                <Text style={styles.cardTitle}>{poi.nameVi}</Text>
-                                <Text style={styles.cardType}>{poi.poiType === 'MAIN' ? 'Cột mốc chính' : 'Điểm lân cận'}</Text>
+                                <Text style={styles.cardTitle}>{getPoiName(poi)}</Text>
+                                <Text style={styles.cardType}>{poi.poiType === 'MAIN' ? t('history.mainPoint') : t('history.nearbyPoint')}</Text>
                                 <Text style={styles.timestamp}>{formatDate(item.viewedAt || item.createdAt)}</Text>
                             </View>
                         </TouchableOpacity>

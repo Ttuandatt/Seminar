@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { MapPin, Github, Globe, Mail, Heart, Shield, FileText } from 'lucide-react-native';
 import Constants from 'expo-constants';
+import { useTranslation } from 'react-i18next';
 
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 
 export default function AboutScreen() {
+    const { t } = useTranslation();
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             {/* App Logo & Name */}
@@ -14,38 +17,34 @@ export default function AboutScreen() {
                     <MapPin size={40} color="#3b82f6" />
                 </View>
                 <Text style={styles.appName}>GPS Tours</Text>
-                <Text style={styles.version}>Phiên bản {APP_VERSION}</Text>
-                <Text style={styles.tagline}>Phố Ẩm thực Vĩnh Khánh</Text>
+                <Text style={styles.version}>{t('about.version', { version: APP_VERSION })}</Text>
+                <Text style={styles.tagline}>{t('about.tagline')}</Text>
             </View>
 
             {/* Description */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Giới thiệu</Text>
-                <Text style={styles.cardText}>
-                    GPS Tours là ứng dụng thuyết minh du lịch thông minh, tự động phát audio
-                    hướng dẫn khi bạn đến gần các địa điểm tham quan tại Phố Ẩm thực Vĩnh Khánh,
-                    Quận 4, TP. Hồ Chí Minh.
-                </Text>
+                <Text style={styles.cardTitle}>{t('about.introTitle')}</Text>
+                <Text style={styles.cardText}>{t('about.introText')}</Text>
             </View>
 
             {/* Features */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Tính năng chính</Text>
+                <Text style={styles.cardTitle}>{t('about.featuresTitle')}</Text>
                 {[
-                    '🗺️  Bản đồ tương tác với các điểm tham quan',
-                    '🎧  Thuyết minh audio tự động theo GPS',
-                    '📷  Quét QR tại địa điểm',
-                    '📶  Hỗ trợ chế độ offline',
-                    '🌐  Đa ngôn ngữ (VN/EN)',
-                    '❤️  Lưu địa điểm yêu thích',
-                ].map((feature, i) => (
-                    <Text key={i} style={styles.featureItem}>{feature}</Text>
+                    { emoji: '\u{1F5FA}\u{FE0F}', key: 'feature1' },
+                    { emoji: '\u{1F3A7}', key: 'feature2' },
+                    { emoji: '\u{1F4F7}', key: 'feature3' },
+                    { emoji: '\u{1F4F6}', key: 'feature4' },
+                    { emoji: '\u{1F310}', key: 'feature5' },
+                    { emoji: '\u{2764}\u{FE0F}', key: 'feature6' },
+                ].map((item, i) => (
+                    <Text key={i} style={styles.featureItem}>{item.emoji}  {t(`about.${item.key}`)}</Text>
                 ))}
             </View>
 
             {/* Links */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Liên kết</Text>
+                <Text style={styles.cardTitle}>{t('about.linksTitle')}</Text>
                 <TouchableOpacity
                     style={styles.linkItem}
                     onPress={() => Linking.openURL('https://github.com/Ttuandatt/Seminar')}
@@ -57,11 +56,8 @@ export default function AboutScreen() {
 
             {/* Credits */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Bản quyền</Text>
-                <Text style={styles.cardText}>
-                    © 2026 GPS Tours Team{'\n'}
-                    Đồ án Seminar — Trường Đại học
-                </Text>
+                <Text style={styles.cardTitle}>{t('about.copyrightTitle')}</Text>
+                <Text style={styles.cardText}>{t('about.copyrightText')}</Text>
             </View>
 
             {/* Footer */}

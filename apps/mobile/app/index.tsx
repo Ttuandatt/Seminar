@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, StatusBar } 
 import { useRouter } from 'expo-router';
 import { Map, ArrowRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 export default function LandingScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
 
     useEffect(() => {
@@ -46,17 +48,17 @@ export default function LandingScreen() {
                             <Map size={36} color="#0C4A6E" />
                         </View>
                         <Text style={styles.title}>GPS Tours</Text>
-                        <Text style={styles.subtitle}>Khám phá thế giới qua những câu chuyện âm thanh sống động trải dài theo từng bước chân của bạn.</Text>
+                        <Text style={styles.subtitle}>{t('landing.subtitle')}</Text>
                     </View>
 
                     <View style={styles.bottomContainer}>
                         <TouchableOpacity style={styles.primaryButton} onPress={handleStart}>
-                            <Text style={styles.primaryButtonText}>Bắt đầu hành trình</Text>
+                            <Text style={styles.primaryButtonText}>{t('landing.startJourney')}</Text>
                             <ArrowRight size={20} color="#ffffff" />
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/login')}>
-                            <Text style={styles.secondaryButtonText}>Tôi đã có tài khoản</Text>
+                            <Text style={styles.secondaryButtonText}>{t('landing.haveAccount')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -80,7 +82,7 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(12, 74, 110, 0.4)', // Deep Sky Blue tint
+        backgroundColor: 'rgba(12, 74, 110, 0.4)',
     },
     content: {
         flex: 1,
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     primaryButton: {
-        backgroundColor: '#F97316', // Adventure Orange
+        backgroundColor: '#F97316',
         flexDirection: 'row',
         height: 64,
         borderRadius: 20,
