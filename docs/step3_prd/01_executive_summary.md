@@ -81,14 +81,28 @@
 | Optional Login (Tourist) | P1 | MVP |
 | QR Code Management | P1 | MVP |
 
+### Phase 2+ (Mở rộng — theo yêu cầu giảng viên 2026-03-15)
+
+| Component | Priority | Phase |
+|-----------|----------|-------|
+| TTS Engine (Text → Audio tự động) | P0 | Phase 2A |
+| Audio Criteria Engine (priority/distance scoring) | P0 | Phase 2A |
+| Shop Approval Flow (duyệt pháp lý) | P0 | Phase 2A |
+| Translation NER (dịch thông minh) | P1 | Phase 2B |
+| Offline Map (PMTiles) | P1 | Phase 2B |
+| Language Package (drawer per lang) | P1 | Phase 2B |
+| WebSocket Real-time Dashboard | P1 | Phase 2B |
+| Payment (MoMo/VNPay) | P2 | Phase 3 |
+| Premium Voices (giọng vùng miền) | P2 | Phase 3 |
+| Load Testing (k6 benchmark) | P2 | Phase 3 |
+
 ### ❌ Ngoài phạm vi (Out of Scope)
 
 | Feature | Lý do | Xem xét? |
 |---------|-------|----------|
-| Tính năng AR | Complexity cao | Phase 3+ |
-| Booking/Payment | Cần partner, legal | Phase 2+ |
-| Chatbot AI | Separate project | Phase 3+ |
-| Social features | Nice-to-have | Phase 2+ |
+| Tính năng AR | Complexity cao | Phase 4+ |
+| Chatbot AI | Separate project | Phase 4+ |
+| Social features | Nice-to-have | Phase 4+ |
 
 ---
 
@@ -161,6 +175,9 @@
 5. ✅ Step 4: POC Implementation — MVP 100% Complete
 6. ☐ Step 5: Refactor & Testing (Unit Test > 70%)
 7. 🔄 **Step 6: Cloud Deployment (Render) + Build APK (EAS Build)**
+8. 🔲 **Phase 2A: TTS Engine, Audio Criteria, Shop Approval Flow**
+9. 🔲 **Phase 2B: Translation NER, Offline Map, Language Package, WebSocket Dashboard**
+10. 🔲 **Phase 3: Payment, Premium Voices, Load Testing**
 
 ---
 

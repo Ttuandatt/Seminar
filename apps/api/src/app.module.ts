@@ -13,6 +13,7 @@ import { ShopOwnerModule } from './modules/shop-owner/shop-owner.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { TtsModule } from './modules/tts/tts.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ProfileModule } from './modules/profile/profile.module';
     AnalyticsModule,
     MerchantsModule,
     ProfileModule,
+    TtsModule,
   ],
 })
 export class AppModule { }
