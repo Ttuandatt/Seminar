@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -23,6 +23,7 @@
 | AD-10 | Tourist Favorites & History | Tourist | UC-55, UC-56 | FR-506, FR-507 |
 | AD-11 | TTS Audio Generation Flow | Admin, Shop Owner | UC-16, UC-24 | FR-209 |
 | AD-12 | Device Capability Check Flow | Tourist, System | UC-50 | FR-600 |
+| AD-13 | Admin Map View | Admin | UC-17 | FR-210 |
 
 ---
 
@@ -598,6 +599,42 @@ flowchart TD
 
 ---
 
+## AD-13: Admin Map View
+
+```mermaid
+flowchart TD
+    Start([Admin truy cập /admin/map]) --> A1[GET /pois?limit=200 + GET /tours]
+    A1 --> A2[Render Leaflet map centered HCM City]
+    A2 --> A3[Hiển thị markers POIs theo category color]
+    A3 --> A4[Hiển thị trigger radius circles]
+
+    A4 --> A5{Admin chọn hành động?}
+
+    A5 -->|Filter status| B1[/Chọn: All / Active / Draft / Archived/]
+    B1 --> B2[Filter markers theo status]
+    B2 --> A5
+
+    A5 -->|Chọn Tour| C1[/Dropdown chọn Tour/]
+    C1 --> C2[Vẽ Polyline nối các POIs theo thứ tự]
+    C2 --> C3[Highlight POIs thuộc Tour]
+    C3 --> A5
+
+    A5 -->|Toggle radius| D1[Bật/tắt hiển thị trigger radius circles]
+    D1 --> A5
+
+    A5 -->|Click marker POI| E1[Hiển thị Popup]
+    E1 --> E2["Popup: tên, category, status, audio badge"]
+    E2 --> E3{Chọn action?}
+    E3 -->|View| E4[Navigate → /admin/pois/:id]
+    E3 -->|Edit| E5[Navigate → /admin/pois/:id/edit]
+    E3 -->|Đóng popup| A5
+
+    A5 -->|Xem Legend| F1[Hiển thị legend: 8 categories + colors]
+    F1 --> A5
+```
+
+---
+
 ## Summary
 
 | Diagram | Nodes | Decisions | Paths | Complexity |
@@ -614,6 +651,7 @@ flowchart TD
 | AD-10 | 24 | 7 | 8 | High |
 | AD-11 | 20 | 6 | 7 | High |
 | AD-12 | 18 | 5 | 6 | Medium |
+| AD-13 | 16 | 4 | 6 | Medium |
 
 ---
 

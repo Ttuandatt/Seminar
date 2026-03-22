@@ -1,10 +1,10 @@
 # 🔌 API Specifications
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25  
-> **Base URL (Dev):** `http://localhost:3000/api/v1`  
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-22
+> **Base URL (Dev):** `http://localhost:3000/api/v1`
 > **Base URL (Prod):** `https://api.gpstours.vn/v1` *(chưa deploy)*
 
 ---
@@ -21,6 +21,7 @@
 | Pagination | `page`, `limit` query params |
 | Sorting | `sort`, `order` query params |
 | Error format | `{ error: { code, message, details } }` |
+| CORS | `origin: true`, `credentials: true` (hỗ trợ mobile LAN IP) |
 
 ### 1.2 Status Codes
 
@@ -1149,7 +1150,92 @@ Update Shop Owner profile.
 
 ---
 
-## 9. Trigger & Analytics APIs
+## 9. TTS (Text-to-Speech) APIs
+
+> **Note:** TTS sử dụng Microsoft Edge TTS engine. Khi Admin/Shop Owner tạo hoặc cập nhật POI description, hệ thống có thể tự động hoặc thủ công sinh audio từ text.
+
+### POST /tts/generate/:poiId
+
+Generate TTS audio cho một POI. Audio cũ được archive (`orderIndex: -1`) và tự xóa sau 30 ngày.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Roles:** `ADMIN`, `SHOP_OWNER`
+
+**Request:**
+```json
+{
+  "language": "VI",
+  "voice": "vi-VN-HoaiMyNeural"
+}
+```
+
+**Available Voices:**
+
+| Language | Voice ID | Description |
+|----------|----------|-------------|
+| VI | `vi-VN-HoaiMyNeural` | Giọng nữ (mặc định) |
+| VI | `vi-VN-NamMinhNeural` | Giọng nam |
+| EN | `en-US-AriaNeural` | Female (default) |
+| EN | `en-US-GuyNeural` | Male |
+| EN | `en-US-JennyNeural` | Female (alternative) |
+
+**Response (201):**
+```json
+{
+  "id": "media-uuid",
+  "type": "AUDIO",
+  "language": "VI",
+  "url": "/uploads/tts/<uuid>/tts_vi.mp3",
+  "originalName": "tts_vi.mp3",
+  "sizeBytes": 125000,
+  "orderIndex": 0,
+  "message": "TTS audio generated successfully"
+}
+```
+
+**Audio specs:** MP3, 24 kHz, 96 kbps mono.
+
+**Errors:**
+- `400`: POI không có description cho ngôn ngữ yêu cầu
+- `404`: POI not found
+- `500`: TTS engine error
+
+---
+
+### GET /tts/voices
+
+Get danh sách available TTS voices.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query:** `?language=VI`
+
+**Response (200):**
+```json
+{
+  "voices": [
+    {
+      "id": "vi-VN-HoaiMyNeural",
+      "name": "Hoài My",
+      "language": "VI",
+      "gender": "FEMALE",
+      "isDefault": true
+    },
+    {
+      "id": "vi-VN-NamMinhNeural",
+      "name": "Nam Minh",
+      "language": "VI",
+      "gender": "MALE",
+      "isDefault": false
+    }
+  ]
+}
+```
+
+---
+
+## 10. Trigger & Analytics APIs
 
 ### POST /public/trigger-log
 
@@ -1228,7 +1314,7 @@ Export analytics data to CSV.
 
 ---
 
-## 10. Error Response Format
+## 11. Error Response Format
 
 ```json
 {
@@ -1257,19 +1343,21 @@ Export analytics data to CSV.
 
 ---
 
-## 11. API Summary
+## 12. API Summary
 
 | Section | Endpoints | Auth Required |
 |---------|-----------|---------------|
 | 2. Auth | 6 | No (except logout) |
-| 3. POI Admin | 8 | Yes (Bearer JWT) |
-| 4. Tour Admin | 6 | Yes (Bearer JWT) |
-| 5. Upload | 2 | Yes (Bearer JWT) |
-| 6. Public | 6 | No |
-| 7. Tourist User | 9 | Yes (Tourist JWT) |
-| **8. Shop Owner** | **9** | **Yes (Shop Owner JWT)** |
-| 9. Analytics | 3 | Mixed |
-| **Total** | **49** | |
+| 3. User Profile | 2 | Yes (Bearer JWT) |
+| 4. POI Admin | 8 | Yes (Bearer JWT) |
+| 5. Tour Admin | 6 | Yes (Bearer JWT) |
+| 6. Upload | 2 | Yes (Bearer JWT) |
+| 7. Public | 7 | No |
+| 8. Tourist User | 9 | Yes (Tourist JWT) |
+| **9. Shop Owner** | **9** | **Yes (Shop Owner JWT)** |
+| **10. TTS** | **2** | **Yes (Admin/Shop Owner JWT)** |
+| 11. Analytics | 3 | Mixed |
+| **Total** | **54** | |
 
 ---
 

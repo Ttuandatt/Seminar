@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -391,6 +391,34 @@ Admin hoặc Shop Owner nhấn nút "Tạo audio TTS" để hệ thống tự đ
 
 ---
 
+### FR-210: Admin Map View
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-210 |
+| **Title** | Visualize POIs & Tours on Admin Map |
+| **Priority** | P1 |
+| **Actor** | Admin |
+
+**Description:**
+Admin có trang bản đồ tổng quan (`/admin/map`) hiển thị tất cả POIs trên Leaflet map, hỗ trợ filter theo status, xem route Tour, và điều hướng nhanh đến trang chi tiết/chỉnh sửa POI.
+
+**Features:**
+- Hiển thị POI markers theo category color (8 categories, 8 màu riêng biệt)
+- Hiển thị trigger radius circles (stroke color theo status: Active=xanh lá, Draft=vàng, Archived=xám)
+- Filter theo status: All / Active / Draft / Archived
+- Chọn Tour từ dropdown → vẽ Polyline route nối các POIs theo thứ tự
+- Toggle bật/tắt hiển thị trigger radius
+- Click marker → Popup (tên, category, status, audio badge, nút View/Edit)
+- Legend hiển thị 8 category colors
+
+**Business Rules:**
+- BR-MAP01: Load tối đa 200 POIs (kèm media) trong 1 request
+- BR-MAP02: Default center: Quận 4, TP.HCM [10.7615, 106.7059], zoom 15
+- BR-MAP03: Map tiles sử dụng OpenStreetMap (Leaflet)
+
+---
+
 ## 3. Admin Dashboard - Tour Management
 
 ### FR-301: Create Tour
@@ -734,6 +762,31 @@ User chọn ngôn ngữ hiển thị (VI/EN/ZH). Khi đổi ngôn ngữ, **cả 
 - BR-603: Lưu preference vào AsyncStorage ('app_language')
 - BR-604: Reload content khi đổi language
 - BR-605: Audio player tìm PoiMedia theo language code (VI/EN/ZH), nếu không có thì fallback ALL
+
+---
+
+### FR-601b: i18n UI Strings
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-601b |
+| **Title** | Internationalization for App UI Strings |
+| **Priority** | P1 |
+
+**Description:**
+Toàn bộ chuỗi UI của mobile app (labels, buttons, messages, tab names) được quốc tế hóa qua i18next + react-i18next. Khi user đổi ngôn ngữ, không chỉ nội dung POI/Tour mà cả giao diện app cũng chuyển sang ngôn ngữ tương ứng.
+
+**Implementation:**
+- Library: `i18next` + `react-i18next`
+- Translation files: `i18n/locales/vi.json`, `i18n/locales/en.json`
+- LanguageContext cung cấp helper functions: `getPoiName(poi)`, `getPoiDescription(poi)`, `getTourName(tour)`, `getTourDescription(tour)`
+- Persistence: AsyncStorage key `app_language`
+- Fallback language: Vietnamese (vi)
+
+**Business Rules:**
+- BR-601b1: UI strings phải có bản dịch VI và EN
+- BR-601b2: Nếu thiếu bản dịch cho key, fallback sang VI
+- BR-601b3: Language detection: đọc từ AsyncStorage → device locale → default VI
 
 ---
 

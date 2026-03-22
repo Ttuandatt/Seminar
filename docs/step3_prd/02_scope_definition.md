@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -59,6 +59,7 @@
 | AD-015 | Nội dung đa ngôn ngữ | P1 | VI/EN/ZH |
 | AD-016 | TTS Audio Generation | P1 | Tạo audio từ mô tả văn bản (VI/EN/ZH) bằng msedge-tts |
 | AD-017 | Criteria Engine (Admin config) | P1 | Xem/cấu hình thuật toán chọn POI khi vùng phát âm thanh trùng nhau |
+| AD-018 | Map View tổng quan | P1 | Leaflet map hiển thị tất cả POIs, filter status, xem route Tour, legend categories |
 
 ### 2.2 Shop Owner Dashboard
 
@@ -93,6 +94,8 @@
 | TA-015 | Landing Page | P1 | Trang đón khách full-screen với background image, nút “Bắt đầu hành trình” + “Đã có tài khoản” |
 | TA-016 | Device Capability Check | P1 | Kiểm tra GPS và Internet khi khởi động — chặn nếu thiếu yêu cầu |
 | TA-017 | Criteria Engine (Mobile) | P1 | Khi nhiều POI trùng vùng GPS, chọn POI tốt nhất theo thuật toán scoring (priority + distance + not-played + autoPlay) |
+| TA-018 | Audio Queue (Singleton) | P0 | Global AudioContext quản lý 1 audio player duy nhất, auto-stop khi chuyển POI, seek/pause/resume |
+| TA-019 | i18n UI Strings | P1 | Quốc tế hóa giao diện app (i18next) — labels, buttons, messages chuyển ngôn ngữ cùng POI content |
 
 ### 2.4 Backend
 

@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -34,7 +34,8 @@
 | | UC-14 | Xóa POI (soft delete) | Admin |
 | | UC-15 | Thay đổi trạng thái POI | Admin |
 | | UC-16 | Upload ảnh cho POI | Admin |
-| | UC-17 | Tạo audio TTS cho POI | Admin |
+| | UC-17 | Tạo audio TTS cho POI (thủ công) | Admin |
+| | UC-18 | Xem bản đồ tổng quan POIs | Admin |
 | Quản lý POI (Shop Owner) | UC-20 | Tạo POI của shop mình | Shop Owner |
 | | UC-21 | Xem danh sách POI của mình | Shop Owner |
 | | UC-22 | Sửa POI của mình | Shop Owner |
@@ -96,7 +97,8 @@ graph TB
         UC14["UC-14: Xóa POI"]
         UC15["UC-15: Thay đổi trạng thái POI"]
         UC16["UC-16: Upload ảnh cho POI"]
-        UC17["UC-17: Tạo audio TTS"]
+        UC17["UC-17: Tạo audio TTS (thủ công)"]
+        UC18["UC-18: Xem bản đồ tổng quan POIs"]
     end
 
     subgraph UC_POI_Shop["🏪 Quản lý POI - Shop Owner"]
@@ -145,7 +147,7 @@ graph TB
         UC63["UC-63: Chỉnh sửa tour"]
     end
 
-    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17
+    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC18
     Admin --> UC30 & UC31 & UC32 & UC33 & UC34 & UC35
     Admin --> UC40 & UC41 & UC42 & UC43 & UC44 & UC45
     Admin --> UC62 & UC63
@@ -663,6 +665,37 @@ graph TB
 | **Preconditions** | Admin đã đăng nhập. POI có nội dung mô tả cho ngôn ngữ cần tạo. |
 | **Post Conditions** | File audio MP3 được lưu. PoiMedia record (type=AUDIO) được tạo/cập nhật. |
 | **Date** | 2026-03-21 |
+
+---
+
+### UC-18: Xem bản đồ tổng quan POIs
+
+| Field | Detail |
+|-------|--------|
+| **Use Case Number** | UC-18 |
+| **Use Case Name** | Xem bản đồ tổng quan POIs |
+| **Actor(s)** | Admin |
+| **Maturity** | Focused |
+| **Summary** | Admin truy cập trang Map View (`/admin/map`) để xem tổng quan tất cả POIs trên bản đồ Leaflet. Hỗ trợ filter theo status, xem route Tour, toggle trigger radius, và điều hướng nhanh đến chi tiết/chỉnh sửa POI. |
+
+**Basic Course of Events:**
+
+| # | Actor Action | System Response |
+|---|---|---|
+| 1 | Admin truy cập /admin/map. | System load tất cả POIs (limit 200) kèm media, và tất cả Tours kèm tourPois. |
+| 2 | | System render Leaflet map centered HCM City [10.76, 106.70], zoom 15. |
+| 3 | | System hiển thị markers theo category color (8 colors), circles theo trigger radius. |
+| 4 | Admin chọn filter status (All/Active/Draft/Archived). | System ẩn/hiện markers theo status. |
+| 5 | Admin chọn Tour từ dropdown. | System vẽ Polyline nối POIs theo orderIndex, highlight POIs thuộc Tour. |
+| 6 | Admin click marker POI. | System hiển thị popup: tên, category, status, audio badge, nút View/Edit. |
+| 7 | Admin nhấn "Edit" trong popup. | System navigate → /admin/pois/:id/edit. |
+
+| Field | Detail |
+|-------|--------|
+| **Triggers** | Admin muốn có cái nhìn tổng quan về phân bố POIs và routes Tour trên bản đồ. |
+| **Preconditions** | Admin đã đăng nhập. |
+| **Post Conditions** | Không thay đổi dữ liệu (read-only view). |
+| **Date** | 2026-03-22 |
 
 ---
 

@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.0
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -30,6 +30,7 @@
 | SD-17 | **QR Code Offline Fallback (SQLite)** | Tourist | FR-503 |
 | SD-18 | **TTS Audio Generation** | Admin, Shop Owner | UC-16, UC-24 |
 | SD-19 | **Device Capability Check** | Tourist, System | UC-50 |
+| SD-20 | **Admin Map View** | Admin | UC-17 |
 
 ---
 
@@ -1029,6 +1030,55 @@ sequenceDiagram
 
 ---
 
+## SD-20: Admin Map View
+
+```mermaid
+sequenceDiagram
+    title SD-20: Admin Map View — Visualize POIs & Tours
+    actor Admin
+    participant UI as Admin Dashboard (React)
+    participant Map as Leaflet Map
+    participant API as NestJS API
+    participant DB as PostgreSQL
+
+    Admin->>UI: Truy cập /admin/map
+    UI->>API: GET /pois?limit=200 (with media)
+    UI->>API: GET /tours (with tourPois)
+    API->>DB: SELECT * FROM pois LEFT JOIN poi_media ...
+    API->>DB: SELECT * FROM tours LEFT JOIN tour_pois ...
+    DB-->>API: POI list + Tour list
+    API-->>UI: {pois: [...], tours: [...]}
+
+    UI->>Map: Initialize Leaflet (center: HCM [10.76, 106.70], zoom: 15)
+    UI->>Map: Add OSM tile layer
+
+    loop Cho mỗi POI
+        UI->>Map: addMarker(poi.lat, poi.lng, categoryColor)
+        UI->>Map: addCircle(poi.lat, poi.lng, triggerRadius, statusColor)
+    end
+    Map-->>Admin: Bản đồ với markers + trigger radius circles
+
+    Note over Admin, Map: === Filter by Status ===
+    Admin->>UI: Chọn filter "Active"
+    UI->>Map: Hide markers where status != ACTIVE
+    Map-->>Admin: Chỉ hiển thị POIs Active
+
+    Note over Admin, Map: === Show Tour Route ===
+    Admin->>UI: Chọn Tour từ dropdown
+    UI->>Map: drawPolyline(tour.pois sorted by orderIndex)
+    UI->>Map: Highlight POIs thuộc Tour
+    Map-->>Admin: Polyline route + highlighted markers
+
+    Note over Admin, Map: === Click POI Marker ===
+    Admin->>Map: Click marker
+    Map->>UI: Popup(poi.name, category, status, hasAudio)
+    UI->>Admin: Hiển thị popup với nút View/Edit
+    Admin->>UI: Nhấn "Edit"
+    UI->>Admin: Navigate → /admin/pois/:id/edit
+```
+
+---
+
 ## Summary
 
 | Diagram | Actors | Lifelines | Messages | Complexity |
@@ -1052,6 +1102,7 @@ sequenceDiagram
 | SD-17 | Tourist | 5 | 24 | High |
 | SD-18 | Admin/Shop Owner | 5 | 20 | High |
 | SD-19 | Tourist/System | 4 | 18 | Medium |
+| SD-20 | Admin | 4 | 20 | Medium |
 
 ---
 
