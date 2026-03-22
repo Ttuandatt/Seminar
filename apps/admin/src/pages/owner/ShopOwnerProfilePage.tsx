@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, CheckCircle2, User, Store, Phone, MapPin, Shield } from 'lucide-react';
 import { shopOwnerPortalService, type ShopOwnerPortalProfile, type ShopOwnerProfilePayload } from '../../services/shopOwnerPortal.service';
 import { useToast } from '../../components/ui/ToastProvider';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ShopOwnerProfilePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { logout } = useAuth();
   const [formState, setFormState] = useState<ShopOwnerProfilePayload>({
     businessName: '',
     ownerName: '',
@@ -52,9 +54,12 @@ const ShopOwnerProfilePage = () => {
     updateMutation.mutate(formState);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('ownerAccessToken');
-    navigate('/owner/login', { replace: true });
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   };
 
   if (isLoading || !profile) {

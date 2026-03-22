@@ -1,53 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Circle, Popup, Polyline } from 'react-leaflet';
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { MapContainer, Marker, Circle, Popup, Polyline } from 'react-leaflet';
 import { Loader2, MapPin, Route, Eye, Pencil, Headphones } from 'lucide-react';
 import { poiService, type POI, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
-
-// Fix Leaflet default icons
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: markerIcon2x,
-    iconUrl: markerIcon,
-    shadowUrl: markerShadow,
-});
-
-const STATUS_COLORS: Record<string, string> = {
-    ACTIVE: '#22c55e',
-    DRAFT: '#f59e0b',
-    ARCHIVED: '#94a3b8',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-    CULTURAL_LANDMARKS: '#ef4444',
-    DINING: '#f97316',
-    STREET_FOOD: '#eab308',
-    CAFES_DESSERTS: '#a855f7',
-    BARS_NIGHTLIFE: '#6366f1',
-    MARKETS_SPECIALTY: '#14b8a6',
-    EXPERIENCES_WORKSHOPS: '#ec4899',
-    OUTDOOR_SCENIC: '#22c55e',
-};
-
-const createColoredIcon = (color: string) => {
-    return L.divIcon({
-        html: `<div style="
-            background: ${color};
-            width: 28px; height: 28px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        "></div>`,
-        className: '',
-        iconSize: [28, 28],
-        iconAnchor: [14, 28],
-        popupAnchor: [0, -28],
-    });
-};
+import MapControls, { FitBounds } from '../../components/map/MapControls';
+import { HCM_CENTER, CATEGORY_COLORS, STATUS_COLORS, createColoredIcon } from '../../components/map/map-utils';
 
 interface Tour {
     id: string;
@@ -56,8 +13,6 @@ interface Tour {
     status: string;
     tourPois?: { orderIndex: number; poi: POI }[];
 }
-
-const HCM_CENTER: [number, number] = [10.7615, 106.7059];
 
 const MapViewPage = () => {
     const navigate = useNavigate();
@@ -120,12 +75,11 @@ const MapViewPage = () => {
                         Map Overview
                     </h1>
                     <p className="text-sm text-slate-500">
-                        {filteredPois.length} POIs {tours.length > 0 && `• ${tours.length} Tours`}
+                        {filteredPois.length} POIs {tours.length > 0 && `\u2022 ${tours.length} Tours`}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Status filter */}
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
@@ -137,7 +91,6 @@ const MapViewPage = () => {
                         <option value="ARCHIVED">Archived</option>
                     </select>
 
-                    {/* Tour selector */}
                     <select
                         value={selectedTour || ''}
                         onChange={(e) => setSelectedTour(e.target.value || null)}
@@ -149,7 +102,6 @@ const MapViewPage = () => {
                         ))}
                     </select>
 
-                    {/* Toggle radius */}
                     <button
                         onClick={() => setShowRadius(prev => !prev)}
                         className={`rounded-lg px-3 py-2 text-sm font-medium border transition-colors ${
@@ -171,12 +123,9 @@ const MapViewPage = () => {
                     style={{ height: '100%', width: '100%' }}
                     scrollWheelZoom
                 >
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; OpenStreetMap'
-                    />
+                    <MapControls />
+                    <FitBounds positions={filteredPois.map(p => [Number(p.latitude), Number(p.longitude)])} />
 
-                    {/* POI markers + radius */}
                     {filteredPois.map(poi => {
                         const color = CATEGORY_COLORS[poi.category] || '#f97316';
                         const lat = Number(poi.latitude);
@@ -196,15 +145,11 @@ const MapViewPage = () => {
                                         }}
                                     />
                                 )}
-                                <Marker
-                                    position={[lat, lng]}
-                                    icon={createColoredIcon(color)}
-                                >
+                                <Marker position={[lat, lng]} icon={createColoredIcon(color)}>
                                     <Popup minWidth={220} maxWidth={300}>
                                         <div className="space-y-2 text-sm">
                                             <div className="font-bold text-base text-slate-900">{poi.nameVi}</div>
                                             {poi.nameEn && <div className="text-slate-500 text-xs">{poi.nameEn}</div>}
-
                                             <div className="flex flex-wrap gap-1">
                                                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                                                     style={{ backgroundColor: `${color}20`, color }}
@@ -222,11 +167,7 @@ const MapViewPage = () => {
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <div className="text-xs text-slate-400">
-                                                Radius: {poi.triggerRadius}m
-                                            </div>
-
+                                            <div className="text-xs text-slate-400">Radius: {poi.triggerRadius}m</div>
                                             <div className="flex gap-2 pt-1">
                                                 <button
                                                     onClick={() => navigate(`/admin/pois/${poi.id}`)}
@@ -248,7 +189,6 @@ const MapViewPage = () => {
                         );
                     })}
 
-                    {/* Tour route polyline */}
                     {selectedTourRoute && (
                         <Polyline
                             positions={selectedTourRoute}
