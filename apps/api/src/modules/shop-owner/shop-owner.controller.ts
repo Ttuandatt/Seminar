@@ -19,11 +19,13 @@ import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { Role, MediaType, MediaLanguage } from '@prisma/client';
 import { PrismaService } from '../../prisma';
+import { QrService } from '../qr/qr.service';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import { IsOptional, IsString } from 'class-validator';
+import { Logger } from '@nestjs/common';
 
 const uploadDir = join(process.cwd(), 'uploads');
 if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
@@ -38,7 +40,12 @@ class UpdateShopOwnerDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.SHOP_OWNER)
 export class ShopOwnerController {
-    constructor(private prisma: PrismaService) { }
+    private readonly logger = new Logger(ShopOwnerController.name);
+
+    constructor(
+        private prisma: PrismaService,
+        private qrService: QrService,
+    ) { }
 
     // ─── Profile ────────────────────────────
     @Get('me')
@@ -61,6 +68,29 @@ export class ShopOwnerController {
     }
 
     // ─── Own POIs ───────────────────────────
+    @Get('pois/:id')
+    async getOnePoi(
+        @CurrentUser('id') userId: string,
+        @Param('id') poiId: string,
+    ) {
+        const poi = await this.prisma.poi.findFirst({
+            where: { id: poiId, deletedAt: null },
+            include: {
+                media: true,
+                owner: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        shopOwnerProfile: { select: { shopName: true } },
+                    },
+                },
+            },
+        });
+        if (!poi) throw new NotFoundException('POI not found');
+        if (poi.ownerId !== userId) throw new ForbiddenException('Not your POI');
+        return poi;
+    }
+
     @Get('pois')
     async getMyPois(@CurrentUser('id') userId: string) {
         return this.prisma.poi.findMany({
@@ -113,6 +143,11 @@ export class ShopOwnerController {
                 },
             });
         }
+
+        // Auto-generate QR code (fire-and-forget)
+        this.qrService.generateForPoi(poi.id)
+            .then(url => this.logger.log(`QR code generated for shop owner POI ${poi.id}: ${url}`))
+            .catch(err => this.logger.error(`QR generation failed for POI ${poi.id}: ${err.message}`));
 
         return { id: poi.id, ownerId: userId, message: 'POI created successfully' };
     }

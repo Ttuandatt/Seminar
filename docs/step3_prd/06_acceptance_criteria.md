@@ -714,13 +714,44 @@ Scenario: View only own POIs
   Then I should see only my 3 POIs
   And I should NOT see POIs owned by other Shop Owners or Admin
 
+Scenario: View POI detail (read-only)
+  Given I am viewing my POI list on the dashboard
+  When I click the "View" button (ExternalLink icon) on "Quán Bún Mắm"
+  Then I should be navigated to /owner/pois/:id
+  And I should see the POI form with all data pre-filled
+  And all form inputs should be disabled
+  And existing media (images, audio) should be displayed
+  And I should see a "Back" button but no "Save" button
+
 Scenario: Edit own POI
   Given I am viewing my POI list
-  When I click edit on "Quán Bún Mắm"
-  Then I should see the edit form with current values
+  When I click the "Edit" button on "Quán Bún Mắm"
+  Then I should be navigated to /owner/pois/:id/edit
+  And the form should show current POI data (fetched via GET /shop-owner/pois/:id)
+  And existing media should be visible (images, audio with player)
   When I update the description
-  And I click "Save"
-  Then changes should be saved successfully
+  And I click "Save Changes"
+  Then changes should be saved successfully via PUT /shop-owner/pois/:id
+  And I should be redirected to the dashboard with a success toast
+
+Scenario: Generate TTS audio in edit mode
+  Given I am editing my POI "Quán Bún Mắm" (the POI has been saved)
+  And the Vietnamese description has at least 10 characters
+  When I click "Generate VI Audio" button
+  Then the system should call POST /tts/generate/:poiId
+  And a loading spinner should appear on the button
+  When TTS generation completes
+  Then I should see a success toast "TTS audio generated"
+  And the audio should appear in the existing audio list
+  And I should be able to play it back
+
+Scenario: Bilingual form labels switch with language tab
+  Given I am on the POI form (create or edit)
+  And the active language tab is "Vietnamese"
+  Then all section headings should be in Vietnamese (e.g., "Nội dung POI", "Phân loại & thông tin")
+  When I switch to the "English" tab
+  Then all section headings should change to English (e.g., "POI Content", "Classification & Info")
+  And all form labels, placeholders, and buttons should also be in English
 
 Scenario: Cannot delete POI
   Given I am viewing my POI list
@@ -729,9 +760,18 @@ Scenario: Cannot delete POI
 
 Scenario: Cannot access other Shop Owner's POI
   Given Shop Owner "B" owns POI with id=99
-  When I try to access /shop-owner/poi/99
-  Then I should see "Access denied"
-  And I should be redirected to my POI list
+  When I try to access /owner/pois/99
+  Then I should see "Access denied" (403 Forbidden)
+  And I should be redirected to my dashboard
+
+Scenario: Shop Owner Map View shows only own POIs
+  Given I am logged in as Shop Owner
+  When I navigate to /owner/map
+  Then the map should display only POIs owned by me
+  And the system should call GET /shop-owner/pois (not GET /pois)
+  And the Tours dropdown should NOT be visible
+  When I click a marker popup "View" button
+  Then I should be navigated to /owner/pois/:id (not /admin/pois/:id)
 ```
 
 ---

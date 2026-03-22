@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, Marker, Circle, Popup, Polyline } from 'react-leaflet';
-import { Loader2, MapPin, Route, Eye, Pencil, Headphones } from 'lucide-react';
+import { Loader2, MapPin, Eye, Pencil, Headphones } from 'lucide-react';
 import { poiService, type POI, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
 import MapControls, { FitBounds } from '../../components/map/MapControls';
 import { HCM_CENTER, CATEGORY_COLORS, STATUS_COLORS, createColoredIcon } from '../../components/map/map-utils';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../lib/api';
 
 interface Tour {
     id: string;
@@ -16,6 +18,8 @@ interface Tour {
 
 const MapViewPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const isShopOwner = user?.role === 'SHOP_OWNER';
     const [pois, setPois] = useState<POI[]>([]);
     const [tours, setTours] = useState<Tour[]>([]);
     const [loading, setLoading] = useState(true);
@@ -26,14 +30,34 @@ const MapViewPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [poiRes, tourRes] = await Promise.all([
-                    poiService.getAll({ limit: 200 }),
-                    fetch('/api/v1/tours', {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-                    }).then(r => r.json()).catch(() => ({ data: [] })),
-                ]);
-                setPois(poiRes.data || []);
-                setTours(tourRes.data || tourRes || []);
+                if (isShopOwner) {
+                    // Shop owner: fetch own POIs via shop-owner endpoint
+                    const { data } = await api.get('/shop-owner/pois');
+                    const mapped: POI[] = (data as Record<string, unknown>[]).map((p: Record<string, unknown>) => ({
+                        id: p.id as string,
+                        nameVi: p.nameVi as string,
+                        nameEn: (p.nameEn as string) || '',
+                        descriptionVi: (p.descriptionVi as string) || '',
+                        descriptionEn: (p.descriptionEn as string) || '',
+                        category: (p.category as string) || 'OTHER',
+                        status: (p.status as string) || 'ACTIVE',
+                        latitude: p.latitude as number,
+                        longitude: p.longitude as number,
+                        triggerRadius: (p.triggerRadius as number) || 15,
+                        media: (p.media as POI['media']) || [],
+                    }));
+                    setPois(mapped);
+                } else {
+                    // Admin: fetch all POIs + tours
+                    const [poiRes, tourRes] = await Promise.all([
+                        poiService.getAll({ limit: 200 }),
+                        fetch('/api/v1/tours', {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+                        }).then(r => r.json()).catch(() => ({ data: [] })),
+                    ]);
+                    setPois(poiRes.data || []);
+                    setTours(tourRes.data || tourRes || []);
+                }
             } catch (err) {
                 console.error('Failed to fetch map data:', err);
             } finally {
@@ -41,7 +65,7 @@ const MapViewPage = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [isShopOwner]);
 
     const filteredPois = useMemo(() => {
         if (statusFilter === 'ALL') return pois;
@@ -57,6 +81,8 @@ const MapViewPage = () => {
     }, [selectedTour, tours]);
 
     const hasAudio = (poi: POI) => poi.media?.some(m => m.type === 'AUDIO');
+
+    const poiBasePath = isShopOwner ? '/owner/pois' : '/admin/pois';
 
     if (loading) {
         return (
@@ -75,7 +101,7 @@ const MapViewPage = () => {
                         Map Overview
                     </h1>
                     <p className="text-sm text-slate-500">
-                        {filteredPois.length} POIs {tours.length > 0 && `\u2022 ${tours.length} Tours`}
+                        {filteredPois.length} POIs {!isShopOwner && tours.length > 0 && `\u2022 ${tours.length} Tours`}
                     </p>
                 </div>
 
@@ -91,16 +117,18 @@ const MapViewPage = () => {
                         <option value="ARCHIVED">Archived</option>
                     </select>
 
-                    <select
-                        value={selectedTour || ''}
-                        onChange={(e) => setSelectedTour(e.target.value || null)}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium"
-                    >
-                        <option value="">No tour route</option>
-                        {tours.map(t => (
-                            <option key={t.id} value={t.id}>{t.nameVi}</option>
-                        ))}
-                    </select>
+                    {!isShopOwner && (
+                        <select
+                            value={selectedTour || ''}
+                            onChange={(e) => setSelectedTour(e.target.value || null)}
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium"
+                        >
+                            <option value="">No tour route</option>
+                            {tours.map(t => (
+                                <option key={t.id} value={t.id}>{t.nameVi}</option>
+                            ))}
+                        </select>
+                    )}
 
                     <button
                         onClick={() => setShowRadius(prev => !prev)}
@@ -170,13 +198,13 @@ const MapViewPage = () => {
                                             <div className="text-xs text-slate-400">Radius: {poi.triggerRadius}m</div>
                                             <div className="flex gap-2 pt-1">
                                                 <button
-                                                    onClick={() => navigate(`/admin/pois/${poi.id}`)}
+                                                    onClick={() => navigate(`${poiBasePath}/${poi.id}`)}
                                                     className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
                                                 >
                                                     <Eye className="h-3 w-3" /> View
                                                 </button>
                                                 <button
-                                                    onClick={() => navigate(`/admin/pois/${poi.id}/edit`)}
+                                                    onClick={() => navigate(`${poiBasePath}/${poi.id}/edit`)}
                                                     className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200"
                                                 >
                                                     <Pencil className="h-3 w-3" /> Edit

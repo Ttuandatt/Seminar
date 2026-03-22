@@ -31,6 +31,7 @@ graph TB
         TourModule["🗺️ Tour Module"]
         MediaModule["📁 Media Module"]
         TtsModule["🔊 TTS Module"]
+        QrModule["📱 QR Code Module"]
         AnalyticsModule["📊 Analytics Module"]
         UserModule["👤 User Module"]
         MerchantsModule["🏪 Merchants Module"]
@@ -58,6 +59,7 @@ graph TB
     Gateway --> TourModule
     Gateway --> MediaModule
     Gateway --> TtsModule
+    Gateway --> QrModule
     Gateway --> AnalyticsModule
     Gateway --> UserModule
     Gateway --> MerchantsModule
@@ -70,6 +72,7 @@ graph TB
     MediaModule --> S3
     TtsModule --> DB
     TtsModule --> S3
+    QrModule --> DB
     AnalyticsModule --> DB
     UserModule --> DB
     MerchantsModule --> DB
@@ -100,20 +103,21 @@ graph TB
 
         subgraph AdminPages["Admin Pages (role='admin')"]
             AdminDashboard["Dashboard Overview"]
-            POIList["POI List + CRUD"]
-            POIForm["POI Create/Edit Form"]
+            POIList["POI List + CRUD (List/Map toggle)"]
+            POIForm["POI Create/Edit Form + QR Code"]
             TourList["Tour List + CRUD"]
             TourForm["Tour Create/Edit Form"]
-            MapViewPage["🗺️ Map View (Leaflet)"]
+            MapViewPage["🗺️ Map View (Leaflet, role-aware)"]
             MerchantList["🏪 Merchant List"]
             AdminAnalytics["📊 Analytics Dashboard"]
             AdminSettings["Settings"]
         end
 
         subgraph ShopPages["Shop Owner Pages (role='shop_owner')"]
-            ShopDashboard["Shop Dashboard"]
+            ShopDashboard["Shop Dashboard (List/Map toggle)"]
             MyPOIs["My POIs List"]
-            ShopPOIForm["POI Create/Edit Form"]
+            ShopPOIForm["POI Create/View/Edit Form + TTS"]
+            ShopMapView["🗺️ Map View (role-aware)"]
             ShopAnalytics["Analytics Dashboard"]
             ShopProfile["Profile Settings"]
         end
@@ -123,6 +127,7 @@ graph TB
             MediaUpload["MediaUploader (Images + Audio)"]
             DataTable["DataTable (sortable, filterable)"]
             FormComponents["Form Components (shadcn/ui)"]
+            FormLabels["FormLabels (VI/EN bilingual constants)"]
         end
 
         subgraph Services["API Services"]
@@ -273,6 +278,11 @@ graph TB
                 TtsService["TtsService (MsEdgeTTS)"]
             end
 
+            subgraph QrMod["QrModule"]
+                QrController["QrController"]
+                QrService["QrService (qrcode lib)"]
+            end
+
             subgraph AnalyticsMod["AnalyticsModule"]
                 AnalyticsController["AnalyticsController"]
                 AnalyticsService["AnalyticsService"]
@@ -323,6 +333,8 @@ graph LR
     TourMod2 --> AuthMod2
     TtsMod2["TtsModule"] --> POIMod2
     TtsMod2 --> AuthMod2
+    QrMod2["QrModule"] --> POIMod2
+    QrMod2 --> AuthMod2
     AnalyticsMod2["AnalyticsModule"] --> POIMod2
     AnalyticsMod2 --> AuthMod2
     ShopMod["ShopOwnerModule"] --> POIMod2
@@ -342,12 +354,17 @@ graph LR
 | `/public/*` | PublicController | None (public) | Tourist read-only APIs |
 | `/pois/*` | POIController | JWT + RolesGuard('admin') | Admin POI CRUD |
 | `/pois/:poiId/media/*` | MediaController | JWT + RolesGuard('admin') | POI media upload |
+| `/pois/:id/qr*` | QrController | JWT + RolesGuard('admin', 'shop_owner') | QR code get/download/regenerate |
 | `/tours/*` | TourController | JWT + RolesGuard('admin') | Admin Tour CRUD |
 | `/tts/*` | TtsController | JWT + RolesGuard('admin', 'shop_owner') | TTS generation |
 | `/admin/analytics/*` | AnalyticsController | JWT + RolesGuard('admin') | Analytics dashboard |
 | `/merchants/*` | MerchantsController | JWT + RolesGuard('admin') | Merchant management |
 | `/me`, `/me/avatar` | ProfileController | JWT | User profile |
-| `/shop-owner/*` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Shop Owner operations |
+| `/shop-owner/pois` | ShopOwnerController | JWT + RolesGuard('shop_owner') | List own POIs |
+| `/shop-owner/pois/:id` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Get own POI detail (with media) |
+| `/shop-owner/pois/:id` (PUT) | ShopOwnerController | JWT + RolesGuard('shop_owner') | Update own POI |
+| `/shop-owner/pois/:id/media` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Upload media to own POI |
+| `/shop-owner/me`, `/shop-owner/analytics` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Profile & Analytics |
 | `/tourist/*` | TouristController | JWT + RolesGuard('tourist') | Tourist favorites, history |
 
 ---

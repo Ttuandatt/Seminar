@@ -36,6 +36,7 @@
 | | UC-16 | Upload Images for POI | Admin |
 | | UC-17 | Generate TTS Audio for POI (manual) | Admin |
 | | UC-18 | View POI Overview Map | Admin |
+| | UC-19 | View/Download QR Code for POI | Admin, Shop Owner |
 | POI Management (Shop Owner) | UC-20 | Create Own POI | Shop Owner |
 | | UC-21 | View Own POI List | Shop Owner |
 | | UC-22 | Edit Own POI | Shop Owner |
@@ -99,6 +100,7 @@ graph TB
         UC16["UC-16: Upload Images"]
         UC17["UC-17: Generate TTS Audio (manual)"]
         UC18["UC-18: View POI Overview Map"]
+        UC19["UC-19: View/Download QR Code"]
     end
 
     subgraph UC_POI_Shop["🏪 POI Management - Shop Owner"]
@@ -147,12 +149,12 @@ graph TB
         UC63["UC-63: Edit Tour"]
     end
 
-    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC18
+    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC18 & UC19
     Admin --> UC30 & UC31 & UC32 & UC33 & UC34 & UC35
     Admin --> UC40 & UC41 & UC42 & UC43 & UC44 & UC45
     Admin --> UC62 & UC63
 
-    ShopOwner --> UC01 & UC03 & UC20 & UC21 & UC22 & UC23 & UC24 & UC25
+    ShopOwner --> UC01 & UC03 & UC19 & UC20 & UC21 & UC22 & UC23 & UC24 & UC25
     ShopOwner --> UC46 & UC47
 
     Tourist --> UC02 & UC01 & UC03 & UC04 & UC05
@@ -162,6 +164,7 @@ graph TB
     System -.->|auto-trigger| UC53
     System -.->|generate| UC17
     System -.->|generate| UC24
+    System -.->|auto-generate| UC19
 
     UC04 -.->|extend| UC01
     UC10 -.->|include| UC16
@@ -770,25 +773,33 @@ graph TB
 
 | # | Actor Action | System Response |
 |---|---|---|
-| 1 | Shop Owner selects a POI from the list (UC-21) and clicks "Edit". | System displays the edit form with current data. |
-| 2 | Shop Owner modifies information. | |
-| 3 | Shop Owner clicks "Save". | |
-| 4 | | System verifies poi.ownerId === userId. E1. |
-| 5 | | System updates the POI record. |
-| 6 | | System displays "Update successful". |
+| 1 | Shop Owner selects a POI from the list (UC-21) and clicks "Edit". | System navigates to `/owner/pois/:id/edit`. |
+| 2 | | System calls `GET /shop-owner/pois/:id` to fetch full POI detail with media. Verifies ownerId === userId. E1. |
+| 3 | | System populates form with existing data (name, description VI/EN, coordinates, category). Displays existing media (images, audio). |
+| 4 | Shop Owner modifies information. UI labels switch with language tab (VI/EN). | |
+| 5 | Shop Owner optionally clicks "Generate TTS Audio" (VI or EN). | System calls `POST /tts/generate/:poiId`. Generates audio and updates media list. {TTS Generation — see UC-24.} |
+| 6 | Shop Owner clicks "Save Changes". | |
+| 7 | | System calls `PUT /shop-owner/pois/:id` with updated data. Uploads new media files via `POST /shop-owner/pois/:id/media`. |
+| 8 | | System displays "Update successful". Navigate to `/owner/dashboard`. |
 | | | The use case ends. |
+
+**Alternative Paths:**
+
+| ID | Description |
+|----|-------------|
+| **A1 – View Mode** | Shop Owner clicks "View" button instead of "Edit" → System navigates to `/owner/pois/:id` (readOnly=true). All form inputs are disabled. Only "Back" button available. |
 
 **Exception Paths:**
 
 | ID | Description |
 |----|-------------|
-| **E1** | poi.ownerId ≠ userId: System returns 403 Forbidden. The use case ends. |
+| **E1** | poi.ownerId ≠ userId: System returns 403 Forbidden. Redirect to dashboard. The use case ends. |
 
 | Field | Detail |
 |-------|--------|
 | **Preconditions** | Shop Owner is logged in. POI is owned by the Shop Owner. |
 | **Post Conditions** | POI is updated. |
-| **Date** | 2026-03-21 |
+| **Date** | 2026-03-22 |
 
 ---
 

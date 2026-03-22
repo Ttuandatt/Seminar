@@ -23,7 +23,8 @@
 | AD-10 | Tourist Favorites & History | Tourist | UC-55, UC-56 | FR-506, FR-507 |
 | AD-11 | TTS Audio Generation Flow | Admin, Shop Owner | UC-16, UC-24 | FR-209 |
 | AD-12 | Device Capability Check Flow | Tourist, System | UC-50 | FR-600 |
-| AD-13 | Admin Map View | Admin | UC-17 | FR-210 |
+| AD-13 | Admin & Shop Owner Map View | Admin, Shop Owner | UC-18, UC-21 | FR-210 |
+| AD-14 | QR Code Generation & Management | System, Admin | UC-19 | FR-211 |
 
 ---
 
@@ -95,9 +96,11 @@ flowchart TD
     C5 -->|OK| C7{Save Draft hay Publish?}
     C7 -->|Draft| C8[POST /admin/pois status='DRAFT']
     C7 -->|Publish → ACTIVE| C9[POST /admin/pois status='ACTIVE']
-    C8 --> C10[Toast 'POI saved']
+    C8 --> C10[Backend auto-generate QR Code + TTS]
     C9 --> C10
-    C10 --> B1
+    C10 --> C11["QR code lưu tại /uploads/qr/poi_id.png<br/>URL lưu trong trường qr_code_url"]
+    C11 --> C12[Toast 'POI saved']
+    C12 --> B1
 
     A2 -->|Chỉnh sửa| D1[Nhấn Edit trên POI]
     D1 --> D2[GET /admin/pois/:id]
@@ -294,7 +297,7 @@ flowchart TD
     E5 --> E6{Hành động?}
     E6 -->|Tạo mới| E4[/Nhập thông tin POI - tabs VI/EN/]
     E4 --> E4a{Generate TTS?}
-    E4a -->|Có| E4b[POST /shop-owner/pois/:id/tts - xem AD-11]
+    E4a -->|Có| E4b["POST /tts/generate/:poiId {text, language} - xem AD-11"]
     E4b --> E7
     E4a -->|Không| E7[Upload media - xem AD-08]
     E7 --> E7a{Validate OK?}
@@ -534,7 +537,7 @@ flowchart TD
     A4 -->|Có| A5[Hiển thị lỗi: Nhập mô tả trước khi tạo audio]
     A5 --> End0([Kết thúc])
 
-    A4 -->|Không| A6[POST /admin/pois/:id/tts {language}]
+    A4 -->|Không| A6["POST /tts/generate/:poiId {text, language}"]
     A6 --> A7{API nhận yêu cầu}
 
     A7 --> A8[msedge-tts synthesize]
@@ -599,38 +602,98 @@ flowchart TD
 
 ---
 
-## AD-13: Admin Map View
+## AD-13: Admin & Shop Owner Map View
 
 ```mermaid
 flowchart TD
-    Start([Admin truy cập /admin/map]) --> A1[GET /pois?limit=200 + GET /tours]
+    Start([User truy cập POI management]) --> A0{Trang nào?}
+
+    A0 -->|/admin/map| A1[GET /pois?limit=200 + GET /tours]
+    A0 -->|/owner/map| A1b["GET /shop-owner/pois (role-aware, chỉ POIs của mình)"]
+    A1b --> A2
+    A0 -->|/admin/pois| A0a[Hiển thị POI List mặc định]
+    A0 -->|/owner/dashboard| A0b[Hiển thị My POIs list mặc định]
+
+    A0a --> A0c{Toggle View Mode?}
+    A0c -->|List| A0a
+    A0c -->|Map| A0d["GET /pois?limit=500 (+ filters)"]
+    A0d --> A2
+
+    A0b --> A0e{Toggle View Mode?}
+    A0e -->|List| A0b
+    A0e -->|Map| A0f["Lấy POIs từ overview data (owner only)"]
+    A0f --> A2
+
     A1 --> A2[Render Leaflet map centered HCM City]
     A2 --> A3[Hiển thị markers POIs theo category color]
     A3 --> A4[Hiển thị trigger radius circles]
 
-    A4 --> A5{Admin chọn hành động?}
+    A4 --> A5{User chọn hành động?}
 
     A5 -->|Filter status| B1[/Chọn: All / Active / Draft / Archived/]
     B1 --> B2[Filter markers theo status]
     B2 --> A5
 
-    A5 -->|Chọn Tour| C1[/Dropdown chọn Tour/]
+    A5 -->|Filter category| B3[/Chọn category/]
+    B3 --> B4[Filter markers theo category]
+    B4 --> A5
+
+    A5 -->|Chọn Tour| C1[/Dropdown chọn Tour (chỉ /admin/map)/]
     C1 --> C2[Vẽ Polyline nối các POIs theo thứ tự]
     C2 --> C3[Highlight POIs thuộc Tour]
     C3 --> A5
 
-    A5 -->|Toggle radius| D1[Bật/tắt hiển thị trigger radius circles]
+    A5 -->|Toggle radius| D1["Bật/tắt trigger radius circles (chỉ /admin/map)"]
     D1 --> A5
 
     A5 -->|Click marker POI| E1[Hiển thị Popup]
     E1 --> E2["Popup: tên, category, status, audio badge"]
     E2 --> E3{Chọn action?}
-    E3 -->|View| E4[Navigate → /admin/pois/:id]
-    E3 -->|Edit| E5[Navigate → /admin/pois/:id/edit]
+    E3 -->|View| E4["Navigate → /admin/pois/:id (Admin) hoặc /owner/pois/:id (Shop Owner)"]
+    E3 -->|Edit| E5["Navigate → /admin/pois/:id/edit (Admin) hoặc /owner/pois/:id/edit (Shop Owner)"]
     E3 -->|Đóng popup| A5
 
     A5 -->|Xem Legend| F1[Hiển thị legend: 8 categories + colors]
     F1 --> A5
+
+    A5 -->|Toggle → List| G1[Chuyển về List view]
+    G1 --> A0
+```
+
+---
+
+## AD-14: QR Code Generation & Management
+
+```mermaid
+flowchart TD
+    Start([POI được tạo]) --> A1["Backend: PoisService.create()"]
+    A1 --> A2["QrService.generateForPoi(poiId) — fire-and-forget"]
+    A2 --> A3["Tạo qrData = 'gpstours:poi:<poiId>'"]
+    A3 --> A4["QRCode.toFile(512px, ECL-H) → /uploads/qr/poi_<id>.png"]
+    A4 --> A5["UPDATE pois SET qr_code_url"]
+    A5 --> A6["Log: QR code generated"]
+
+    A6 --> B1{Admin mở POI Edit page?}
+    B1 -->|Không| End1([Kết thúc])
+    B1 -->|Có| B2["GET /pois/:id/qr"]
+    B2 --> B3{POI đã có QR?}
+    B3 -->|Có| B4[Trả về qrDataUrl + qrCodeUrl]
+    B3 -->|Chưa| B5[Auto-generate QR mới]
+    B5 --> B4
+    B4 --> B6["Hiển thị QR code trong sidebar"]
+
+    B6 --> C1{Admin chọn hành động?}
+    C1 -->|Download| C2["Download PNG từ qrDataUrl"]
+    C2 --> C1
+    C1 -->|Regenerate| C3["POST /pois/:id/qr/regenerate"]
+    C3 --> C4[Overwrite file PNG + Update DB]
+    C4 --> C5["Hiển thị QR mới + Toast"]
+    C5 --> C1
+    C1 -->|Đóng| End2([Kết thúc])
+
+    style A2 fill:#e0f2fe
+    style A4 fill:#e0f2fe
+    style C3 fill:#fef3c7
 ```
 
 ---
@@ -640,7 +703,7 @@ flowchart TD
 | Diagram | Nodes | Decisions | Paths | Complexity |
 |---------|-------|-----------|-------|------------|
 | AD-01 | 14 | 4 | 5 | Medium |
-| AD-02 | 32 | 10 | 11 | High |
+| AD-02 | 34 | 10 | 11 | High |
 | AD-03 | 16 | 4 | 4 | Medium |
 | AD-04 | 36 | 11 | 13 | Very High |
 | AD-05 | 22 | 6 | 8 | High |
@@ -651,7 +714,8 @@ flowchart TD
 | AD-10 | 24 | 7 | 8 | High |
 | AD-11 | 20 | 6 | 7 | High |
 | AD-12 | 18 | 5 | 6 | Medium |
-| AD-13 | 16 | 4 | 6 | Medium |
+| AD-13 | 24 | 7 | 9 | High |
+| AD-14 | 18 | 4 | 6 | Medium |
 
 ---
 

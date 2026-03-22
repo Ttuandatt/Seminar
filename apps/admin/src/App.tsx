@@ -43,6 +43,8 @@ function App() {
           <Route path="analytics" element={<ShopOwnerAnalyticsPage />} />
           <Route path="profile" element={<ShopOwnerProfilePage />} />
           <Route path="pois/new" element={<ShopOwnerPOIFormPage />} />
+          <Route path="pois/:id" element={<ShopOwnerPOIFormPage readOnly />} />
+          <Route path="pois/:id/edit" element={<ShopOwnerPOIFormPage />} />
         </Route>
 
         {/* Admin routes */}

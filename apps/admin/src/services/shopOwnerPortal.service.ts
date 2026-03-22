@@ -271,6 +271,27 @@ export const shopOwnerPortalService = {
     return { message: 'POI has been deleted.' };
   },
 
+  async getOnePoi(id: string) {
+    const { data } = await api.get(`/shop-owner/pois/${id}`);
+    return data;
+  },
+
+  async updatePoi(id: string, payload: Record<string, string>) {
+    const { data } = await api.put(`/shop-owner/pois/${id}`, payload);
+    return data;
+  },
+
+  async uploadMedia(poiId: string, file: File, type: 'IMAGE' | 'AUDIO', language?: 'VI' | 'EN') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    if (language) formData.append('language', language);
+    const { data } = await api.post(`/shop-owner/pois/${poiId}/media`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
   async createPoi(payload: ShopOwnerCreatePOIPayload): Promise<ShopOwnerPOI> {
     const formData = new FormData();
     formData.append('nameVi', payload.nameVi);

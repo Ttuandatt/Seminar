@@ -500,6 +500,60 @@ Remove media from POI.
 
 ---
 
+### GET /pois/:id/qr
+
+Get QR code information for a POI. Auto-generates if not exists.
+
+**Headers:** `Authorization: Bearer <token>` (Admin or Shop Owner)
+
+**Response (200):**
+```json
+{
+  "poiId": "uuid-123",
+  "poiName": "Chùa Linh Ứng",
+  "qrCodeUrl": "/uploads/qr/poi_uuid-123.png",
+  "qrDataUrl": "data:image/png;base64,...",
+  "qrContent": "gpstours:poi:uuid-123"
+}
+```
+
+**Notes:**
+- `qrDataUrl` is a base64 data URL for inline display in the admin UI
+- `qrCodeUrl` is the file path served by the static file server
+- If POI doesn't have a QR code yet, this endpoint auto-generates one
+
+---
+
+### POST /pois/:id/qr/regenerate
+
+Force regenerate QR code for a POI.
+
+**Headers:** `Authorization: Bearer <token>` (Admin only)
+
+**Response (200):**
+```json
+{
+  "poiId": "uuid-123",
+  "qrCodeUrl": "/uploads/qr/poi_uuid-123.png",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
+---
+
+### GET /pois/:id/qr/download
+
+Download QR code as PNG file.
+
+**Headers:** `Authorization: Bearer <token>` (Admin or Shop Owner)
+
+**Response:** Binary PNG file download (`Content-Disposition: attachment`)
+
+**Errors:**
+- `404`: POI not found
+
+---
+
 ## 4. Tour APIs
 
 ### GET /tours
@@ -1037,6 +1091,64 @@ Get POIs owned by current Shop Owner.
 ```
 
 > **Data isolation:** Backend filters by `owner_id = current_user.id`. Shop Owner cannot see other owners' POIs.
+
+---
+
+### GET /shop-owner/pois/:id
+
+Get full detail of a single POI owned by the current Shop Owner. Used to populate the edit form and display existing media/audio.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "nameVi": "Quán Bún Mắm Tùng",
+  "nameEn": "Tung Bun Mam Restaurant",
+  "descriptionVi": "...",
+  "descriptionEn": "...",
+  "category": "DINING",
+  "status": "ACTIVE",
+  "latitude": 10.7575,
+  "longitude": 106.6993,
+  "triggerRadius": 15,
+  "ownerId": "user-uuid",
+  "createdAt": "2026-03-01T00:00:00Z",
+  "updatedAt": "2026-03-20T00:00:00Z",
+  "media": [
+    {
+      "id": "media-uuid",
+      "type": "IMAGE",
+      "language": "ALL",
+      "url": "/uploads/abc.jpg",
+      "originalName": "shop-photo.jpg",
+      "sizeBytes": 245000
+    },
+    {
+      "id": "media-uuid-2",
+      "type": "AUDIO",
+      "language": "VI",
+      "url": "/uploads/tts/tts_vi.mp3",
+      "originalName": "tts_vi.mp3",
+      "sizeBytes": 125000
+    }
+  ],
+  "owner": {
+    "id": "user-uuid",
+    "fullName": "Nguyễn Văn A",
+    "shopOwnerProfile": {
+      "shopName": "Quán Bún Mắm Tùng"
+    }
+  }
+}
+```
+
+**Errors:**
+- `403`: Not your POI (`ownerId !== current_user.id`)
+- `404`: POI not found or soft-deleted
+
+> **Ownership check:** Backend verifies `poi.ownerId === jwt.userId` before returning data. Shop Owner cannot access POIs owned by others.
 
 ---
 

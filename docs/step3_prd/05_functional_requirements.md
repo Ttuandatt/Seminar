@@ -398,24 +398,86 @@ Admin hoặc Shop Owner nhấn nút "Tạo audio TTS" để hệ thống tự đ
 | **ID** | FR-210 |
 | **Title** | Visualize POIs & Tours on Admin Map |
 | **Priority** | P1 |
-| **Actor** | Admin |
+| **Actor** | Admin, Shop Owner |
 
 **Description:**
-Admin có trang bản đồ tổng quan (`/admin/map`) hiển thị tất cả POIs trên Leaflet map, hỗ trợ filter theo status, xem route Tour, và điều hướng nhanh đến trang chi tiết/chỉnh sửa POI.
+Admin có trang bản đồ tổng quan (`/admin/map`) hiển thị tất cả POIs trên Leaflet map, hỗ trợ filter theo status, xem route Tour, và điều hướng nhanh đến trang chi tiết/chỉnh sửa POI. Ngoài ra, cả Admin và Shop Owner đều có thể toggle giữa chế độ **List** và **Map** ngay trong trang POI List:
+- **Admin POI List** (`/admin/pois`): Toggle List/Map hiển thị tất cả POIs (tối đa 500) lên bản đồ Leaflet với markers, radius circles, popups (View/Edit).
+- **Admin Map View** (`/admin/map`): Dedicated map page — fetch `GET /pois?limit=200` + `GET /tours`.
+- **Shop Owner Dashboard** (`/owner/dashboard`): Toggle List/Map hiển thị POIs do mình sở hữu lên bản đồ Leaflet.
+- **Shop Owner Map View** (`/owner/map`): Dedicated map page — fetch `GET /shop-owner/pois` (role-aware, không gọi endpoint admin).
+
+**Role-aware MapViewPage:**
+Component `MapViewPage` được chia sẻ giữa Admin và Shop Owner. Component detect role qua `useAuth()`:
+- **Admin** (`user.role === 'ADMIN'`): Gọi `GET /pois?limit=200` + `GET /tours`, hiển thị Tour dropdown, popup links → `/admin/pois/:id`
+- **Shop Owner** (`user.role === 'SHOP_OWNER'`): Gọi `GET /shop-owner/pois`, ẩn Tour dropdown, popup links → `/owner/pois/:id`
 
 **Features:**
 - Hiển thị POI markers theo category color (8 categories, 8 màu riêng biệt)
 - Hiển thị trigger radius circles (stroke color theo status: Active=xanh lá, Draft=vàng, Archived=xám)
 - Filter theo status: All / Active / Draft / Archived
-- Chọn Tour từ dropdown → vẽ Polyline route nối các POIs theo thứ tự
+- Filter theo category
+- Chọn Tour từ dropdown → vẽ Polyline route nối các POIs theo thứ tự (chỉ Admin)
 - Toggle bật/tắt hiển thị trigger radius
 - Click marker → Popup (tên, category, status, audio badge, nút View/Edit)
 - Legend hiển thị 8 category colors
+- **List/Map toggle** trên POI List page và Shop Owner Dashboard
 
 **Business Rules:**
-- BR-MAP01: Load tối đa 200 POIs (kèm media) trong 1 request
+- BR-MAP01: Load tối đa 500 POIs (kèm media) trong 1 request cho Map view
 - BR-MAP02: Default center: Quận 4, TP.HCM [10.7615, 106.7059], zoom 15
 - BR-MAP03: Map tiles sử dụng OpenStreetMap (Leaflet)
+- BR-MAP04: Map query chỉ fetch khi viewMode = 'map' (lazy loading)
+- BR-MAP05: Shop Owner Map view chỉ hiển thị POIs có `ownerId = userId` — gọi `GET /shop-owner/pois` thay vì `GET /pois`
+- BR-MAP06: Popup navigation links phân biệt theo role: Admin → `/admin/pois/:id`, Shop Owner → `/owner/pois/:id`
+- BR-MAP07: Tour dropdown chỉ hiển thị cho Admin (Shop Owner không quản lý Tours)
+
+---
+
+### FR-211: Auto-Generate QR Code for POI
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-211 |
+| **Title** | Tự động tạo mã QR khi tạo POI |
+| **Priority** | P1 |
+| **Actor** | System (triggered by Admin, Shop Owner) |
+
+**Description:**
+Khi Admin hoặc Shop Owner tạo một POI mới, hệ thống tự động sinh mã QR code dưới dạng file PNG (512x512px, error correction level H) chứa nội dung `gpstours:poi:<poiId>`. File QR được lưu tại `/uploads/qr/poi_<uuid>.png` và URL lưu trong trường `qr_code_url` của POI. Tourist quét mã QR này bằng camera để mở POI và nghe audio guide.
+
+**Features:**
+- Auto-generate QR code (fire-and-forget) khi tạo POI mới
+- Hiển thị QR code trong sidebar POI Edit/View page (Admin Dashboard)
+- Download QR code dưới dạng PNG
+- Regenerate QR code (Admin only)
+- QR format: `gpstours:poi:<uuid>` — tương thích với endpoint `POST /public/qr/validate`
+
+**Input:**
+| Field | Type | Required | Values |
+|-------|------|----------|--------|
+| poiId | UUID | Yes | ID POI vừa tạo |
+
+**Output:**
+| Field | Type | Description |
+|-------|------|-------------|
+| qrCodeUrl | string | URL file QR PNG (e.g., `/uploads/qr/poi_<uuid>.png`) |
+| qrDataUrl | string | Base64 data URL cho inline display |
+| qrContent | string | Nội dung mã QR: `gpstours:poi:<uuid>` |
+
+**API Endpoints:**
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/pois/:id/qr` | JWT (Admin, Shop Owner) | Lấy QR code info (auto-generate nếu chưa có) |
+| POST | `/pois/:id/qr/regenerate` | JWT (Admin) | Tạo lại QR code |
+| GET | `/pois/:id/qr/download` | JWT (Admin, Shop Owner) | Download QR code PNG |
+
+**Business Rules:**
+- BR-QR01: QR code tự động tạo khi `POST /pois` hoặc `POST /shop-owner/pois` thành công
+- BR-QR02: QR code sử dụng format `gpstours:poi:<uuid>` — cùng format với mobile QR scanner
+- BR-QR03: QR PNG kích thước 512x512, margin 2, error correction level H (chống hỏng ~30%)
+- BR-QR04: Nếu POI chưa có QR code, endpoint `GET /pois/:id/qr` tự động tạo mới
+- BR-QR05: Chỉ Admin mới có quyền regenerate QR code
 
 ---
 
@@ -790,6 +852,39 @@ Toàn bộ chuỗi UI của mobile app (labels, buttons, messages, tab names) đ
 
 ---
 
+### FR-601c: Web Dashboard Bilingual Form Labels
+
+| Field | Description |
+|-------|-------------|
+| **ID** | FR-601c |
+| **Title** | Bilingual Form Labels for Web Dashboard |
+| **Priority** | P2 |
+
+**Description:**
+Trên Web Dashboard (Admin + Shop Owner), form tạo/chỉnh sửa POI có tabs chuyển đổi ngôn ngữ (Vietnamese / English). Khi user chuyển tab ngôn ngữ, không chỉ trường nhập liệu (name, description) mà **toàn bộ nhãn form** (section headings, labels, placeholders, buttons, toast messages) cũng chuyển sang ngôn ngữ tương ứng.
+
+**Implementation:**
+- File: `apps/admin/src/constants/form-labels.ts`
+- Object `POI_FORM_LABELS` chứa 2 key `VI` và `EN`, mỗi key là object chứa toàn bộ label strings
+- Component sử dụng: `const L = POI_FORM_LABELS[activeLang]` rồi dùng `L.poiName`, `L.description`, `L.ttsHeading`, v.v.
+- Áp dụng cho cả `POIFormPage` (Admin) và `ShopOwnerPOIFormPage` (Shop Owner)
+
+**Labels covered:**
+- Page title/subtitle (Create / Edit / View)
+- Section headings (Content, Classification, Location, Media, TTS)
+- Form labels (POI Name, Description, Category, Address, Latitude, Longitude, Trigger Radius)
+- Placeholders
+- Button text (Cancel, Save, Submit, Generate TTS VI/EN)
+- Toast messages (success, error, validation)
+- Sidebar text (Approval Status, Tips)
+
+**Business Rules:**
+- BR-601c1: Default language tab = VI
+- BR-601c2: Chuyển tab chỉ thay đổi UI labels, không ảnh hưởng dữ liệu form (mỗi tab edit field tương ứng)
+- BR-601c3: Không sử dụng i18n library (lightweight constant-based approach)
+
+---
+
 ### FR-602: Offline Mode
 
 | Field | Description |
@@ -851,13 +946,35 @@ Hệ thống cho phép người dùng đăng ký tài khoản Shop Owner với t
 | **Priority** | P1 |
 | **User Story** | US-803 |
 
-**Description:**  
-Shop Owner có thể tạo và chỉnh sửa POI(s) thuộc quyền sở hữu của mình.
+**Description:**
+Shop Owner có thể tạo, xem chi tiết, và chỉnh sửa POI(s) thuộc quyền sở hữu của mình. Form POI hỗ trợ 3 chế độ: Create, View (read-only), và Edit.
 
 **Capabilities:**
-- Tạo POI mới (tên, mô tả, vị trí, hình ảnh, audio)
-- Chỉnh sửa tất cả fields của POI thuộc mình
-- Xem danh sách POI(s) của mình
+- Tạo POI mới (tên, mô tả, vị trí, hình ảnh, audio) — route `/owner/pois/new`
+- Xem chi tiết POI (read-only) — route `/owner/pois/:id`
+- Chỉnh sửa tất cả fields của POI thuộc mình — route `/owner/pois/:id/edit`
+- Xem danh sách POI(s) của mình — route `/owner/dashboard`
+- Tạo TTS audio từ mô tả POI (sử dụng `POST /tts/generate/:poiId`) — chỉ khả dụng khi POI đã được lưu (edit mode)
+- Xem và phát lại existing media (hình ảnh, audio) trong chế độ view/edit
+
+**Routes:**
+| Route | Mode | Description |
+|-------|------|-------------|
+| `/owner/pois/new` | Create | Form tạo POI mới |
+| `/owner/pois/:id` | View | Xem chi tiết POI (read-only, tất cả inputs disabled) |
+| `/owner/pois/:id/edit` | Edit | Chỉnh sửa POI + upload media + TTS generation |
+
+**API Endpoints Used:**
+- `GET /shop-owner/pois/:id` — lấy chi tiết POI (bao gồm media) cho view/edit
+- `POST /shop-owner/pois` — tạo POI mới
+- `PUT /shop-owner/pois/:id` — cập nhật POI
+- `POST /shop-owner/pois/:id/media` — upload media
+- `POST /tts/generate/:poiId` — tạo TTS audio (roles: ADMIN, SHOP_OWNER)
+
+**Dashboard Buttons:**
+- Nút **Edit** (✏️) → navigate `/owner/pois/:id/edit`
+- Nút **View** (🔗) → navigate `/owner/pois/:id`
+- Nút **Delete** (🗑️) → soft delete via `DELETE /pois/:id`
 
 **Restrictions:**
 - Chỉ thấy POI(s) mà mình sở hữu (owner_id = current_user)
@@ -867,6 +984,7 @@ Shop Owner có thể tạo và chỉnh sửa POI(s) thuộc quyền sở hữu c
 **Business Rules:**
 - BR-1003: Shop Owner chỉ CRUD POI có owner_id = mình
 - BR-1004: Shop Owner không xóa POI
+- BR-1005b: TTS generation cho Shop Owner sử dụng cùng endpoint `POST /tts/generate/:poiId` với Admin (backend check ownership qua JWT)
 
 ---
 

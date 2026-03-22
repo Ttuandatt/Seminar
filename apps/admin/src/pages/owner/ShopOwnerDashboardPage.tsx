@@ -174,11 +174,17 @@ const ShopOwnerDashboardPage = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <button className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-blue-200 hover:text-blue-600">
+                  <button
+                    onClick={() => navigate(`/owner/pois/${poi.id}/edit`)}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-blue-200 hover:text-blue-600"
+                  >
                     <Edit3 className="mr-2 inline h-4 w-4" />
                     Edit
                   </button>
-                  <button className="rounded-full border border-slate-200 px-3 py-2 text-slate-500 hover:border-slate-300">
+                  <button
+                    onClick={() => navigate(`/owner/pois/${poi.id}`)}
+                    className="rounded-full border border-slate-200 px-3 py-2 text-slate-500 hover:border-slate-300"
+                  >
                     <ExternalLink className="h-4 w-4" />
                   </button>
                   <button

@@ -31,6 +31,7 @@
 | SD-18 | **TTS Audio Generation** | Admin, Shop Owner | UC-16, UC-24 |
 | SD-19 | **Device Capability Check** | Tourist, System | UC-50 |
 | SD-20 | **Admin Map View** | Admin | UC-17 |
+| SD-21 | **Auto QR Code Generation** | System | UC-19, FR-211 |
 
 ---
 
@@ -184,6 +185,15 @@ sequenceDiagram
     POI->>POI: Validate (lat/lng range, required fields)
     POI->>DB: INSERT INTO pois (...)
     DB-->>POI: POI record
+
+    Note over POI, DB: Auto-generate QR Code (fire-and-forget)
+    POI->>POI: qrService.generateForPoi(poiId)
+    POI->>POI: Generate PNG gpstours:poi:poiId (512px, ECL-H)
+    POI->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+
+    Note over POI, DB: Auto-generate TTS (fire-and-forget)
+    POI->>POI: ttsService.generateForPoi(poiId, descriptionVi, descriptionEn)
+
     POI-->>API: POI created
     API-->>UI: 201 {poi}
     UI->>Admin: Toast "POI created!" → redirect POI List
@@ -223,6 +233,11 @@ sequenceDiagram
     POI->>POI: Auto-set status = 'draft' (chờ Admin duyệt nếu cần)
     POI->>DB: INSERT INTO pois (..., owner_id = shopOwnerId)
     DB-->>POI: POI record
+
+    Note over POI, DB: Auto-generate QR Code (fire-and-forget)
+    POI->>POI: qrService.generateForPoi(poiId)
+    POI->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+
     POI-->>API: POI created
     API-->>UI: 201 {poi}
     UI->>SO: Toast "POI created!" → My POIs list updated
@@ -937,8 +952,8 @@ sequenceDiagram
     User->>UI: Nhấn "Generate TTS" trên form POI
     UI->>UI: Đọc description text + ngôn ngữ đang chọn (VI/EN/ZH)
 
-    UI->>API: POST /admin/pois/{id}/tts OR /shop-owner/pois/{id}/tts
-    Note right of API: { language: "VI" | "EN" | "ZH" }
+    UI->>API: POST /tts/generate/:poiId {text, language}
+    Note right of API: Roles: ADMIN, SHOP_OWNER<br/>{ text: "...", language: "VI" | "EN" }
 
     API->>DB: SELECT description_vi / description_en / description_zh FROM pois WHERE id = ?
     DB-->>API: description text
@@ -1030,24 +1045,36 @@ sequenceDiagram
 
 ---
 
-## SD-20: Admin Map View
+## SD-20: Admin & Shop Owner Map View
 
 ```mermaid
 sequenceDiagram
-    title SD-20: Admin Map View — Visualize POIs & Tours
-    actor Admin
-    participant UI as Admin Dashboard (React)
+    title SD-20: Role-Aware Map View — Visualize POIs & Tours
+    actor User as Admin / Shop Owner
+    participant UI as Web Dashboard (React)
+    participant Auth as useAuth()
     participant Map as Leaflet Map
     participant API as NestJS API
     participant DB as PostgreSQL
 
-    Admin->>UI: Truy cập /admin/map
-    UI->>API: GET /pois?limit=200 (with media)
-    UI->>API: GET /tours (with tourPois)
-    API->>DB: SELECT * FROM pois LEFT JOIN poi_media ...
-    API->>DB: SELECT * FROM tours LEFT JOIN tour_pois ...
-    DB-->>API: POI list + Tour list
-    API-->>UI: {pois: [...], tours: [...]}
+    User->>UI: Truy cập /admin/map hoặc /owner/map
+    UI->>Auth: Kiểm tra user.role
+    Auth-->>UI: role = 'ADMIN' hoặc 'SHOP_OWNER'
+
+    alt role = ADMIN
+        UI->>API: GET /pois?limit=200 (with media)
+        UI->>API: GET /tours (with tourPois)
+        API->>DB: SELECT * FROM pois LEFT JOIN poi_media ...
+        API->>DB: SELECT * FROM tours LEFT JOIN tour_pois ...
+        DB-->>API: All POI list + Tour list
+        API-->>UI: {pois: [...], tours: [...]}
+    else role = SHOP_OWNER
+        UI->>API: GET /shop-owner/pois
+        API->>DB: SELECT * FROM pois WHERE owner_id = userId AND deleted_at IS NULL
+        DB-->>API: Own POI list only
+        API-->>UI: {pois: [...]}
+        Note right of UI: Tours dropdown hidden cho Shop Owner
+    end
 
     UI->>Map: Initialize Leaflet (center: HCM [10.76, 106.70], zoom: 15)
     UI->>Map: Add OSM tile layer
@@ -1056,25 +1083,181 @@ sequenceDiagram
         UI->>Map: addMarker(poi.lat, poi.lng, categoryColor)
         UI->>Map: addCircle(poi.lat, poi.lng, triggerRadius, statusColor)
     end
-    Map-->>Admin: Bản đồ với markers + trigger radius circles
+    Map-->>User: Bản đồ với markers + trigger radius circles
 
-    Note over Admin, Map: === Filter by Status ===
-    Admin->>UI: Chọn filter "Active"
+    Note over User, Map: === Filter by Status ===
+    User->>UI: Chọn filter "Active"
     UI->>Map: Hide markers where status != ACTIVE
-    Map-->>Admin: Chỉ hiển thị POIs Active
+    Map-->>User: Chỉ hiển thị POIs Active
 
-    Note over Admin, Map: === Show Tour Route ===
-    Admin->>UI: Chọn Tour từ dropdown
-    UI->>Map: drawPolyline(tour.pois sorted by orderIndex)
-    UI->>Map: Highlight POIs thuộc Tour
-    Map-->>Admin: Polyline route + highlighted markers
+    Note over User, Map: === Show Tour Route (Admin only) ===
+    alt role = ADMIN
+        User->>UI: Chọn Tour từ dropdown
+        UI->>Map: drawPolyline(tour.pois sorted by orderIndex)
+        UI->>Map: Highlight POIs thuộc Tour
+        Map-->>User: Polyline route + highlighted markers
+    end
 
-    Note over Admin, Map: === Click POI Marker ===
-    Admin->>Map: Click marker
+    Note over User, Map: === Click POI Marker ===
+    User->>Map: Click marker
     Map->>UI: Popup(poi.name, category, status, hasAudio)
-    UI->>Admin: Hiển thị popup với nút View/Edit
-    Admin->>UI: Nhấn "Edit"
-    UI->>Admin: Navigate → /admin/pois/:id/edit
+    UI->>User: Hiển thị popup với nút View/Edit
+
+    alt role = ADMIN
+        User->>UI: Nhấn "Edit"
+        UI->>User: Navigate → /admin/pois/:id/edit
+    else role = SHOP_OWNER
+        User->>UI: Nhấn "Edit"
+        UI->>User: Navigate → /owner/pois/:id/edit
+    end
+```
+
+---
+
+## SD-21: Auto QR Code Generation & View/Download
+
+```mermaid
+sequenceDiagram
+    title SD-21: Auto QR Code Generation + Admin View/Download
+    actor Admin
+    participant UI as Admin Dashboard
+    participant API as NestJS API
+    participant POI as POI Service
+    participant QR as QR Service
+    participant FS as File System
+    participant DB as PostgreSQL
+
+    Note over Admin, DB: === Phase 1: Auto-Generate on POI Creation ===
+    Admin->>UI: Create POI (nhấn Publish)
+    UI->>API: POST /pois {name, desc, lat, lng, ...}
+    API->>POI: createPOI()
+    POI->>DB: INSERT INTO pois (...)
+    DB-->>POI: POI record (poiId)
+
+    POI->>QR: generateForPoi(poiId) [fire-and-forget]
+    QR->>QR: qrData = "gpstours:poi:<poiId>"
+    QR->>QR: QRCode.toFile(512px, ECL-H)
+    QR->>FS: Save /uploads/qr/poi_<poiId>.png
+    QR->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+    QR-->>POI: QR URL
+
+    POI-->>API: 201 {poi}
+    API-->>UI: POI created
+
+    Note over Admin, DB: === Phase 2: View QR in Edit Page ===
+    Admin->>UI: Open /admin/pois/:id/edit
+    UI->>API: GET /pois/:id (fetch POI details)
+    UI->>API: GET /pois/:id/qr
+    API->>QR: getQr(poiId)
+    QR->>DB: SELECT qr_code_url FROM pois WHERE id = poiId
+    alt QR code exists
+        QR->>QR: QRCode.toDataURL() → base64
+        QR-->>API: {qrCodeUrl, qrDataUrl, qrContent}
+    else QR code not yet generated
+        QR->>QR: generateForPoi(poiId) → auto-create
+        QR-->>API: {qrCodeUrl, qrDataUrl, qrContent}
+    end
+    API-->>UI: QR code data
+    UI->>Admin: Hiển thị QR code trong sidebar (img + download button)
+
+    Note over Admin, DB: === Phase 3: Download QR ===
+    Admin->>UI: Nhấn "Download PNG"
+    UI->>UI: Create download link from qrDataUrl
+    UI->>Admin: Browser downloads QR_<poiName>.png
+
+    Note over Admin, DB: === Phase 4: Regenerate (Admin only) ===
+    Admin->>UI: Nhấn "Regenerate"
+    UI->>API: POST /pois/:id/qr/regenerate
+    API->>QR: generateForPoi(poiId)
+    QR->>FS: Overwrite /uploads/qr/poi_<id>.png
+    QR->>DB: UPDATE pois SET qr_code_url
+    QR-->>API: New QR data
+    API-->>UI: {qrCodeUrl, qrDataUrl}
+    UI->>Admin: Hiển thị QR code mới + Toast "Regenerated"
+```
+
+---
+
+## SD-22: Shop Owner View/Edit POI + TTS Generation
+
+```mermaid
+sequenceDiagram
+    title SD-22: Shop Owner View/Edit POI + TTS Generation
+    actor SO as Shop Owner
+    participant UI as Shop Owner Dashboard
+    participant Form as ShopOwnerPOIFormPage
+    participant API as NestJS API
+    participant Guard as Auth Guard
+    participant TTS as TTS Service
+    participant DB as PostgreSQL
+
+    Note over SO, DB: === Phase 1: Navigate from Dashboard ===
+    SO->>UI: Xem My POIs list trên Dashboard
+    UI->>SO: Hiển thị danh sách POIs (với nút Edit, View, Delete)
+
+    alt Nhấn "View" (ExternalLink icon)
+        SO->>UI: Click View button
+        UI->>Form: Navigate → /owner/pois/:id (readOnly=true)
+    else Nhấn "Edit" (Edit3 icon)
+        SO->>UI: Click Edit button
+        UI->>Form: Navigate → /owner/pois/:id/edit (readOnly=false)
+    end
+
+    Note over SO, DB: === Phase 2: Fetch POI Detail ===
+    Form->>API: GET /shop-owner/pois/:id
+    API->>Guard: Verify JWT + role = 'SHOP_OWNER'
+    Guard-->>API: userId extracted
+    API->>DB: SELECT * FROM pois WHERE id = :id AND deleted_at IS NULL, include media + owner
+    DB-->>API: POI record with media array
+
+    alt poi.ownerId !== userId
+        API-->>Form: 403 Forbidden
+        Form->>SO: Error → redirect to dashboard
+    else Ownership OK
+        API-->>Form: 200 {poi with media}
+        Form->>Form: Populate formData (nameVi, nameEn, descriptionVi, descriptionEn, lat, lng, ...)
+        Form->>Form: Set existingMedia (images + audio)
+    end
+
+    Note over SO, DB: === Phase 3a: View Mode (readOnly) ===
+    alt readOnly = true
+        Form->>SO: Hiển thị POI details (all inputs disabled)
+        Form->>SO: Hiển thị existing images + audio player
+        Form->>SO: Nút "Back" để quay lại
+    end
+
+    Note over SO, DB: === Phase 4: Edit Mode ===
+    alt readOnly = false
+        SO->>Form: Chỉnh sửa thông tin (tabs VI/EN → labels chuyển ngôn ngữ)
+        SO->>Form: Upload thêm media (images, audio)
+
+        Note over SO, DB: === Phase 4a: TTS Generation ===
+        SO->>Form: Nhấn "Generate VI Audio" hoặc "Generate EN Audio"
+        Form->>API: POST /tts/generate/:poiId {text, language}
+        API->>Guard: Verify JWT + roles ['ADMIN', 'SHOP_OWNER']
+        API->>TTS: synthesize(text, language, voice)
+        TTS-->>API: audio buffer (MP3)
+        API->>DB: INSERT INTO poi_media (type=AUDIO, language, url)
+        API-->>Form: 201 {media record}
+        Form->>API: GET /shop-owner/pois/:id (refresh media list)
+        API-->>Form: Updated POI with new audio
+        Form->>SO: Toast "TTS audio generated" + audio player updated
+
+        Note over SO, DB: === Phase 4b: Save Changes ===
+        SO->>Form: Nhấn "Save Changes"
+        Form->>API: PUT /shop-owner/pois/:id {nameVi, nameEn, descriptionVi}
+        API->>Guard: Verify ownership (ownerId === userId)
+        API->>DB: UPDATE pois SET ...
+        DB-->>API: Updated record
+
+        opt Upload new media files
+            Form->>API: POST /shop-owner/pois/:id/media (images)
+            Form->>API: POST /shop-owner/pois/:id/media (audio files)
+        end
+
+        API-->>Form: Success
+        Form->>SO: Toast "POI updated" → Navigate to /owner/dashboard
+    end
 ```
 
 ---
@@ -1085,8 +1268,8 @@ sequenceDiagram
 |---------|--------|-----------|----------|------------|
 | SD-01 | Admin | 4 | 14 | Medium |
 | SD-02 | Shop Owner | 4 | 22 | High |
-| SD-03 | Admin | 6 | 24 | High |
-| SD-04 | Shop Owner | 5 | 12 | Medium |
+| SD-03 | Admin | 6 | 28 | High |
+| SD-04 | Shop Owner | 5 | 16 | Medium |
 | SD-05 | Admin | 5 | 16 | Medium |
 | SD-06 | Tourist | 5 | 18 | High |
 | SD-07 | Tourist | 5 | 20 | High |
@@ -1102,7 +1285,9 @@ sequenceDiagram
 | SD-17 | Tourist | 5 | 24 | High |
 | SD-18 | Admin/Shop Owner | 5 | 20 | High |
 | SD-19 | Tourist/System | 4 | 18 | Medium |
-| SD-20 | Admin | 4 | 20 | Medium |
+| SD-20 | Admin/Shop Owner | 5 | 24 | Medium |
+| SD-21 | Admin/System | 6 | 30 | High |
+| SD-22 | Shop Owner | 6 | 28 | High |
 
 ---
 

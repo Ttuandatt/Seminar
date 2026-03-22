@@ -36,6 +36,7 @@
 | | UC-16 | Upload ảnh cho POI | Admin |
 | | UC-17 | Tạo audio TTS cho POI (thủ công) | Admin |
 | | UC-18 | Xem bản đồ tổng quan POIs | Admin |
+| | UC-19 | Xem/tải mã QR của POI | Admin, Shop Owner |
 | Quản lý POI (Shop Owner) | UC-20 | Tạo POI của shop mình | Shop Owner |
 | | UC-21 | Xem danh sách POI của mình | Shop Owner |
 | | UC-22 | Sửa POI của mình | Shop Owner |
@@ -99,6 +100,7 @@ graph TB
         UC16["UC-16: Upload ảnh cho POI"]
         UC17["UC-17: Tạo audio TTS (thủ công)"]
         UC18["UC-18: Xem bản đồ tổng quan POIs"]
+        UC19["UC-19: Xem/tải mã QR của POI"]
     end
 
     subgraph UC_POI_Shop["🏪 Quản lý POI - Shop Owner"]
@@ -147,12 +149,12 @@ graph TB
         UC63["UC-63: Chỉnh sửa tour"]
     end
 
-    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC18
+    Admin --> UC01 & UC03 & UC10 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC18 & UC19
     Admin --> UC30 & UC31 & UC32 & UC33 & UC34 & UC35
     Admin --> UC40 & UC41 & UC42 & UC43 & UC44 & UC45
     Admin --> UC62 & UC63
 
-    ShopOwner --> UC01 & UC03 & UC20 & UC21 & UC22 & UC23 & UC24 & UC25
+    ShopOwner --> UC01 & UC03 & UC19 & UC20 & UC21 & UC22 & UC23 & UC24 & UC25
     ShopOwner --> UC46 & UC47
 
     Tourist --> UC02 & UC01 & UC03 & UC04 & UC05
@@ -162,6 +164,7 @@ graph TB
     System -.->|auto-trigger| UC53
     System -.->|generate| UC17
     System -.->|generate| UC24
+    System -.->|auto-generate| UC19
 
     UC04 -.->|extend| UC01
     UC10 -.->|include| UC16
@@ -770,25 +773,33 @@ graph TB
 
 | # | Actor Action | System Response |
 |---|---|---|
-| 1 | Shop Owner chọn POI từ danh sách (UC-21) và nhấn "Sửa". | System hiển thị form sửa với dữ liệu hiện tại. |
-| 2 | Shop Owner thay đổi thông tin. | |
-| 3 | Shop Owner nhấn "Lưu". | |
-| 4 | | System kiểm tra poi.ownerId === userId. |
-| 5 | | System cập nhật POI record. |
-| 6 | | System hiển thị "Cập nhật thành công". |
+| 1 | Shop Owner chọn POI từ danh sách (UC-21) và nhấn "Sửa". | System chuyển đến `/owner/pois/:id/edit`. |
+| 2 | | System gọi `GET /shop-owner/pois/:id` để lấy chi tiết POI + media. Kiểm tra ownerId === userId. E1. |
+| 3 | | System điền dữ liệu hiện tại vào form (tên, mô tả VI/EN, toạ độ, category). Hiển thị media hiện có (ảnh, audio). |
+| 4 | Shop Owner chỉnh sửa thông tin. Nhãn form chuyển theo tab ngôn ngữ (VI/EN). | |
+| 5 | Shop Owner tuỳ chọn nhấn "Tạo audio TTS" (VI hoặc EN). | System gọi `POST /tts/generate/:poiId`. Tạo audio và cập nhật danh sách media. {Tạo TTS — xem UC-24.} |
+| 6 | Shop Owner nhấn "Lưu thay đổi". | |
+| 7 | | System gọi `PUT /shop-owner/pois/:id` với dữ liệu mới. Upload media mới qua `POST /shop-owner/pois/:id/media`. |
+| 8 | | System hiển thị "Cập nhật thành công". Chuyển về `/owner/dashboard`. |
 | | | The use case ends. |
+
+**Alternative Paths:**
+
+| ID | Mô tả |
+|----|-------|
+| **A1 – Chế độ xem** | Shop Owner nhấn nút "Xem" thay vì "Sửa" → System chuyển đến `/owner/pois/:id` (readOnly=true). Tất cả input bị disabled. Chỉ có nút "Quay lại". |
 
 **Exception Paths:**
 
 | ID | Mô tả |
 |----|-------|
-| **E1** | poi.ownerId ≠ userId: System trả về 403 Forbidden. The use case ends. |
+| **E1** | poi.ownerId ≠ userId: System trả về 403 Forbidden. Chuyển về dashboard. The use case ends. |
 
 | Field | Detail |
 |-------|--------|
 | **Preconditions** | Shop Owner đã đăng nhập. POI thuộc quyền sở hữu của Shop Owner. |
 | **Post Conditions** | POI được cập nhật. |
-| **Date** | 2026-03-21 |
+| **Date** | 2026-03-22 |
 
 ---
 

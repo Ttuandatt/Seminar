@@ -13,6 +13,9 @@ import {
     PlayCircle,
     Image as ImageIcon,
     Headphones,
+    QrCode,
+    Download,
+    RefreshCw,
 } from 'lucide-react';
 import { poiService, type POI, type POIMedia, type SavePOIPayload, POI_CATEGORY_OPTIONS } from '../../services/poi.service';
 import { merchantService, type Merchant } from '../../services/merchant.service';
@@ -20,6 +23,7 @@ import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { POI_FORM_LABELS } from '../../constants/form-labels';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -59,6 +63,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
     const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
+    const L = POI_FORM_LABELS[activeLang];
     const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
 
     const [formData, setFormData] = useState({
@@ -93,6 +98,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
     const [ttsGenerating, setTtsGenerating] = useState<{ VI?: boolean; EN?: boolean }>({});
+    const [qrData, setQrData] = useState<{ qrDataUrl: string; qrCodeUrl: string; qrContent: string } | null>(null);
+    const [qrLoading, setQrLoading] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -130,6 +137,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     } else {
                         setCurrentOwnerInfo(null);
                     }
+
+                    // Fetch QR code
+                    poiService.getQrCode(id)
+                        .then(qr => setQrData({ qrDataUrl: qr.qrDataUrl, qrCodeUrl: qr.qrCodeUrl, qrContent: qr.qrContent }))
+                        .catch(() => {}); // QR is non-critical
                 })
                 .catch((err) => {
                     console.error('Failed to fetch POI:', err);
@@ -397,6 +409,28 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         }
     };
 
+    const handleRegenerateQr = async () => {
+        if (!id) return;
+        setQrLoading(true);
+        try {
+            const result = await poiService.regenerateQr(id);
+            setQrData({ qrDataUrl: result.qrDataUrl, qrCodeUrl: result.qrCodeUrl, qrContent: `gpstours:poi:${id}` });
+            showToast({ variant: 'success', title: 'QR Code regenerated', description: 'Mã QR mới đã được tạo.' });
+        } catch {
+            showToast({ variant: 'error', title: 'QR regeneration failed', description: 'Không thể tạo lại mã QR.' });
+        } finally {
+            setQrLoading(false);
+        }
+    };
+
+    const handleDownloadQr = () => {
+        if (!qrData?.qrDataUrl) return;
+        const link = document.createElement('a');
+        link.download = `QR_${formData.name || 'POI'}.png`;
+        link.href = qrData.qrDataUrl;
+        link.click();
+    };
+
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (readOnly) return;
@@ -509,7 +543,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="font-semibold text-slate-900 flex items-center gap-2">
                                 <MapPin className="h-4 w-4 text-blue-600" />
-                                Content
+                                {L.contentHeading}
                             </h2>
                             <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
                                 {languageTabs.map((tab) => (
@@ -529,7 +563,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">POI Name *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.poiName} {activeLang === 'VI' ? L.required : ''}</label>
                                 <input
                                     name={translationField.name}
                                     value={formData[translationField.name as keyof typeof formData] as string}
@@ -542,7 +576,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Description {activeLang === 'VI' ? '*' : '(optional)'}</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}</label>
                                 <textarea
                                     name={translationField.description}
                                     value={formData[translationField.description as keyof typeof formData] as string}
@@ -561,11 +595,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
                         <h2 className="font-semibold text-slate-900 flex items-center gap-2">
                             <Globe className="h-4 w-4 text-purple-600" />
-                            Classification & Settings
+                            {L.classificationHeading}
                         </h2>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.category} {L.required}</label>
                                 <select
                                     name="category"
                                     value={formData.category}
@@ -580,7 +614,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.address}</label>
                                 <input
                                     name="address"
                                     value={formData.address}
@@ -614,20 +648,20 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
                         <div className="flex items-center justify-between gap-3">
-                            <h2 className="font-semibold text-slate-900">Location</h2>
+                            <h2 className="font-semibold text-slate-900">{L.locationHeading}</h2>
                             {mapPreview && (
                                 <button
                                     type="button"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-500"
                                     onClick={() => navigator.clipboard?.writeText(mapPreview.coordsLabel)}
                                 >
-                                    Copy coords
+                                    {L.copyCoords}
                                 </button>
                             )}
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Latitude *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.latitude} {L.required}</label>
                                 <input
                                     name="latitude"
                                     value={formData.latitude}
@@ -640,7 +674,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Longitude *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.longitude} {L.required}</label>
                                 <input
                                     name="longitude"
                                     value={formData.longitude}
@@ -654,7 +688,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Trigger radius: {formData.triggerRadius} m</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">{L.triggerRadius}: {formData.triggerRadius} m</label>
                             <input
                                 name="triggerRadius"
                                 type="range"
@@ -695,7 +729,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
                         <div className="flex items-center gap-2 text-slate-900 font-semibold">
                             <ImageIcon className="h-4 w-4 text-blue-600" />
-                            Media Assets
+                            {L.mediaHeading}
                         </div>
 
                         {imageMedia.length > 0 && (
@@ -755,7 +789,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-slate-900 font-semibold">
                                 <Headphones className="h-4 w-4 text-blue-600" />
-                                Audio guide
+                                {L.audioGuide}
                             </div>
                             {audioMedia.length > 0 && (
                                 <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
@@ -829,10 +863,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
                                     <div className="flex items-center gap-2 text-sm font-semibold text-indigo-900">
                                         <Headphones className="h-4 w-4" />
-                                        Auto-generate TTS from Description
+                                        {L.ttsHeading}
                                     </div>
                                     <p className="text-xs text-indigo-600">
-                                        Tự động tạo audio thuyết minh từ nội dung mô tả POI bằng Microsoft Edge TTS.
+                                        {L.ttsDescription}
                                     </p>
                                     <div className="grid gap-3 md:grid-cols-2">
                                         <button
@@ -842,7 +876,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         >
                                             {ttsGenerating.VI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                                            Generate VI Audio
+                                            {L.generateVi}
                                         </button>
                                         <button
                                             type="button"
@@ -851,7 +885,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         >
                                             {ttsGenerating.EN ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                                            Generate EN Audio
+                                            {L.generateEn}
                                         </button>
                                     </div>
                                 </div>
@@ -951,6 +985,51 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             <li>Ảnh tiêu đề nên có kích thước tối thiểu 1200px.</li>
                         </ul>
                     </div>
+
+                    {isEditMode && (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <QrCode className="h-4 w-4 text-blue-600" />
+                                QR Code
+                            </div>
+                            {qrData?.qrDataUrl ? (
+                                <>
+                                    <div className="flex justify-center">
+                                        <img
+                                            src={qrData.qrDataUrl}
+                                            alt="QR Code"
+                                            className="w-48 h-48 rounded-lg border border-slate-200"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 text-center break-all">{qrData.qrContent}</p>
+                                    <div className="grid gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleDownloadQr}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Download PNG
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRegenerateQr}
+                                            disabled={qrLoading}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                                        >
+                                            {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center py-4 text-center text-slate-400">
+                                    <QrCode className="h-10 w-10 mb-2" />
+                                    <p className="text-xs">QR code will be generated automatically when this POI is saved.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </aside>
             </div>
         </div>
