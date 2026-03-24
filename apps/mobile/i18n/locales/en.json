@@ -198,6 +198,20 @@
     "copyrightTitle": "Copyright",
     "copyrightText": "© 2026 GPS Tours Team\nSeminar Project — University"
   },
+  "deviceCheck": {
+    "title": "Device Check",
+    "subtitle": "The app needs GPS and Internet to work properly",
+    "gps": "GPS Location",
+    "internet": "Internet Connection",
+    "checking": "Checking...",
+    "gpsOk": "Location permission granted",
+    "gpsFail": "Location permission not granted",
+    "internetOk": "Connected to the Internet",
+    "internetFail": "No Internet connection",
+    "allPass": "All set!",
+    "retry": "Check again",
+    "openSettings": "Open Settings"
+  },
   "languageScreen": {
     "title": "Choose Language",
     "subtitle": "Display language for POI content and audio narration",

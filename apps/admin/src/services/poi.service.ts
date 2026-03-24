@@ -50,6 +50,7 @@ export interface POI {
     latitude: number;
     longitude: number;
     triggerRadius: number;
+    qrCodeUrl?: string | null;
     media?: POIMedia[];
     owner?: POIOwner | null;
     _count?: {
@@ -131,6 +132,22 @@ export const poiService = {
 
     generateTts: async (poiId: string, text: string, language: 'VI' | 'EN', voice?: string) => {
         const response = await api.post(`/tts/generate/${poiId}`, { text, language, voice });
+        return response.data;
+    },
+
+    getQrCode: async (poiId: string) => {
+        const response = await api.get<{
+            poiId: string;
+            poiName: string;
+            qrCodeUrl: string;
+            qrDataUrl: string;
+            qrContent: string;
+        }>(`/pois/${poiId}/qr`);
+        return response.data;
+    },
+
+    regenerateQr: async (poiId: string) => {
+        const response = await api.post(`/pois/${poiId}/qr/regenerate`);
         return response.data;
     },
 };

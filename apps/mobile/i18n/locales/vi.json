@@ -198,6 +198,20 @@
     "copyrightTitle": "Bản quyền",
     "copyrightText": "© 2026 GPS Tours Team\nĐồ án Seminar — Trường Đại học"
   },
+  "deviceCheck": {
+    "title": "Kiểm tra thiết bị",
+    "subtitle": "Ứng dụng cần GPS và Internet để hoạt động tốt nhất",
+    "gps": "Định vị GPS",
+    "internet": "Kết nối Internet",
+    "checking": "Đang kiểm tra...",
+    "gpsOk": "Đã cấp quyền định vị",
+    "gpsFail": "Chưa cấp quyền định vị",
+    "internetOk": "Đã kết nối Internet",
+    "internetFail": "Không có kết nối Internet",
+    "allPass": "Tất cả đã sẵn sàng!",
+    "retry": "Kiểm tra lại",
+    "openSettings": "Mở cài đặt"
+  },
   "languageScreen": {
     "title": "Chọn ngôn ngữ",
     "subtitle": "Ngôn ngữ hiển thị cho nội dung POI và audio thuyết minh",

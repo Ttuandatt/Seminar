@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma';
 import { CreatePoiDto, UpdatePoiDto, QueryPoiDto } from './dto';
 import { Prisma, Role, MediaLanguage } from '@prisma/client';
 import { TtsService } from '../tts/tts.service';
+import { QrService } from '../qr/qr.service';
+import { SeedExportService } from '../seed-export/seed-export.service';
 
 @Injectable()
 export class PoisService {
@@ -11,6 +13,8 @@ export class PoisService {
     constructor(
         private prisma: PrismaService,
         private ttsService: TtsService,
+        private qrService: QrService,
+        private seedExportService: SeedExportService,
     ) { }
 
     async create(dto: CreatePoiDto, userId: string) {
@@ -24,6 +28,14 @@ export class PoisService {
 
         // Auto-generate TTS from description (fire-and-forget)
         this.autoGenerateTts(poi.id, dto.descriptionVi, dto.descriptionEn);
+
+        // Auto-generate QR code (fire-and-forget)
+        this.qrService.generateForPoi(poi.id)
+            .then(url => this.logger.log(`QR code generated for POI ${poi.id}: ${url}`))
+            .catch(err => this.logger.error(`QR generation failed for POI ${poi.id}: ${err.message}`));
+
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
 
         return poi;
     }
@@ -120,6 +132,9 @@ export class PoisService {
             );
         }
 
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
+
         return poi;
     }
 
@@ -140,10 +155,15 @@ export class PoisService {
             throw new ForbiddenException('Only the owner or an admin can delete this POI.');
         }
 
-        return this.prisma.poi.update({
+        const result = await this.prisma.poi.update({
             where: { id },
             data: { deletedAt: new Date() },
         });
+
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
+
+        return result;
     }
 
     /**

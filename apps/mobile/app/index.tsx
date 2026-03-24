@@ -4,11 +4,33 @@ import { useRouter } from 'expo-router';
 import { Map, ArrowRight } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import * as Location from 'expo-location';
+import * as Network from 'expo-network';
 
 export default function LandingScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+
+    // Silent device check on mount (no request, just check current state)
+    useEffect(() => {
+        const silentDeviceCheck = async () => {
+            try {
+                const [locPerm, netState] = await Promise.all([
+                    Location.getForegroundPermissionsAsync(),
+                    Network.getNetworkStateAsync(),
+                ]);
+                const gpsOk = locPerm.status === 'granted';
+                const netOk = netState.isConnected && netState.isInternetReachable;
+                if (!gpsOk || !netOk) {
+                    router.replace('/device-check');
+                }
+            } catch {
+                // If check fails, still allow app to continue
+            }
+        };
+        silentDeviceCheck();
+    }, [router]);
 
     useEffect(() => {
         const checkFirstLaunch = async () => {

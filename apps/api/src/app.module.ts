@@ -14,6 +14,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TtsModule } from './modules/tts/tts.module';
+import { QrModule } from './modules/qr/qr.module';
+import { SeedExportModule } from './modules/seed-export/seed-export.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { TtsModule } from './modules/tts/tts.module';
       serveRoot: '/uploads',
     }),
     PrismaModule,
+    SeedExportModule,
     AuthModule,
     PoisModule,
     MediaModule,
@@ -34,6 +37,7 @@ import { TtsModule } from './modules/tts/tts.module';
     MerchantsModule,
     ProfileModule,
     TtsModule,
+    QrModule,
   ],
 })
 export class AppModule { }
