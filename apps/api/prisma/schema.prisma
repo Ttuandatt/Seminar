@@ -311,3 +311,23 @@ model TriggerLog {
   @@index([createdAt])
   @@map("trigger_logs")
 }
+
+model SupportedLanguage {
+  code          String   @id
+  label         String
+  enabled       Boolean  @default(true)
+  supportsText  Boolean  @default(true)
+  supportsTts   Boolean  @default(true)
+  requiresPack  Boolean  @default(false)
+  allowOffline  Boolean  @default(false)
+  defaultVoice  String?
+  fallbackVoice String?
+  priority      Int      @default(100)
+  description   String?
+  region        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([priority])
+  @@map("supported_languages")
+}
