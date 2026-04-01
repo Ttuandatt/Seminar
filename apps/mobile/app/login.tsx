@@ -1,39 +1,65 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, Lock } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { useTranslation } from 'react-i18next';
+import FormFieldError from '../components/FormFieldError';
+import FormBanner from '../components/FormBanner';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    const [banner, setBanner] = useState<string | null>(null);
     const router = useRouter();
     const { t } = useTranslation();
+    const emailInputRef = useRef<TextInput>(null);
+    const passwordInputRef = useRef<TextInput>(null);
+
+    const validate = () => {
+        const newErrors: { email?: string; password?: string } = {};
+        if (!email.trim()) newErrors.email = t('login.errorEmptyField') || 'Vui lòng nhập email.';
+        if (!password) newErrors.password = t('login.errorEmptyField') || 'Vui lòng nhập mật khẩu.';
+        return newErrors;
+    };
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert(t('common.error'), t('login.errorEmpty'));
+        setBanner(null);
+        const newErrors = validate();
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            if (newErrors.email) emailInputRef.current?.focus();
+            else if (newErrors.password) passwordInputRef.current?.focus();
             return;
         }
-
         setLoading(true);
         try {
-            const data = await authService.login({ email, password });
+            const data = await authService.login({ email: email.trim(), password });
             if (data && data.accessToken) {
                 await AsyncStorage.setItem('accessToken', data.accessToken);
-                Alert.alert(t('common.success'), t('login.loginSuccess'), [
-                    { text: 'OK', onPress: () => router.back() }
-                ]);
+                setTimeout(() => {
+                    setEmail(''); setPassword('');
+                    setErrors({});
+                    setBanner(null);
+                    router.back();
+                }, 300);
             } else {
-                Alert.alert(t('common.error'), t('login.errorNoToken'));
+                setBanner(t('login.errorNoToken') || 'Đăng nhập thất bại.');
             }
         } catch (error: any) {
             console.error('Login Error:', error);
-            const msg = error.response?.data?.message || t('login.errorInvalid');
-            Alert.alert(t('login.loginFailed'), msg);
+            const mapped = authService.normalizeAuthError(error);
+            let fieldErrors: any = {};
+            let bannerMsg: string | null = null;
+            mapped.forEach(e => {
+                if (e.banner) bannerMsg = e.message;
+                if (e.field) fieldErrors[e.field] = e.message;
+            });
+            setErrors(fieldErrors);
+            setBanner(bannerMsg);
         } finally {
             setLoading(false);
         }
@@ -51,28 +77,39 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.form}>
-                    <View style={styles.inputContainer}>
+                    {banner && <FormBanner message={banner} type="error" onDismiss={() => setBanner(null)} />}
+
+                    <View style={[styles.inputContainer, errors.email && { borderColor: '#F97316' }]}> 
                         <Mail size={20} color="#64748b" style={styles.inputIcon} />
                         <TextInput
+                            ref={emailInputRef}
                             style={styles.input}
                             placeholder="Email"
                             value={email}
                             onChangeText={setEmail}
                             autoCapitalize="none"
                             keyboardType="email-address"
+                            returnKeyType="next"
+                            onSubmitEditing={() => passwordInputRef.current?.focus()}
+                            blurOnSubmit={false}
                         />
                     </View>
+                    {errors.email && <FormFieldError message={errors.email} />}
 
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, errors.password && { borderColor: '#F97316' }]}> 
                         <Lock size={20} color="#64748b" style={styles.inputIcon} />
                         <TextInput
+                            ref={passwordInputRef}
                             style={styles.input}
                             placeholder={t('login.passwordPlaceholder')}
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
+                            returnKeyType="done"
+                            onSubmitEditing={handleLogin}
                         />
                     </View>
+                    {errors.password && <FormFieldError message={errors.password} />}
 
                     <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
                         {loading ? (

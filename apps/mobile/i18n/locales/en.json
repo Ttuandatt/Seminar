@@ -9,6 +9,38 @@
     "save": "Save",
     "noDescription": "No description"
   },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Create an account to save your trip history",
+    "fullNamePlaceholder": "Full name",
+    "passwordPlaceholder": "Password",
+    "registerButton": "Register",
+    "hasAccount": "Already have an account?",
+    "loginNow": "Login",
+    "goToLogin": "Login",
+    "errorEmptyField": "Please fill out this field.",
+    "errorPassword": "Password must contain uppercase, lowercase, and a number.",
+    "errorPasswordLength": "Password must be at least 8 characters.",
+    "registerSuccess": "Registration successful! Please log in.",
+    "registerFailed": "Registration failed. Please try again.",
+    "duplicateEmail": "Email is already in use.",
+    "ctaLogin": "Login"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Log in to save your history and favorite places",
+    "passwordPlaceholder": "Password",
+    "loginButton": "Login",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Register",
+    "errorEmptyField": "Please fill out this field.",
+    "errorInvalid": "Email or password is incorrect.",
+    "errorNoToken": "Login failed. Please try again.",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed",
+    "lockedAccount": "Account is locked. Contact support.",
+    "networkError": "System error. Please try again."
+  },
   "tabs": {
     "map": "Map",
     "tours": "Tours",

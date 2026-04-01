@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -24,6 +24,7 @@ import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../c
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
+import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -37,6 +38,8 @@ type MediaResource = POIMedia & {
     mimetype?: string | null;
     lang?: string | null;
     title?: string | null;
+    originalName?: string | null;
+    orderIndex?: number | null;
 };
 
 const isAudioMedia = (media: MediaResource) => {
@@ -53,10 +56,20 @@ const isAudioMedia = (media: MediaResource) => {
 
 const getMediaLabel = (media: MediaResource) => media?.language || media?.lang || 'N/A';
 
+const isActiveMedia = (media?: MediaResource | null) =>
+    Boolean(media) && (media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0);
+
+const sanitizeMediaList = (media?: MediaResource[] | null) => {
+    if (!Array.isArray(media)) return [];
+    return media.filter((item) => isActiveMedia(item));
+};
+
 const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const isEditMode = !!id;
+    const [draftPoiId, setDraftPoiId] = useState<string | null>(null);
+    const poiId = id ?? draftPoiId ?? undefined;
+    const isEditMode = !!poiId;
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
@@ -97,9 +110,9 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [currentOwnerInfo, setCurrentOwnerInfo] = useState<{ id: string; label: string } | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
-    const [ttsGenerating, setTtsGenerating] = useState<{ VI?: boolean; EN?: boolean }>({});
     const [qrData, setQrData] = useState<{ qrDataUrl: string; qrCodeUrl: string; qrContent: string } | null>(null);
     const [qrLoading, setQrLoading] = useState(false);
+    const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -129,7 +142,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         ownerId: poi.owner?.id || '',
                     });
 
-                    setExistingMedia((poi.media as MediaResource[]) || []);
+                    setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
 
                     if (poi.owner) {
                         const ownerLabel = poi.owner.shopOwnerProfile?.shopName || poi.owner.fullName;
@@ -183,6 +196,76 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         };
     }, [audioQueue]);
 
+    const refreshMedia = useCallback(async (targetPoiId?: string) => {
+        const effectivePoiId = targetPoiId ?? poiId;
+        if (!effectivePoiId) return;
+        const poi = await poiService.getOne(effectivePoiId);
+        setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
+    }, [poiId]);
+
+    const { generating: ttsGenerating, generateTts } = usePoiTts({
+        getPoiId: () => poiId,
+        getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
+        refreshMedia,
+        onSuccessToast: (language) =>
+            showToast({
+                variant: 'success',
+                title: `TTS ${language} đã tạo`,
+                description: `Audio ${language} đã được tạo thành công.`,
+            }),
+        onErrorToast: (language, message) =>
+            showToast({
+                variant: 'error',
+                title: `TTS ${language} thất bại`,
+                description: message,
+            }),
+        getMissingPoiMessage: () => 'Vui lòng lưu POI trước khi tạo TTS audio.',
+        getShortDescriptionMessage: (language) =>
+            language === 'VI'
+                ? 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.'
+                : 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.',
+        ensurePoiExists: async () => {
+            if (poiId) {
+                return { poiId };
+            }
+
+            const { errors, lat, lng } = collectValidationState();
+            if (errors.length > 0) {
+                const primaryMessage = errors[0];
+                setError(errors.join(' '));
+                showToast({
+                    variant: 'error',
+                    title: 'Thiếu thông tin',
+                    description: primaryMessage,
+                });
+                return { handled: true };
+            }
+
+            setEnsuringPoiForTts(true);
+            try {
+                const payload = buildPayload(lat, lng, 'DRAFT');
+                const newPoi = await poiService.create(payload);
+                setDraftPoiId(newPoi.id);
+                showToast({
+                    variant: 'success',
+                    title: 'Đã lưu bản nháp',
+                    description: 'POI đã được lưu tạm thời để tạo audio TTS.',
+                });
+                return { poiId: newPoi.id };
+            } catch (error) {
+                console.error('Failed to auto-save POI for TTS:', error);
+                showToast({
+                    variant: 'error',
+                    title: 'Không thể lưu POI',
+                    description: 'Vui lòng thử lưu POI trước khi tạo audio.',
+                });
+                return { handled: true };
+            } finally {
+                setEnsuringPoiForTts(false);
+            }
+        },
+    });
+
     // Handle File Selection with Previews
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -231,10 +314,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     };
 
     const confirmDeleteMedia = async () => {
-        if (!mediaToDelete || !id) return;
+        if (!mediaToDelete || !poiId) return;
         setIsDeletingMedia(true);
         try {
-            await poiService.deleteMedia(id, mediaToDelete.id);
+            await poiService.deleteMedia(poiId, mediaToDelete.id);
             setExistingMedia((prev) => prev.filter((media) => media.id !== mediaToDelete.id));
             showToast({
                 variant: 'success',
@@ -281,16 +364,34 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setFormData((prev) => ({ ...prev, [name]: nextValue }));
     };
 
-    const handleSave = async (nextStatus: WorkflowStatus) => {
-        if (readOnly) return;
-
-        // Client-side validation to prevent 400 from backend
+    const collectValidationState = () => {
         const lat = parseFloat(formData.latitude);
         const lng = parseFloat(formData.longitude);
         const errors: string[] = [];
         if (!formData.name || formData.name.length < 2) errors.push('Tên POI cần ít nhất 2 ký tự.');
         if (!formData.description || formData.description.length < 10) errors.push('Mô tả tiếng Việt cần ít nhất 10 ký tự.');
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) errors.push('Vui lòng chọn vị trí trên bản đồ.');
+        return { errors, lat, lng };
+    };
+
+    const buildPayload = (lat: number, lng: number, status: WorkflowStatus): SavePOIPayload => ({
+        nameVi: formData.name,
+        nameEn: formData.nameEn,
+        descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
+        descriptionEn: formData.descriptionEn,
+        latitude: lat,
+        longitude: lng,
+        category: formData.category,
+        triggerRadius: Number(formData.triggerRadius) || 15,
+        status,
+        ownerId: formData.ownerId || null,
+    });
+
+    const handleSave = async (nextStatus: WorkflowStatus) => {
+        if (readOnly) return;
+
+        // Client-side validation to prevent 400 from backend
+        const { errors, lat, lng } = collectValidationState();
         if (errors.length > 0) {
             setError(errors.join(' '));
             return;
@@ -300,35 +401,25 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setError('');
 
         try {
-            const payload: SavePOIPayload = {
-                nameVi: formData.name,
-                nameEn: formData.nameEn,
-                descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
-                descriptionEn: formData.descriptionEn,
-                latitude: lat,
-                longitude: lng,
-                category: formData.category,
-                triggerRadius: Number(formData.triggerRadius) || 15,
-                status: nextStatus,
-                ownerId: formData.ownerId || null,
-            };
+            const payload = buildPayload(lat, lng, nextStatus);
 
-            let poiId = id;
+            let targetPoiId = poiId;
 
-            if (isEditMode) {
-                await poiService.update(id!, payload);
+            if (targetPoiId) {
+                await poiService.update(targetPoiId, payload);
             } else {
                 const newPoi = await poiService.create(payload);
-                poiId = newPoi.id;
+                targetPoiId = newPoi.id;
+                setDraftPoiId(newPoi.id);
             }
 
-            if (poiId) {
+            if (targetPoiId) {
                 const uploaders: Promise<unknown>[] = [];
 
                 if (imageQueue.length > 0) {
                     uploaders.push(
                         Promise.all(
-                            imageQueue.map((file) => poiService.uploadMedia(poiId!, file, 'IMAGE'))
+                            imageQueue.map((file) => poiService.uploadMedia(targetPoiId!, file, 'IMAGE'))
                         )
                     );
                 }
@@ -337,7 +428,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     uploaders.push(
                         Promise.all(
                             audioQueue.map(({ file, language }) =>
-                                poiService.uploadMedia(poiId!, file, 'AUDIO', language)
+                                poiService.uploadMedia(targetPoiId!, file, 'AUDIO', language)
                             )
                         )
                     );
@@ -348,9 +439,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 }
             }
 
+            const wasRouteEdit = Boolean(id);
             showToast({
                 variant: 'success',
-                title: isEditMode ? 'Đã cập nhật POI' : 'Đã tạo POI',
+                title: wasRouteEdit ? 'Đã cập nhật POI' : 'Đã tạo POI',
                 description: 'Thông tin POI đã được lưu thành công.',
             });
             navigate('/admin/pois');
@@ -371,7 +463,6 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             setLoading(false);
         }
     };
-
     const handlePreview = () => {
         if (!formData.name || !formData.description) {
             showToast({
@@ -384,37 +475,12 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setIsPreviewOpen(true);
     };
 
-    const handleGenerateTts = async (language: 'VI' | 'EN') => {
-        if (!id) {
-            showToast({ variant: 'error', title: 'Lưu POI trước', description: 'Vui lòng lưu POI trước khi tạo TTS audio.' });
-            return;
-        }
-        const text = language === 'VI' ? formData.description : formData.descriptionEn;
-        if (!text || text.length < 10) {
-            showToast({ variant: 'error', title: 'Thiếu nội dung', description: `Mô tả ${language} cần ít nhất 10 ký tự để tạo audio.` });
-            return;
-        }
-        setTtsGenerating(prev => ({ ...prev, [language]: true }));
-        try {
-            const result = await poiService.generateTts(id, text, language);
-            showToast({ variant: 'success', title: `TTS ${language} đã tạo`, description: `Audio ${language} đã được tạo thành công.` });
-            // Refresh media list
-            const poi = await poiService.getOne(id);
-            setExistingMedia((poi.media as MediaResource[]) || []);
-        } catch (err) {
-            console.error('TTS generation error:', err);
-            showToast({ variant: 'error', title: `TTS ${language} thất bại`, description: 'Không thể tạo audio. Vui lòng thử lại.' });
-        } finally {
-            setTtsGenerating(prev => ({ ...prev, [language]: false }));
-        }
-    };
-
     const handleRegenerateQr = async () => {
-        if (!id) return;
+        if (!poiId) return;
         setQrLoading(true);
         try {
-            const result = await poiService.regenerateQr(id);
-            setQrData({ qrDataUrl: result.qrDataUrl, qrCodeUrl: result.qrCodeUrl, qrContent: `gpstours:poi:${id}` });
+            const result = await poiService.regenerateQr(poiId);
+            setQrData({ qrDataUrl: result.qrDataUrl, qrCodeUrl: result.qrCodeUrl, qrContent: `gpstours:poi:${poiId}` });
             showToast({ variant: 'success', title: 'QR Code regenerated', description: 'Mã QR mới đã được tạo.' });
         } catch {
             showToast({ variant: 'error', title: 'QR regeneration failed', description: 'Không thể tạo lại mã QR.' });
@@ -446,15 +512,9 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }
 
     // Determine Base URL for images
-    // Assuming backend serves static files at /uploads. 
-    // Need to prepend API URL or just / if served by same host?
-    // User's API is on localhost:3000/api. Static files probably at localhost:3000/uploads ?
-    // Let's assume relative path returned by API needs full URL if on different port.
-    // For now assuming proxy or same origin. 
+    // Assuming backend serves static files at /uploads.
     const getImageUrl = (url: string) => {
         if (url.startsWith('http')) return url;
-        // If dev mode, might need to point to API server.
-        // Quick hack: if url starts with /, assumes root.
         return `http://localhost:3000${url}`;
     };
 
@@ -486,6 +546,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const translationField = activeLang === 'VI'
         ? { name: 'name', description: 'description' }
         : { name: 'nameEn', description: 'descriptionEn' };
+    const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);
@@ -588,6 +649,24 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none disabled:opacity-60"
                                     placeholder={activeLang === 'VI' ? 'Mô tả địa điểm...' : 'Optional English copy...'}
                                 />
+                                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                                    <span>{L.ttsDescription}</span>
+                                    {!readOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => generateTts(activeLang)}
+                                            disabled={ensuringPoiForTts || ttsGenerating[activeLang] || !activeDescriptionValue?.trim()}
+                                            className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {ensuringPoiForTts || ttsGenerating[activeLang] ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <Headphones className="h-3.5 w-3.5" />
+                                            )}
+                                            {activeLang === 'VI' ? L.generateVi : L.generateEn}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -796,7 +875,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     {audioMedia.map((media) => (
                                         <div key={media.id} className="flex items-center justify-between gap-3 p-3 text-sm">
                                             <div>
-                                                <p className="font-semibold text-slate-900">{media.title || `Audio ${media.id}`}</p>
+                                                <p className="font-semibold text-slate-900">{media.title || media.originalName || `Audio ${media.id}`}</p>
                                                 <p className="text-xs text-slate-500">Language: {getMediaLabel(media)}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -859,37 +938,6 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 </div>
                             )}
 
-                            {!readOnly && isEditMode && (
-                                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-900">
-                                        <Headphones className="h-4 w-4" />
-                                        {L.ttsHeading}
-                                    </div>
-                                    <p className="text-xs text-indigo-600">
-                                        {L.ttsDescription}
-                                    </p>
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleGenerateTts('VI')}
-                                            disabled={ttsGenerating.VI || !formData.description}
-                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            {ttsGenerating.VI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                                            {L.generateVi}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleGenerateTts('EN')}
-                                            disabled={ttsGenerating.EN || !formData.descriptionEn}
-                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            {ttsGenerating.EN ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                                            {L.generateEn}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
 

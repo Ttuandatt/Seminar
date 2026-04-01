@@ -1,0 +1,696 @@
+{
+  "exportedAt": "2026-04-01T04:36:55.597Z",
+  "users": [
+    {
+      "id": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "email": "admin@gpstours.vn",
+      "passwordHash": "$2b$12$onbaA5DV7s7/dK/DYkBpq.3CrmeLXbHLYjggDvfKiCqP7i/KcNPAm",
+      "fullName": "Daniel",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 2,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$u.b6ZYRPANAM5HGfpyfqmOUrGIz.vzKgLK8ZecpN.Q6ydv3ybZDOO",
+      "refreshTokenId": "8bc38ace-ea8f-419b-b8ae-0d5713a526a7",
+      "profile": {
+        "phone": "0129384756",
+        "gender": "MALE",
+        "avatarUrl": "/uploads/6c88ffd3-3529-4790-995c-9f3b8c1e0131.jpg"
+      },
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "1d1a7fed-5c3e-4761-91fb-1ad4d55fa9d0",
+      "email": "tourist1@gmail.com",
+      "passwordHash": "$2b$12$6LcrQbgXzDRHAxzD0w3ZHue2Q/8iecKLYGmeZM0K3lbLZkfeMKDZG",
+      "fullName": "tourist1",
+      "role": "TOURIST",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$97GTdXFC59fckmqT3olK6ulVUKvyC4w.GwZ6drg8jPC/gUxoin/W6",
+      "refreshTokenId": "57b0528e-fd67-4f80-9ecc-f28c89909495",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "email": "admin1@gmail.com",
+      "passwordHash": "$2b$12$e3pRQ3ut5T7wSBW3OvzT1OIinkIyGjn/I2p3WTomIGoisFwmo5Bau",
+      "fullName": "Daniel Phan",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$fVq7r9gsdkHLChMjZWG6s.mje8c8HJ5RRk7tIaJRpYeNKILR9r7jW",
+      "refreshTokenId": "08b03786-9ac7-4c5b-8a9a-015ae93c3328",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "5f6a0fa0-4a54-4793-b437-69e79f2e1aeb",
+      "email": "tourist@example.com",
+      "passwordHash": "$2b$12$CB94dRYc2WTwN3WlJuy3RuqJ/zJyUd34EWd5jhTJvU0.T9u8ZDFR.",
+      "fullName": "John Tourist",
+      "role": "TOURIST",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": null,
+      "refreshTokenId": null,
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "9d0aab88-ce84-49c3-b40b-a0ac2b66c877",
+      "email": "admin2@gmail.com",
+      "passwordHash": "$2b$12$XG7mq3rKe4qmUxpNe4SuduJ4jDrDavnFVKcfCVX6wKqo9IfZgI5Pa",
+      "fullName": "admin2",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$L1s0Kn0Nx2dkvYtMMi9RI.N5q6Eu9.7iLC7LIqKorD7.fc9WGjP42",
+      "refreshTokenId": "719727af-64ae-47f9-b99e-254198c2cb46",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "31b93dcf-8c76-4433-8ecd-cf69657d0dcc",
+      "email": "bunmam@gpstours.vn",
+      "passwordHash": "$2b$12$XIYYGpVNi0zKAIvmpR7wUeMxLa13IK3S6eGapLiWUGp4MuyS4.Rxq",
+      "fullName": "Nguyễn Văn Tùng",
+      "role": "SHOP_OWNER",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$YFDPgSLidlvd44y.nhsMMusk.ECmK3nCqkGkt5R6px81cBnTa9sKG",
+      "refreshTokenId": "985671e7-49bf-4df6-9ff1-f7418fa2f761",
+      "profile": null,
+      "shopOwnerProfile": {
+        "id": "0fc4c658-4b12-407a-b726-5976349ed828",
+        "userId": "31b93dcf-8c76-4433-8ecd-cf69657d0dcc",
+        "shopName": "Quán Bún Mắm Tùng",
+        "shopAddress": "144 Vĩnh Khánh, Q.4",
+        "phone": "0901234567",
+        "avatarUrl": null,
+        "openingHours": null,
+        "createdAt": "2026-03-24T10:18:08.019Z",
+        "updatedAt": "2026-03-24T10:18:08.019Z"
+      },
+      "touristProfile": null
+    },
+    {
+      "id": "b015624c-f0b4-438a-a641-ad8387208edb",
+      "email": "shopowner1@gmail.com",
+      "passwordHash": "$2b$12$vy9H4D5rqO16XboXqYnLZekMA3D0bgm3EknLWB76X4BkxmUWB3kRO",
+      "fullName": "shop owner 1",
+      "role": "SHOP_OWNER",
+      "status": "ACTIVE",
+      "failedLoginCount": 1,
+      "lockedUntil": null,
+      "refreshToken": null,
+      "refreshTokenId": null,
+      "profile": null,
+      "shopOwnerProfile": {
+        "id": "c7c241a1-a87e-4889-8e45-cef2327ccd79",
+        "userId": "b015624c-f0b4-438a-a641-ad8387208edb",
+        "shopName": "bún cá 1",
+        "shopAddress": null,
+        "phone": "0987654321",
+        "avatarUrl": null,
+        "openingHours": null,
+        "createdAt": "2026-03-24T10:18:08.019Z",
+        "updatedAt": "2026-03-24T10:18:08.019Z"
+      },
+      "touristProfile": null
+    },
+    {
+      "id": "1bc8539a-adb3-4a04-a0ce-5c4539ffc95a",
+      "email": "shopowner2@gmail.com",
+      "passwordHash": "$2b$12$tKuwnFDatcbdLpxx81x.m.T1lzs/lrKwWwQwZrwKAFvyaIKIfDhjK",
+      "fullName": "Trần Văn B",
+      "role": "SHOP_OWNER",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$4FXxZBBl27Q/3RAs.tEyJ.Ld1ao9EkeL.zoGSxR3VQKizIDqXJ5jC",
+      "refreshTokenId": "dfe07679-9e81-426d-913b-80c9da0a04ad",
+      "profile": null,
+      "shopOwnerProfile": {
+        "id": "8ba196a9-18ce-40e3-8308-6d968f9ceb75",
+        "userId": "1bc8539a-adb3-4a04-a0ce-5c4539ffc95a",
+        "shopName": "Cà phê AZ",
+        "shopAddress": null,
+        "phone": "0987654321",
+        "avatarUrl": null,
+        "openingHours": null,
+        "createdAt": "2026-03-24T10:18:08.019Z",
+        "updatedAt": "2026-03-24T10:18:08.019Z"
+      },
+      "touristProfile": null
+    },
+    {
+      "id": "35d94b49-7044-404c-8c56-0449b97316cc",
+      "email": "shopowner3@gmail.com",
+      "passwordHash": "$2b$12$CpMaoDToNaKUyG0st.w.ye9KlsS8YSYMmGs0ADSeSu8EBWd9XsxOq",
+      "fullName": "Shop owner 3",
+      "role": "SHOP_OWNER",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": null,
+      "refreshTokenId": null,
+      "profile": null,
+      "shopOwnerProfile": {
+        "id": "2a766b6d-cbe3-4909-847d-9fbb88d4ad49",
+        "userId": "35d94b49-7044-404c-8c56-0449b97316cc",
+        "shopName": "Quán trà đá",
+        "shopAddress": null,
+        "phone": "0987654321",
+        "avatarUrl": null,
+        "openingHours": null,
+        "createdAt": "2026-04-01T01:38:29.889Z",
+        "updatedAt": "2026-04-01T01:38:29.889Z"
+      },
+      "touristProfile": null
+    }
+  ],
+  "pois": [
+    {
+      "id": "3900fd17-77b6-4e53-86bd-002e1be08344",
+      "nameVi": "Hải Sản Bé Mặn",
+      "nameEn": "Be Man Seafood",
+      "descriptionVi": "Nhà hàng hải sản tươi sống với cua, ghẹ, tôm hùm và các món lẩu đặc biệt.",
+      "descriptionEn": "Fresh seafood restaurant with crabs, lobsters, and special hotpots.",
+      "latitude": 10.7568,
+      "longitude": 106.6988,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": []
+    },
+    {
+      "id": "f9c813da-bfcf-4505-b0a3-bb471169528f",
+      "nameVi": "Cà Phê Vợt Sài Gòn",
+      "nameEn": "Saigon Filter Coffee",
+      "descriptionVi": "Quán cà phê vợt truyền thống hơn 30 năm, giữ nguyên cách pha cà phê cổ điển.",
+      "descriptionEn": "Traditional 30-year-old filter coffee shop preserving classic brewing methods.",
+      "latitude": 10.756,
+      "longitude": 106.6995,
+      "triggerRadius": 10,
+      "category": "CAFES_DESSERTS",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": []
+    },
+    {
+      "id": "d53c269d-673d-45f6-b975-b9f676d90989",
+      "nameVi": "Chùa Xá Lợi",
+      "nameEn": "Xa Loi Pagoda",
+      "descriptionVi": "Ngôi chùa lịch sử xây năm 1956, nổi tiếng với tháp chuông 7 tầng cao 32m.",
+      "descriptionEn": "Historic pagoda built in 1956, famous for its 7-story 32m bell tower.",
+      "latitude": 10.78,
+      "longitude": 106.6925,
+      "triggerRadius": 30,
+      "category": "CULTURAL_LANDMARKS",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": []
+    },
+    {
+      "id": "cc6977b8-1b9c-442c-92dc-8159a3a717ec",
+      "nameVi": "Ốc Đào",
+      "nameEn": "Oc Dao Snail Restaurant",
+      "descriptionVi": "Quán ốc lâu đời với hơn 50 món ốc các loại, bao gồm ốc hương nướng mỡ hành.",
+      "descriptionEn": "Long-established snail restaurant with over 50 snail dishes.",
+      "latitude": 10.7572,
+      "longitude": 106.699,
+      "triggerRadius": 15,
+      "category": "STREET_FOOD",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": []
+    },
+    {
+      "id": "d3047230-e354-4d6c-88f4-ef7073dfbc04",
+      "nameVi": "Test POI 2",
+      "nameEn": "Test POI 2",
+      "descriptionVi": "[Address: Đường Kênh 19/5, Khu phố 12, Phường Tân Sơn Nhì, Ho Chi Minh City, 72008, Vietnam]\n\nPOI test số 2",
+      "descriptionEn": "POI test number 2",
+      "latitude": 10.8040274,
+      "longitude": 106.6107969,
+      "triggerRadius": 15,
+      "category": "STREET_FOOD",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "1c798248-4a52-48e8-bfd9-0d7bb8f6b522",
+          "poiId": "d3047230-e354-4d6c-88f4-ef7073dfbc04",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/da8783cf-e71e-4f9e-bf22-bccf1dfe5f8f.webp",
+          "thumbnailUrl": null,
+          "originalName": "street-food-vendor-selling-delicious-snacks-including-tacos-and-grilled-corn.webp",
+          "sizeBytes": 29680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "60f1c823-7a45-4474-ace5-46bb1d34e79f",
+          "poiId": "d3047230-e354-4d6c-88f4-ef7073dfbc04",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/65c46c1c-3c3f-4b96-b4c4-91b1b38abea3.flac",
+          "thumbnailUrl": null,
+          "originalName": "test_audio_1.flac",
+          "sizeBytes": 305546,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
+      "nameVi": "70 kênh 19/5",
+      "nameEn": "",
+      "descriptionVi": "[Address: 70 kênh 19/5, P. Sơn Kỳ]\n\nĐây là địa chỉ tiệm tóc",
+      "descriptionEn": "",
+      "latitude": 10.80892504353372,
+      "longitude": 106.6146663067798,
+      "triggerRadius": 50,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_26c13338-0cd6-4e38-b8cb-ac8c8e656c62.png",
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "2cf07ca9-8bec-4d16-aafe-4a46e23940a0",
+          "poiId": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/2e76b797-df2e-4dd7-9057-76a1417bfe93.webp",
+          "thumbnailUrl": null,
+          "originalName": "street-food-vendor-selling-delicious-snacks-including-tacos-and-grilled-corn.webp",
+          "sizeBytes": 29680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "efee2a40-0851-49a7-b476-decb5676cbff",
+          "poiId": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/26c13338-0cd6-4e38-b8cb-ac8c8e656c62_vi_13899ad3-c129-43b5-a0f7-dde4bad57dba/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1774109129089.mp3",
+          "sizeBytes": 210240,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "461abd5e-1d2e-40e3-a026-83d766bafe58",
+          "poiId": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/26c13338-0cd6-4e38-b8cb-ac8c8e656c62_vi_587acb13-30fc-4508-b54b-b9d230f8eee4/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1774110326334.mp3",
+          "sizeBytes": 435168,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "d684417a-0cac-4e54-8713-9b31b1bbf8b3",
+      "nameVi": "Cắt tóc nam nữ",
+      "nameEn": "",
+      "descriptionVi": "Tiệm cắt tóc nam nữ",
+      "descriptionEn": "",
+      "latitude": 10.80876256808151,
+      "longitude": 106.6146521983105,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_d684417a-0cac-4e54-8713-9b31b1bbf8b3.png",
+      "createdById": "b015624c-f0b4-438a-a641-ad8387208edb",
+      "ownerId": "b015624c-f0b4-438a-a641-ad8387208edb",
+      "media": []
+    },
+    {
+      "id": "cb4e22da-23ea-469e-9882-df21f57bf428",
+      "nameVi": "Quán Bún Mắm Tùng",
+      "nameEn": "Bun Mam Tung Restaurant",
+      "descriptionVi": "Quán bún mắm nổi tiếng nhất Vĩnh Khánh với nước dùng đậm đà từ mắm cá linh.",
+      "descriptionEn": "The most famous bun mam restaurant on Vinh Khanh with rich broth from fermented fish.",
+      "latitude": 10.7575,
+      "longitude": 106.6993,
+      "triggerRadius": 20,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": "31b93dcf-8c76-4433-8ecd-cf69657d0dcc",
+      "media": [
+        {
+          "id": "79aa98fc-6660-4070-802e-143ae8c2ef25",
+          "poiId": "cb4e22da-23ea-469e-9882-df21f57bf428",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/e91445ce-6ae7-4e3f-8b17-3cf23459158b.webp",
+          "thumbnailUrl": null,
+          "originalName": "street-food-vendor-selling-delicious-snacks-including-tacos-and-grilled-corn.webp",
+          "sizeBytes": 29680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "3a069a36-135c-46c0-a17d-b9afb8263451",
+          "poiId": "cb4e22da-23ea-469e-9882-df21f57bf428",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/0a23b325-13a2-4144-ac78-3b97397cda0c.flac",
+          "thumbnailUrl": null,
+          "originalName": "test_audio_1.flac",
+          "sizeBytes": 305546,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "5f4fcadf-fa7b-4d76-ac37-201df3183112",
+      "nameVi": "TRUE CAFE 24h",
+      "nameEn": "TRUE CAFE 24h",
+      "descriptionVi": "[Address: 72 �. K�nh 19/5, Son K?, T�n Ph�, Th�nh ph? H? Ch� Minh]\n\nQu�n c� ph� m? c?a 24/7 t?i khu v?c T�n Ph�.",
+      "descriptionEn": "[Address: 72 Kenh 19/5, Son Ky, Tan Phu, Ho Chi Minh City]\n\nA 24-hour cafe located in Tan Phu district.",
+      "latitude": 10.80885482782117,
+      "longitude": 106.6148305186399,
+      "triggerRadius": 50,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": null,
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "ownerId": "b015624c-f0b4-438a-a641-ad8387208edb",
+      "media": [
+        {
+          "id": "c91c45ef-78c6-45b3-a583-507453fe5e94",
+          "poiId": "5f4fcadf-fa7b-4d76-ac37-201df3183112",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/0a1f1383-4bba-43e9-88e5-7992038f00a5.webp",
+          "thumbnailUrl": null,
+          "originalName": "street-food-vendor-selling-delicious-snacks-including-tacos-and-grilled-corn.webp",
+          "sizeBytes": 29680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "43c9cc22-61b8-4254-a092-9d97ebf2df5d",
+          "poiId": "5f4fcadf-fa7b-4d76-ac37-201df3183112",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/8340d57f-088c-48f4-b98c-ec754837ebc5.flac",
+          "thumbnailUrl": null,
+          "originalName": "test_audio_1.flac",
+          "sizeBytes": 305546,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "bce7144f-7115-46c2-9a26-33052a110726",
+      "nameVi": "Tiệm tạp hóa",
+      "nameEn": "",
+      "descriptionVi": "Tiệm tạp hóa hihi",
+      "descriptionEn": "",
+      "latitude": 10.80863005330339,
+      "longitude": 106.6145856206133,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_bce7144f-7115-46c2-9a26-33052a110726.png",
+      "createdById": "1bc8539a-adb3-4a04-a0ce-5c4539ffc95a",
+      "ownerId": "1bc8539a-adb3-4a04-a0ce-5c4539ffc95a",
+      "media": [
+        {
+          "id": "23a4631a-06a0-412b-a542-ff9aa19835b3",
+          "poiId": "bce7144f-7115-46c2-9a26-33052a110726",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/bce7144f-7115-46c2-9a26-33052a110726_vi_77d41abb-ac14-4778-80dc-9d1c81b623ac/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1774185461791.mp3",
+          "sizeBytes": 27072,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "4b667901-8495-4f0d-95a1-586a316367e1",
+      "nameVi": "Test 999",
+      "nameEn": "",
+      "descriptionVi": "[Address: Saigon University–Main Campus, 273, An Dương Vương, Khu phố 22, Phường Chợ Quán, Thủ Đức, Ho Chi Minh City, 72760, Vietnam]\n\nXin chào hihihi",
+      "descriptionEn": "",
+      "latitude": 10.7597031,
+      "longitude": 106.6817595,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_4b667901-8495-4f0d-95a1-586a316367e1.png",
+      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "2b21dff7-9a20-4213-904a-0f9f0b39e353",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/38a74a04-ebc9-48d6-b800-031adf32edda.webp",
+          "thumbnailUrl": null,
+          "originalName": "street-food-vendor-selling-delicious-snacks-including-tacos-and-grilled-corn.webp",
+          "sizeBytes": 29680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "37fee2fd-c041-45b4-af11-44fa6c98d835",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_2ccd405f-fec2-4956-a924-3ece40ae2298/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1774969949188.mp3",
+          "sizeBytes": 42624,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "b6ca7a7e-72cd-484e-8611-ae766e52f516",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_195b410e-5e79-42fe-9b26-1bc1f3db3c91/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775006618963.mp3",
+          "sizeBytes": 24192,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "cb9ad517-829e-4716-810f-bb2d439aad62",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_5d5ea20d-cea5-44ce-8ad0-33812be4199d/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775006629986.mp3",
+          "sizeBytes": 24192,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "5bfcebad-49b8-48ff-a936-156e59de1a74",
+      "nameVi": "Test POI 5",
+      "nameEn": "",
+      "descriptionVi": "[Address: Saigon University–Main Campus, 273, An Dương Vương, Khu phố 22, Phường Chợ Quán, Thủ Đức, Ho Chi Minh City, 72760, Vietnam]\n\nPOI test số 5",
+      "descriptionEn": "",
+      "latitude": 10.7597031,
+      "longitude": 106.6817595,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_5bfcebad-49b8-48ff-a936-156e59de1a74.png",
+      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "784e209a-4936-4f11-811e-7b568cea8f9c",
+          "poiId": "5bfcebad-49b8-48ff-a936-156e59de1a74",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/5bfcebad-49b8-48ff-a936-156e59de1a74_vi_3c3576c4-5034-454a-9945-4e7df27aea86/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775018193853.mp3",
+          "sizeBytes": 24192,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    }
+  ],
+  "tours": [
+    {
+      "id": "ed52bd3f-70b4-47f7-8338-a011f5e475cf",
+      "nameVi": "Test 1",
+      "nameEn": "Test 1",
+      "descriptionVi": "Tour này là Tour test 1",
+      "descriptionEn": "This tour is Tour test 1",
+      "thumbnailUrl": null,
+      "estimatedDuration": 100,
+      "status": "DRAFT",
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "tourPois": [
+        {
+          "tourId": "ed52bd3f-70b4-47f7-8338-a011f5e475cf",
+          "poiId": "cb4e22da-23ea-469e-9882-df21f57bf428",
+          "orderIndex": 0
+        },
+        {
+          "tourId": "ed52bd3f-70b4-47f7-8338-a011f5e475cf",
+          "poiId": "3900fd17-77b6-4e53-86bd-002e1be08344",
+          "orderIndex": 1
+        },
+        {
+          "tourId": "ed52bd3f-70b4-47f7-8338-a011f5e475cf",
+          "poiId": "cc6977b8-1b9c-442c-92dc-8159a3a717ec",
+          "orderIndex": 2
+        }
+      ]
+    },
+    {
+      "id": "68504145-e31c-4058-b337-b8c86556776a",
+      "nameVi": "Tour Ẩm thực Vĩnh Khánh",
+      "nameEn": "Vinh Khanh Food Street Tour",
+      "descriptionVi": "Khám phá con phố ẩm thực nổi tiếng nhất Sài Gòn với các món ốc, hải sản, bún mắm.",
+      "descriptionEn": "Discover Saigon's most famous food street with snails, seafood, and bun mam.",
+      "thumbnailUrl": null,
+      "estimatedDuration": 90,
+      "status": "ACTIVE",
+      "createdById": "cfd2695c-0545-472d-bf01-778cd79ecba8",
+      "tourPois": [
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "cb4e22da-23ea-469e-9882-df21f57bf428",
+          "orderIndex": 0
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "cc6977b8-1b9c-442c-92dc-8159a3a717ec",
+          "orderIndex": 1
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "3900fd17-77b6-4e53-86bd-002e1be08344",
+          "orderIndex": 2
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "d53c269d-673d-45f6-b975-b9f676d90989",
+          "orderIndex": 3
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "f9c813da-bfcf-4505-b0a3-bb471169528f",
+          "orderIndex": 4
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "16240dca-f147-4a33-8743-33d626964963",
+          "orderIndex": 5
+        }
+      ]
+    },
+    {
+      "id": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+      "nameVi": "Tour thử 1",
+      "nameEn": "Test tour 1",
+      "descriptionVi": "Tour để thử số 1",
+      "descriptionEn": "Test tour number 1",
+      "thumbnailUrl": null,
+      "estimatedDuration": 60,
+      "status": "DRAFT",
+      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "tourPois": [
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "orderIndex": 0
+        },
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "d684417a-0cac-4e54-8713-9b31b1bbf8b3",
+          "orderIndex": 1
+        },
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "f9c813da-bfcf-4505-b0a3-bb471169528f",
+          "orderIndex": 2
+        }
+      ]
+    }
+  ]
+}

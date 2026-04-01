@@ -83,13 +83,15 @@ export default function ScannerScreen() {
 
     return (
         <View style={styles.container}>
-            <CameraView
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                    barcodeTypes: ["qr"],
-                }}
-                style={StyleSheet.absoluteFillObject}
-            >
+            <View style={styles.cameraWrapper}>
+                <CameraView
+                    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                    barcodeScannerSettings={{
+                        barcodeTypes: ["qr"],
+                    }}
+                    style={StyleSheet.absoluteFillObject}
+                />
+
                 <View style={styles.overlay}>
                     <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
                         <XCircle size={32} color="#fff" />
@@ -104,7 +106,7 @@ export default function ScannerScreen() {
                         <View style={styles.cornerBottomRight} />
                     </View>
                 </View>
-            </CameraView>
+            </View>
         </View>
     );
 }
@@ -115,8 +117,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#000',
     },
-    overlay: {
+    cameraWrapper: {
         flex: 1,
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',

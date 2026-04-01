@@ -34,6 +34,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const status = useAudioPlayerStatus(player);
 
+    const restartIfEnded = () => {
+        if (
+            status.duration > 0 &&
+            (status.playbackState === 'ended' || status.currentTime >= status.duration - 0.05)
+        ) {
+            player.seekTo(0);
+        }
+    };
+
     // Watch for source changes to auto-play
     useEffect(() => {
         if (fullSource) {
@@ -64,7 +73,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             setCurrentPoiId(poiId);
             setCurrentAudioUrl(audioUrl);
         } else {
-            // Same POI, just resume
+            // Same POI, ensure we restart if the previous playback already ended
+            restartIfEnded();
             player.play();
         }
     };
@@ -74,6 +84,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
 
     const resumeGlobalAudio = () => {
+        restartIfEnded();
         player.play();
     };
 

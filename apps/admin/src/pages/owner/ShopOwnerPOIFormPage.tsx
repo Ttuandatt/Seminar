@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -14,10 +14,11 @@ import {
 } from 'lucide-react';
 import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
-import { POI_CATEGORY_OPTIONS, poiService } from '../../services/poi.service';
+import { POI_CATEGORY_OPTIONS } from '../../services/poi.service';
 import { shopOwnerPortalService } from '../../services/shopOwnerPortal.service';
 import { useToast } from '../../components/ui/ToastProvider';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
+import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
 
 const languageTabs = [
   { code: 'VI' as const, label: 'Vietnamese' },
@@ -30,12 +31,23 @@ interface MediaResource {
   language?: string;
   url: string;
   originalName?: string;
+  orderIndex?: number | null;
 }
+
+const isActiveMedia = (media?: MediaResource | null) =>
+  Boolean(media) && (media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0);
+
+const sanitizeMediaList = (media?: MediaResource[] | null) => {
+  if (!Array.isArray(media)) return [];
+  return media.filter((item) => isActiveMedia(item));
+};
 
 const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = !!id;
+  const [draftPoiId, setDraftPoiId] = useState<string | null>(null);
+  const poiId = id ?? draftPoiId ?? undefined;
+  const isEditMode = !!poiId;
   const { showToast } = useToast();
   const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
   const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
@@ -44,7 +56,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const [error, setError] = useState('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
-  const [ttsGenerating, setTtsGenerating] = useState<{ VI?: boolean; EN?: boolean }>({});
+  const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
 
   const L = POI_FORM_LABELS[activeLang];
 
@@ -87,7 +99,9 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
           triggerRadius: (poi.triggerRadius as number) || 15,
         });
         if (Array.isArray(poi.media)) {
-          setExistingMedia(poi.media as MediaResource[]);
+          setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
+        } else {
+          setExistingMedia([]);
         }
       })
       .catch((err: unknown) => {
@@ -108,6 +122,41 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
       previews.forEach((preview) => URL.revokeObjectURL(preview.url));
     };
   }, [audioQueue]);
+
+  const refreshMedia = useCallback(async (targetPoiId?: string) => {
+    const effectivePoiId = targetPoiId ?? poiId;
+    if (!effectivePoiId) return;
+    const poi = await shopOwnerPortalService.getOnePoi(effectivePoiId);
+    if (Array.isArray(poi.media)) {
+      setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
+    } else {
+      setExistingMedia([]);
+    }
+  }, [poiId]);
+
+  const { generating: ttsGenerating, generateTts } = usePoiTts({
+    getPoiId: () => poiId,
+    getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
+    refreshMedia,
+    onSuccessToast: (language) =>
+      showToast({
+        variant: 'success',
+        title: `TTS ${language}`,
+        description: `Audio ${language} generated successfully.`,
+      }),
+    onErrorToast: (language, message) =>
+      showToast({
+        variant: 'error',
+        title: `TTS ${language} failed`,
+        description: message,
+      }),
+    getMissingPoiMessage: () => 'Save POI first before generating TTS.',
+    getShortDescriptionMessage: (language) =>
+      language === 'VI'
+        ? 'Vietnamese description needs at least 10 characters.'
+        : 'English description needs at least 10 characters.',
+    ensurePoiExists: ensurePoiExistsForTts,
+  });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (readOnly) return;
@@ -190,9 +239,32 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     };
   })();
 
+  const collectValidationState = () => {
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+    const errors: string[] = [];
+    if (!formData.name.trim()) errors.push(L.toastMissingInfoDesc || 'Vui lòng nhập tên tiếng Việt.');
+    if (!formData.description.trim()) errors.push(L.toastMissingContentDesc || 'Vui lòng nhập mô tả tiếng Việt.');
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) errors.push(L.toastMissingCoordsDesc || 'Vui lòng chọn toạ độ trên bản đồ.');
+    return { errors, lat, lng };
+  };
+
+  const buildBaseCreatePayload = (lat: number, lng: number) => ({
+    nameVi: formData.name.trim(),
+    nameEn: formData.nameEn.trim() || undefined,
+    descriptionVi: formData.description.trim(),
+    descriptionEn: formData.descriptionEn.trim() || undefined,
+    category: formData.category,
+    address: formData.address.trim() || undefined,
+    latitude: lat,
+    longitude: lng,
+    triggerRadius: formData.triggerRadius,
+  });
+
   const translationField = activeLang === 'VI'
     ? { name: 'name', description: 'description' }
     : { name: 'nameEn', description: 'descriptionEn' };
+  const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
   const handlePreview = () => {
     if (!formData.name || !formData.description) {
@@ -206,89 +278,50 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     setIsPreviewOpen(true);
   };
 
-  const handleGenerateTts = async (language: 'VI' | 'EN') => {
-    if (!id) {
-      showToast({ variant: 'error', title: L.toastFailed, description: 'Save POI first before generating TTS.' });
-      return;
-    }
-    const text = language === 'VI' ? formData.description : formData.descriptionEn;
-    if (!text || text.length < 10) {
-      showToast({ variant: 'error', title: L.toastMissingContent, description: `${language} description needs at least 10 characters.` });
-      return;
-    }
-    setTtsGenerating((prev) => ({ ...prev, [language]: true }));
-    try {
-      await poiService.generateTts(id, text, language);
-      showToast({ variant: 'success', title: `TTS ${language}`, description: `Audio ${language} generated successfully.` });
-      // Refresh media list
-      const poi = await shopOwnerPortalService.getOnePoi(id);
-      if (Array.isArray(poi.media)) {
-        setExistingMedia(poi.media as MediaResource[]);
-      }
-    } catch (err) {
-      console.error('TTS generation error:', err);
-      showToast({ variant: 'error', title: `TTS ${language} failed`, description: 'Could not generate audio. Please try again.' });
-    } finally {
-      setTtsGenerating((prev) => ({ ...prev, [language]: false }));
-    }
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (readOnly) return;
     setError('');
 
-    if (!formData.name.trim() || !formData.description.trim()) {
-      showToast({ variant: 'error', title: L.toastMissingInfo, description: L.toastMissingInfoDesc });
-      return;
-    }
-    if (typeof latitudeValue !== 'number' || typeof longitudeValue !== 'number') {
-      showToast({ variant: 'error', title: L.toastMissingCoords, description: L.toastMissingCoordsDesc });
+    const { errors, lat, lng } = collectValidationState();
+    if (errors.length > 0) {
+      showToast({ variant: 'error', title: L.toastMissingInfo, description: errors[0] });
+      setError(errors.join(' '));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      let poiId = id;
+      let targetPoiId = poiId;
 
-      if (isEditMode) {
-        // Update existing POI
-        await shopOwnerPortalService.updatePoi(id!, {
+      if (targetPoiId) {
+        await shopOwnerPortalService.updatePoi(targetPoiId, {
           nameVi: formData.name.trim(),
           nameEn: formData.nameEn.trim() || '',
           descriptionVi: formData.description.trim(),
         });
       } else {
-        // Create new POI
         const result = await shopOwnerPortalService.createPoi({
-          nameVi: formData.name.trim(),
-          nameEn: formData.nameEn.trim() || undefined,
-          descriptionVi: formData.description.trim(),
-          descriptionEn: formData.descriptionEn.trim() || undefined,
-          category: formData.category,
-          address: formData.address.trim() || undefined,
-          latitude: latitudeValue,
-          longitude: longitudeValue,
-          triggerRadius: formData.triggerRadius,
+          ...buildBaseCreatePayload(lat, lng),
           media: {
             images: imageQueue.map((file) => file.name),
             audio: audioQueue.map((audio) => ({ language: audio.language, name: audio.file.name })),
           },
         });
-        poiId = result.id;
+        targetPoiId = result.id;
+        setDraftPoiId(result.id);
       }
 
-      // Upload media files for new/edit
-      if (poiId) {
+      if (targetPoiId) {
         const uploaders: Promise<unknown>[] = [];
         if (imageQueue.length > 0) {
           uploaders.push(
-            Promise.all(imageQueue.map((file) => shopOwnerPortalService.uploadMedia(poiId!, file, 'IMAGE')))
+            Promise.all(imageQueue.map((file) => shopOwnerPortalService.uploadMedia(targetPoiId!, file, 'IMAGE')))
           );
         }
         if (audioQueue.length > 0) {
           uploaders.push(
-            Promise.all(audioQueue.map(({ file, language }) => shopOwnerPortalService.uploadMedia(poiId!, file, 'AUDIO', language)))
+            Promise.all(audioQueue.map(({ file, language }) => shopOwnerPortalService.uploadMedia(targetPoiId!, file, 'AUDIO', language)))
           );
         }
         if (uploaders.length) await Promise.all(uploaders);
@@ -296,8 +329,8 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
       showToast({
         variant: 'success',
-        title: isEditMode ? L.toastUpdated : L.toastSubmitted,
-        description: isEditMode ? L.toastUpdatedDesc : L.toastSubmittedDesc,
+        title: id ? L.toastUpdated : L.toastSubmitted,
+        description: id ? L.toastUpdatedDesc : L.toastSubmittedDesc,
       });
       navigate('/owner/dashboard');
     } catch (err) {
@@ -306,6 +339,37 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
       showToast({ variant: 'error', title: L.toastFailed, description: message });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const ensurePoiExistsForTts = async (): Promise<EnsurePoiResult> => {
+    if (poiId) {
+      return { poiId };
+    }
+
+    const { errors, lat, lng } = collectValidationState();
+    if (errors.length > 0) {
+      showToast({ variant: 'error', title: L.toastMissingInfo, description: errors[0] });
+      setError(errors.join(' '));
+      return { handled: true };
+    }
+
+    setEnsuringPoiForTts(true);
+    try {
+      const result = await shopOwnerPortalService.createPoi(buildBaseCreatePayload(lat, lng));
+      setDraftPoiId(result.id);
+      const successTitle = activeLang === 'VI' ? 'Đã lưu bản nháp' : 'Draft saved';
+      const successDescription = activeLang === 'VI'
+        ? 'POI đã được lưu tạm để tạo audio.'
+        : 'Saved a draft so you can generate audio.';
+      showToast({ variant: 'success', title: successTitle, description: successDescription });
+      return { poiId: result.id };
+    } catch (error) {
+      console.error('Failed to auto-save shop owner POI for TTS:', error);
+      showToast({ variant: 'error', title: L.toastFailed, description: L.toastFailedDefault });
+      return { handled: true };
+    } finally {
+      setEnsuringPoiForTts(false);
     }
   };
 
@@ -404,6 +468,24 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none disabled:opacity-60"
                     placeholder={activeLang === 'VI' ? L.descriptionPlaceholder : L.descriptionEnPlaceholder}
                   />
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                    <span>{L.ttsDescription}</span>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => generateTts(activeLang)}
+                        disabled={ensuringPoiForTts || ttsGenerating[activeLang] || !activeDescriptionValue?.trim()}
+                        className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {ensuringPoiForTts || ttsGenerating[activeLang] ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Headphones className="h-3.5 w-3.5" />
+                        )}
+                        {activeLang === 'VI' ? L.generateVi : L.generateEn}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -640,36 +722,6 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                   </div>
                 )}
 
-                {/* TTS Generation - only for saved POIs in edit mode */}
-                {!readOnly && isEditMode && (
-                  <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-900">
-                      <Headphones className="h-4 w-4" />
-                      {L.ttsHeading}
-                    </div>
-                    <p className="text-xs text-indigo-600">{L.ttsDescription}</p>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateTts('VI')}
-                        disabled={ttsGenerating.VI || !formData.description}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {ttsGenerating.VI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                        {L.generateVi}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateTts('EN')}
-                        disabled={ttsGenerating.EN || !formData.descriptionEn}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {ttsGenerating.EN ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
-                        {L.generateEn}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 

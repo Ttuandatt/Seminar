@@ -9,6 +9,38 @@
     "save": "Lưu",
     "noDescription": "Không có mô tả"
   },
+  "register": {
+    "title": "Đăng ký tài khoản",
+    "subtitle": "Tạo tài khoản để lưu lịch sử chuyến đi",
+    "fullNamePlaceholder": "Họ và tên",
+    "passwordPlaceholder": "Mật khẩu",
+    "registerButton": "Đăng ký",
+    "hasAccount": "Đã có tài khoản?",
+    "loginNow": "Đăng nhập",
+    "goToLogin": "Đăng nhập",
+    "errorEmptyField": "Vui lòng điền thông tin này.",
+    "errorPassword": "Mật khẩu phải có chữ hoa, chữ thường và số.",
+    "errorPasswordLength": "Mật khẩu tối thiểu 8 ký tự.",
+    "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
+    "registerFailed": "Đăng ký thất bại. Vui lòng thử lại.",
+    "duplicateEmail": "Email đã được sử dụng.",
+    "ctaLogin": "Đăng nhập"
+  },
+  "login": {
+    "title": "Đăng nhập",
+    "subtitle": "Đăng nhập để lưu lịch sử và địa điểm yêu thích",
+    "passwordPlaceholder": "Mật khẩu",
+    "loginButton": "Đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "registerNow": "Đăng ký",
+    "errorEmptyField": "Vui lòng điền thông tin này.",
+    "errorInvalid": "Email hoặc mật khẩu không đúng.",
+    "errorNoToken": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "loginSuccess": "Đăng nhập thành công!",
+    "loginFailed": "Đăng nhập thất bại",
+    "lockedAccount": "Tài khoản đã bị khoá. Liên hệ hỗ trợ.",
+    "networkError": "Lỗi hệ thống. Vui lòng thử lại."
+  },
   "tabs": {
     "map": "Bản đồ",
     "tours": "Tours",

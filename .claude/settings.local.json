@@ -35,7 +35,8 @@
       "Bash(where python:*)",
       "Bash(python:*)",
       "Bash(docker ps:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(git:*)"
     ]
   }
 }
