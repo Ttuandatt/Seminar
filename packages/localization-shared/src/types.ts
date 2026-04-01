@@ -247,6 +247,32 @@ export interface UsePoiLocalizationsState {
 }
 
 /**
+ * Configuration options for the usePoiLocalizations hook
+ */
+export interface UsePoiLocalizationsOptions {
+  /** REST client configuration */
+  clientConfig: LocalizationClientConfig;
+  /** Optional callback when dirty state changes (only fires on actual state change) */
+  onDirtyChange?: (dirtyCount: number) => void;
+  /** Optional callback before mutation starts */
+  onMutationStart?: (payload: {
+    action: 'save' | 'delete';
+    language: BCP47Language;
+  }) => void;
+  /** Optional callback after mutation completes */
+  onMutationComplete?: (payload: {
+    action: 'save' | 'delete';
+    language: BCP47Language;
+    success: boolean;
+    error?: string;
+  }) => void;
+  /** Optional callback on mutation error */
+  onError?: (error: Error) => void;
+  /** Optional callback for analytics tracking */
+  onAnalytics?: (event: LocalizationActionEvent) => void;
+}
+
+/**
  * Configuration for localization client
  */
 export interface LocalizationClientConfig {
