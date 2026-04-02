@@ -15,9 +15,7 @@ export function useSupportedLanguages(role: UserRole = 'admin') {
 
       // Filter based on role
       if (role === 'shopOwner') {
-        return json.filter(
-          (l: SupportedLanguage) => l.enabled && l.shopOwnerEditable
-        );
+        return json.filter((l: SupportedLanguage) => l.enabled);
       }
       return json.filter((l: SupportedLanguage) => l.enabled);
     },

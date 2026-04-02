@@ -1,17 +1,25 @@
 // LocalizationPanel.tsx
-import React, { forwardRef, useImperativeHandle, useState, useCallback, useRef, useEffect } from 'react';
-import {
-  usePoiLocalizations,
-  LocalizationClientConfig,
-  BCP47Language
-} from '@localization-shared';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { BCP47Language, PoiLocalization, usePoiLocalizations } from '@localization-shared';
 import { LocalizationPanelProps, LocalizationPanelHandle, LocalizationPanelState } from './LocalizationPanel.types';
 import { LocalizationAccordionItem } from './LocalizationPanelAccordion';
-import { ConflictModal } from './ConflictModal';
 import { useSupportedLanguages } from '../../hooks/useSupportedLanguages';
 import { localizationAnalytics } from '../../services/localization-analytics';
+import {
+  isTranslationRequestPending,
+  listPendingTranslationRequests,
+  markTranslationRequestPending,
+} from '../../services/localizationPendingRequests';
 import styles from './LocalizationPanel.module.css';
-import { Plus } from 'lucide-react';
+
+function languageKey(language: BCP47Language) {
+  return String(language).toUpperCase();
+}
+
+function buildLocalizationMap(items: PoiLocalization[]) {
+  return new Map(items.map((item) => [languageKey(item.language), item] as const));
+}
 
 const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelProps>(
   (
@@ -22,12 +30,15 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
       disabled = false,
       onDirtyChange,
       onGlobalSaveRequest,
-      className
+      className,
     },
     ref
   ) => {
-    const { languages: supportedLanguages, isLoading } = useSupportedLanguages(role);
-    
+    const isShopOwner = role === 'shopOwner';
+    const { languages: supportedLanguages } = useSupportedLanguages(role);
+    const [pendingLanguages, setPendingLanguages] = useState<string[]>(() =>
+      isShopOwner ? listPendingTranslationRequests(poiId) : []
+    );
     const [state, setState] = useState<LocalizationPanelState>({
       supportedLanguages,
       selectedLanguages: [baseLanguage],
@@ -35,190 +46,202 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
       showConflictModal: false,
       conflictDiffs: [],
       isStale: false,
-      staleBanner: false
+      staleBanner: false,
     });
-
-    const [isHandlingConflict, setIsHandlingConflict] = useState(false);
-
-    useEffect(() => {
-      setState(prev => ({
-        ...prev,
-        supportedLanguages
-      }));
-    }, [supportedLanguages]);
-
-    // Emit panel view event
-    useEffect(() => {
-      localizationAnalytics.emitDropdownView({
-        poiId,
-        role,
-        languageCount: state.selectedLanguages.length,
-        timestamp: Date.now()
-      });
-    }, [poiId, role]);
 
     const localizationHook = usePoiLocalizations(poiId, {
       clientConfig: {
         baseUrl: '/admin-api',
-        authMode: 'bearer'
+        authMode: 'bearer',
       },
-      onDirtyChange,
+      onDirtyChange: (dirtyCount) => {
+        onDirtyChange?.(dirtyCount > 0);
+      },
       onMutationStart: () => {
-        // Show loading UI
+        // Reserved for future loading state.
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         console.error('Localization error:', error);
-        
-        // Handle conflict (409)
-        if (error?.status === 409 || error?.response?.status === 409) {
-          const diffs = error?.diffs || error?.response?.data?.diffs || [];
-          setState(prev => ({
+        if ((error as { status?: number }).status === 409) {
+          setState((prev) => ({
             ...prev,
             showConflictModal: true,
-            conflictDiffs: diffs
+            conflictDiffs: [],
           }));
         }
-      }
+      },
     });
 
-    const handleAddLanguage = (language: BCP47Language) => {
-      setState(prev => ({
+    useEffect(() => {
+      setState((prev) => ({
         ...prev,
-        selectedLanguages: Array.from(new Set([...prev.selectedLanguages, language]))
+        supportedLanguages,
       }));
-      
-      // Emit analytics
+    }, [supportedLanguages]);
+
+    useEffect(() => {
+      if (isShopOwner) {
+        setPendingLanguages(listPendingTranslationRequests(poiId));
+      }
+    }, [isShopOwner, poiId]);
+
+    const localizationByLanguage = useMemo(
+      () => buildLocalizationMap(localizationHook.state.items || []),
+      [localizationHook.state.items]
+    );
+    const dirtyMap = localizationHook.state.dirtyMap;
+    const draftByLanguage = localizationHook.state.draftByLanguage;
+    const pendingSet = useMemo(
+      () => new Set(pendingLanguages.map((language) => languageKey(language as BCP47Language))),
+      [pendingLanguages]
+    );
+
+    useEffect(() => {
+      const visibleLanguageCount = isShopOwner
+        ? supportedLanguages.filter((language) => language.enabled).length
+        : state.selectedLanguages.length;
+
+      localizationAnalytics.emitDropdownView({
+        poiId,
+        role,
+        languageCount: visibleLanguageCount,
+        timestamp: Date.now(),
+      });
+    }, [isShopOwner, poiId, role, supportedLanguages, state.selectedLanguages.length]);
+
+    const handleAddLanguage = (language: BCP47Language) => {
+      setState((prev) => ({
+        ...prev,
+        selectedLanguages: Array.from(new Set([...prev.selectedLanguages, language])),
+      }));
+
       localizationAnalytics.emitAction({
         action: 'add_language',
         language,
         poiId,
         role,
         timestamp: Date.now(),
-        success: true
+        success: true,
       });
     };
 
     const handleRemoveLanguage = (language: BCP47Language) => {
-      if (language === baseLanguage) return; // Don't remove base language
-      setState(prev => ({
+      if (language === baseLanguage) return;
+
+      setState((prev) => ({
         ...prev,
-        selectedLanguages: prev.selectedLanguages.filter(l => l !== language)
+        selectedLanguages: prev.selectedLanguages.filter((item) => item !== language),
       }));
     };
 
-    const handleToggleExpand = (language: BCP47Language) => {
-      setState(prev => {
-        const expanded = new Set(prev.expandedLanguages);
-        if (expanded.has(language)) {
-          expanded.delete(language);
-        } else {
-          expanded.add(language);
-        }
-        return { ...prev, expandedLanguages: expanded };
+    const handleRequestTranslation = (language: BCP47Language) => {
+      const key = languageKey(language);
+
+      if (isTranslationRequestPending(poiId, language)) {
+        localizationAnalytics.emitAction({
+          action: 'request_translation_blocked',
+          language,
+          poiId,
+          role,
+          timestamp: Date.now(),
+          success: false,
+          errorMessage: 'Request already pending',
+        });
+        return;
+      }
+
+      markTranslationRequestPending(poiId, language);
+      setPendingLanguages(listPendingTranslationRequests(poiId));
+
+      localizationAnalytics.emitAction({
+        action: 'request_translation',
+        language,
+        poiId,
+        role,
+        timestamp: Date.now(),
+        success: true,
+      });
+
+      localizationAnalytics.emitPendingState({
+        poiId,
+        language: key,
+        role,
+        timestamp: Date.now(),
+        pending: true,
       });
     };
 
     const handleReloadLatest = async () => {
-      setIsHandlingConflict(true);
-      try {
-        await localizationHook.refetch();
-        setState(prev => ({
-          ...prev,
-          showConflictModal: false,
-          conflictDiffs: []
-        }));
-        
-        // Emit conflict resolution analytics
-        state.conflictDiffs.forEach(diff => {
-          localizationAnalytics.emitAction({
-            action: 'conflict_reload',
-            language: diff.language as BCP47Language,
-            poiId,
-            role,
-            timestamp: Date.now(),
-            success: true
-          });
-        });
-      } finally {
-        setIsHandlingConflict(false);
-      }
+      setState((prev) => ({
+        ...prev,
+        showConflictModal: false,
+        conflictDiffs: [],
+      }));
+
+      await localizationHook.refetch();
     };
 
     const handleOverwriteAnyway = async () => {
-      setIsHandlingConflict(true);
-      try {
-        // Clear drafts and re-save with force flag
-        const dirtyLanguages = Array.from(localizationHook.state.dirtyMap.keys());
-        for (const lang of dirtyLanguages) {
-          await localizationHook.saveLanguage(lang, { forceOverwrite: true });
-          
-          // Emit conflict overwrite analytics
-          localizationAnalytics.emitAction({
-            action: 'conflict_overwrite',
-            language: lang,
-            poiId,
-            role,
-            timestamp: Date.now(),
-            success: true
-          });
-        }
-        setState(prev => ({
-          ...prev,
-          showConflictModal: false,
-          conflictDiffs: []
-        }));
-      } finally {
-        setIsHandlingConflict(false);
+      const dirtyLanguages = Object.keys(dirtyMap).filter((language) => dirtyMap[language]);
+
+      for (const language of dirtyLanguages) {
+        await localizationHook.saveLanguage(language as BCP47Language);
       }
+
+      setState((prev) => ({
+        ...prev,
+        showConflictModal: false,
+        conflictDiffs: [],
+      }));
     };
 
-    // Expose imperative handle
     useImperativeHandle(
       ref,
       () => ({
-        async flush(options) {
-          // Validate all dirty drafts
-          // If validation fails, reject with fieldErrors
-          // Otherwise save all dirty and return 'clean'
+        async flush() {
           return 'clean';
         },
         async saveLanguage(language) {
           await localizationHook.saveLanguage(language);
         },
         async saveAllDirty() {
-          const dirtyLanguages = localizationHook.state.dirtyMap.keys();
-          for (const lang of dirtyLanguages) {
-            await localizationHook.saveLanguage(lang);
+          const dirtyLanguages = Object.keys(dirtyMap).filter((language) => dirtyMap[language]);
+          for (const language of dirtyLanguages) {
+            await localizationHook.saveLanguage(language as BCP47Language);
           }
         },
         async refetch() {
           await localizationHook.refetch();
         },
         hasDirtyChanges() {
-          return localizationHook.state.dirtyMap.size > 0;
+          return Object.values(dirtyMap).some(Boolean);
         },
         getDirtyLanguages() {
-          return Array.from(localizationHook.state.dirtyMap.keys());
-        }
+          return Object.keys(dirtyMap).filter((language) => dirtyMap[language]) as BCP47Language[];
+        },
       }),
-      [localizationHook]
+      [dirtyMap, localizationHook]
     );
 
-    const availableLanguages = supportedLanguages.filter(
-      l => !state.selectedLanguages.includes(l.code as BCP47Language)
-    );
+    const adminLanguages = state.selectedLanguages;
+    const shopOwnerLanguages = supportedLanguages.filter((language) => language.enabled);
+    const languagesToRender = isShopOwner ? shopOwnerLanguages : adminLanguages;
 
     return (
       <>
-        <div className={`${styles.panel} ${className}`}>
+        <div className={`${styles.panel} ${className ?? ''}`.trim()}>
           <div className={styles.header}>
-            <h3>Translations ({state.selectedLanguages.length})</h3>
-            {availableLanguages.length > 0 && (
+            <h3>Translations</h3>
+            {!isShopOwner && (
               <button
                 disabled={disabled}
                 onClick={() => {
-                  if (availableLanguages.length > 0) {
-                    handleAddLanguage(availableLanguages[0].code as BCP47Language);
+                  const nextLanguage = supportedLanguages.find(
+                    (language) => !state.selectedLanguages.includes(language.code)
+                  );
+
+                  if (nextLanguage) {
+                    handleAddLanguage(nextLanguage.code);
                   }
                 }}
                 style={{
@@ -233,7 +256,7 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
                   opacity: disabled ? 0.6 : 1,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
                 }}
               >
                 <Plus size={14} />
@@ -243,30 +266,35 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
           </div>
 
           <div className={styles.accordion}>
-            {state.selectedLanguages.map((lang) => {
-              const supported = supportedLanguages.find(l => l.code === lang);
+            {languagesToRender.map((language) => {
+              const languageCode = language.code as BCP47Language;
+              const key = languageKey(languageCode);
+              const localization = localizationByLanguage.get(key);
+              const draft = draftByLanguage[key];
+              const requestPending = pendingSet.has(key);
+
               return (
                 <LocalizationAccordionItem
-                  key={lang}
-                  language={lang}
-                  localization={localizationHook.state.localizations[lang]}
-                  draft={localizationHook.state.drafts[lang]}
-                  isDirty={localizationHook.state.dirtyMap.has(lang)}
-                  isLocked={role === 'shopOwner' && !supported?.shopOwnerEditable}
-                  supportedLanguageInfo={supported}
-                  isBaseLanguage={lang === baseLanguage}
-                  onEdit={(language, updates) => {
-                    localizationHook.updateDraft(language, updates);
+                  key={key}
+                  language={languageCode}
+                  localization={localization}
+                  draft={draft}
+                  isDirty={Boolean(dirtyMap[key])}
+                  isLocked={isShopOwner && !language.shopOwnerEditable}
+                  supportedLanguageInfo={language}
+                  isBaseLanguage={languageCode === baseLanguage}
+                  onEdit={(updatedLanguage, updates) => {
+                    localizationHook.editLanguage(updatedLanguage, updates);
                   }}
-                  onSave={(language) => localizationHook.saveLanguage(language)}
-                  onDiscard={(language) => localizationHook.discardDraft(language)}
-                  onDelete={(language) => {
-                    handleRemoveLanguage(language);
-                    return localizationHook.deleteLocalization(language);
-                  }}
+                  onSave={(updatedLanguage) => localizationHook.saveLanguage(updatedLanguage)}
+                  onDiscard={(updatedLanguage) => localizationHook.discardLanguage(updatedLanguage)}
+                  onDelete={(updatedLanguage) => localizationHook.deleteLanguage(updatedLanguage)}
+                  onRequestTranslation={handleRequestTranslation}
                   disabled={disabled}
                   poiId={poiId}
                   role={role}
+                  mode={isShopOwner ? 'shopOwner' : 'admin'}
+                  requestPending={requestPending}
                 />
               );
             })}
@@ -274,19 +302,21 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
         </div>
 
         {state.showConflictModal && (
-          <ConflictModal
-            diffs={state.conflictDiffs}
-            onReloadLatest={handleReloadLatest}
-            onOverwriteAnyway={handleOverwriteAnyway}
-            isLoading={isHandlingConflict}
-            onClose={() => {
-              setState(prev => ({
-                ...prev,
-                showConflictModal: false,
-                conflictDiffs: []
-              }));
-            }}
-          />
+          <div className={styles.modal}>
+            <div className={styles.modalContent}>
+              <h3>Conflicting Changes Detected</h3>
+              <p>Another user modified the content while you were editing.</p>
+
+              <div className={styles.modalActions}>
+                <button type="button" onClick={handleReloadLatest}>
+                  Reload Latest
+                </button>
+                <button type="button" onClick={handleOverwriteAnyway}>
+                  Overwrite Anyway
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </>
     );

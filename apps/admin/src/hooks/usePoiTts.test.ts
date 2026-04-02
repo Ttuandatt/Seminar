@@ -3,7 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { usePoiTts, type UsePoiTtsParams } from './usePoiTts';
 
-const mockGenerateTts = vi.fn();
+const { mockGenerateTts } = vi.hoisted(() => ({
+    mockGenerateTts: vi.fn(),
+}));
 
 vi.mock('../services/poi.service', () => ({
     poiService: {

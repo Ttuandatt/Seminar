@@ -1,7 +1,17 @@
 // analytics.ts - Localization analytics events
 import { BCP47Language } from '@localization-shared';
 
-export type LocalizationActionType = 'save' | 'delete' | 'discard' | 'add_language' | 'generate_audio' | 'conflict_reload' | 'conflict_overwrite';
+export type LocalizationActionType =
+  | 'save'
+  | 'delete'
+  | 'discard'
+  | 'add_language'
+  | 'generate_audio'
+  | 'conflict_reload'
+  | 'conflict_overwrite'
+  | 'request_translation'
+  | 'request_translation_blocked'
+  | 'pending_state_shown';
 
 export interface LocalizationActionEvent {
   action: LocalizationActionType;
@@ -21,8 +31,18 @@ export interface LocalizationDropdownViewEvent {
   timestamp: number;
 }
 
+export interface LocalizationPendingStateEvent {
+  poiId: string;
+  language: string;
+  role: 'admin' | 'shopOwner';
+  timestamp: number;
+  pending: boolean;
+}
+
 class LocalizationAnalytics {
-  private listeners: Set<(event: LocalizationActionEvent | LocalizationDropdownViewEvent) => void> = new Set();
+  private listeners: Set<
+    (event: LocalizationActionEvent | LocalizationDropdownViewEvent | LocalizationPendingStateEvent) => void
+  > = new Set();
 
   /**
    * Subscribe to analytics events
@@ -30,6 +50,22 @@ class LocalizationAnalytics {
   subscribe(listener: (event: LocalizationActionEvent | LocalizationDropdownViewEvent) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /**
+   * Emit a localization pending-state event
+   */
+  emitPendingState(event: LocalizationPendingStateEvent) {
+    console.log('[LocalizationAnalytics] Pending state:', event);
+    this.listeners.forEach((listener) => {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error('Analytics listener error:', error);
+      }
+    });
+
+    this.sendToBackend('localization_pending_state', event);
   }
 
   /**
