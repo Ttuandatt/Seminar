@@ -86,8 +86,9 @@ export default function PoiDetailScreen() {
                 if (localData) {
                     setPoi({
                         ...localData,
+                        category: localData.poiType || 'SUB',
                         media: [],
-                    } as Poi);
+                    });
                     setIsUsingCachedPoi(true);
                     setLoading(false);
                     return;
