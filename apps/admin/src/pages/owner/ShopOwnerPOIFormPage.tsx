@@ -11,11 +11,13 @@ import {
   Image as ImageIcon,
   Headphones,
   PlayCircle,
+  Languages,
 } from 'lucide-react';
 import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 import { POI_CATEGORY_OPTIONS } from '../../services/poi.service';
 import { shopOwnerPortalService } from '../../services/shopOwnerPortal.service';
+import { translateService } from '../../services/translate.service';
 import { useToast } from '../../components/ui/ToastProvider';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
 import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
@@ -57,6 +59,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
   const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   const L = POI_FORM_LABELS[activeLang];
 
@@ -453,6 +456,43 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     placeholder={activeLang === 'VI' ? L.namePlaceholder : L.nameEnPlaceholder}
                   />
                 </div>
+                {/* Auto-translate button — show when on non-VI tab */}
+                {activeLang !== 'VI' && !readOnly && formData.name?.trim() && (
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!formData.name?.trim() && !formData.description?.trim()) {
+                          showToast({ variant: 'error', title: 'Missing source', description: 'Please enter Vietnamese name and description first.' });
+                          return;
+                        }
+                        setTranslating(true);
+                        try {
+                          const toLang = activeLang.toLowerCase();
+                          const result = await translateService.translateBatch([formData.name || '', formData.description || ''], 'vi', toLang);
+                          if (activeLang === 'EN') {
+                            setFormData((prev) => ({ ...prev, nameEn: result.translations[0] || prev.nameEn, descriptionEn: result.translations[1] || prev.descriptionEn }));
+                          }
+                          showToast({ variant: 'success', title: `Translated to ${activeLang}`, description: 'Name and description have been auto-translated. Please review.' });
+                        } catch (error) {
+                          console.error('Translation error:', error);
+                          showToast({ variant: 'error', title: 'Translation failed', description: 'Could not auto-translate. Please try again or enter manually.' });
+                        } finally {
+                          setTranslating(false);
+                        }
+                      }}
+                      disabled={translating}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {translating ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Languages className="h-3.5 w-3.5" />
+                      )}
+                      {translating ? 'Translating...' : `Translate from Vietnamese → ${activeLang}`}
+                    </button>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     {L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}

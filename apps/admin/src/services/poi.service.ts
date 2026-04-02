@@ -135,6 +135,21 @@ export const poiService = {
         return response.data;
     },
 
+    generateTranslatedTts: async (poiId: string, text: string, targetLanguage: string, sourceLanguage: string = 'VI', voice?: string) => {
+        const response = await api.post(`/tts/generate-translated/${poiId}`, {
+            text,
+            targetLanguage,
+            sourceLanguage,
+            voice,
+        });
+        return response.data;
+    },
+
+    getTtsLanguages: async () => {
+        const response = await api.get<{ code: string; translateCode: string; defaultVoice: string; alternatives: string[] }[]>('/tts/languages');
+        return response.data;
+    },
+
     getQrCode: async (poiId: string) => {
         const response = await api.get<{
             poiId: string;

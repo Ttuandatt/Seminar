@@ -14,6 +14,24 @@ async function seedFromJson() {
     console.log(`📦 Loading from data.json (exported ${data.exportedAt})`);
     console.log(`   ${data.users.length} users, ${data.pois.length} POIs, ${data.tours.length} tours`);
 
+    // Remove relation foreign keys that cannot be provided in nested create
+    const sanitizeArray = (arr: any[] | undefined, keysToRemove: string[]) => {
+        if (!arr) return undefined;
+        return arr.map((it) => {
+            const copy: any = { ...it };
+            for (const k of keysToRemove) {
+                if (k in copy) delete copy[k];
+            }
+            return copy;
+        });
+    };
+
+    const sanitizeProfile = (p: any) => {
+        if (!p) return undefined;
+        const { userId, ...rest } = p;
+        return rest;
+    };
+
     // Delete in dependency order
     await prisma.tourPoi.deleteMany();
     await prisma.tour.deleteMany();
@@ -32,45 +50,73 @@ async function seedFromJson() {
     // Import users
     for (const user of data.users) {
         const { shopOwnerProfile, touristProfile, ...userData } = user;
+
+        const shopOwnerCreate = sanitizeProfile(shopOwnerProfile);
+        const touristCreate = sanitizeProfile(touristProfile);
+
         await prisma.user.create({
             data: {
                 ...userData,
-                ...(shopOwnerProfile ? {
-                    shopOwnerProfile: { create: shopOwnerProfile },
+                ...(shopOwnerCreate ? {
+                    shopOwnerProfile: { create: shopOwnerCreate },
                 } : {}),
-                ...(touristProfile ? {
-                    touristProfile: { create: touristProfile },
+                ...(touristCreate ? {
+                    touristProfile: { create: touristCreate },
                 } : {}),
             },
         });
     }
     console.log(`✅ Imported ${data.users.length} users`);
 
+    // Track created POI IDs
+    const createdPoiIds = new Set<string>();
+
     // Import POIs
     for (const poi of data.pois) {
         const { media, ...poiData } = poi;
-        await prisma.poi.create({
+
+        const mediaCreate = sanitizeArray(media, ['poiId']);
+
+        const createdPoi = await prisma.poi.create({
             data: {
                 ...poiData,
-                ...(media?.length ? {
-                    media: { create: media },
+                ...(mediaCreate?.length ? {
+                    media: { create: mediaCreate },
                 } : {}),
             },
         });
+        createdPoiIds.add(createdPoi.id);
     }
     console.log(`✅ Imported ${data.pois.length} POIs`);
 
     // Import tours
     for (const tour of data.tours) {
         const { tourPois, ...tourData } = tour;
-        await prisma.tour.create({
-            data: {
-                ...tourData,
-                ...(tourPois?.length ? {
-                    tourPois: { create: tourPois },
-                } : {}),
-            },
-        });
+
+        // Filter tourPois to only include references to created POIs
+        const validTourPois = tourPois?.filter((tp: any) => createdPoiIds.has(tp.poiId)) || [];
+        const tourPoisCreate = sanitizeArray(validTourPois, ['tourId']);
+
+        if (tourPoisCreate?.length !== tourPois?.length) {
+            const missingCount = (tourPois?.length || 0) - (tourPoisCreate?.length || 0);
+            console.warn(`⚠️  Tour "${tourData.nameVi}" skipping ${missingCount} POI references (not found)`);
+        }
+
+        if (tourPoisCreate?.length) {
+            await prisma.tour.create({
+                data: {
+                    ...tourData,
+                    tourPois: {
+                        create: tourPoisCreate,
+                    },
+                },
+            });
+        } else {
+            // Create tour without POIs if none are valid
+            await prisma.tour.create({
+                data: tourData,
+            });
+        }
     }
     console.log(`✅ Imported ${data.tours.length} tours`);
 }

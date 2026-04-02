@@ -20,15 +20,71 @@ const VOICE_MAP: Record<string, { default: string; alternatives: string[] }> = {
         default: 'en-US-AriaNeural',
         alternatives: ['en-US-GuyNeural', 'en-US-JennyNeural'],
     },
+    JA: {
+        default: 'ja-JP-NanamiNeural',
+        alternatives: ['ja-JP-KeitaNeural'],
+    },
+    KO: {
+        default: 'ko-KR-SunHiNeural',
+        alternatives: ['ko-KR-InJoonNeural'],
+    },
+    'ZH-CN': {
+        default: 'zh-CN-XiaoxiaoNeural',
+        alternatives: ['zh-CN-YunxiNeural'],
+    },
+    'ZH-TW': {
+        default: 'zh-TW-HsiaoChenNeural',
+        alternatives: ['zh-TW-YunJheNeural'],
+    },
+    FR: {
+        default: 'fr-FR-DeniseNeural',
+        alternatives: ['fr-FR-HenriNeural'],
+    },
+    DE: {
+        default: 'de-DE-KatjaNeural',
+        alternatives: ['de-DE-ConradNeural'],
+    },
+    ES: {
+        default: 'es-ES-ElviraNeural',
+        alternatives: ['es-ES-AlvaroNeural'],
+    },
+    TH: {
+        default: 'th-TH-PremwadeeNeural',
+        alternatives: ['th-TH-NiwatNeural'],
+    },
+    RU: {
+        default: 'ru-RU-SvetlanaNeural',
+        alternatives: ['ru-RU-DmitryNeural'],
+    },
 };
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads', 'tts');
+
+import { TranslateService } from '../translate/translate.service';
+
+// Map TTS language codes to Google Translate language codes
+const LANG_TO_TRANSLATE_CODE: Record<string, string> = {
+    VI: 'vi',
+    EN: 'en',
+    JA: 'ja',
+    KO: 'ko',
+    'ZH-CN': 'zh-CN',
+    'ZH-TW': 'zh-TW',
+    FR: 'fr',
+    DE: 'de',
+    ES: 'es',
+    TH: 'th',
+    RU: 'ru',
+};
 
 @Injectable()
 export class TtsService {
     private readonly logger = new Logger(TtsService.name);
 
-    constructor(private prisma: PrismaService) {
+    constructor(
+        private prisma: PrismaService,
+        private translateService: TranslateService,
+    ) {
         if (!existsSync(UPLOADS_DIR)) {
             mkdirSync(UPLOADS_DIR, { recursive: true });
         }
@@ -45,10 +101,10 @@ export class TtsService {
         });
         if (!poi) throw new NotFoundException('POI not found');
 
-        const voiceName = voice || VOICE_MAP[language]?.default;
+        const voiceName = voice || VOICE_MAP[language]?.default || VOICE_MAP[language.toUpperCase()]?.default;
         if (!voiceName) {
             throw new BadRequestException(
-                `Không hỗ trợ ngôn ngữ: ${language}. Chỉ hỗ trợ VI và EN.`,
+                `Không hỗ trợ ngôn ngữ: ${language}. Hỗ trợ: ${Object.keys(VOICE_MAP).join(', ')}`,
             );
         }
 
@@ -113,6 +169,55 @@ export class TtsService {
             sizeBytes: media.sizeBytes,
             voice: voiceName,
         };
+    }
+
+    /**
+     * Auto-translate text from source language to target language, then generate TTS.
+     * This is the main flow: user writes Vietnamese → system translates → generates audio.
+     */
+    async generateWithTranslation(
+        poiId: string,
+        targetLanguage: string, // e.g. 'EN', 'JA', 'KO'
+        sourceText: string,
+        sourceLanguage: string = 'VI',
+        voice?: string,
+    ) {
+        let finalText = sourceText;
+        const srcCode = LANG_TO_TRANSLATE_CODE[sourceLanguage.toUpperCase()] || sourceLanguage.toLowerCase();
+        const tgtCode = LANG_TO_TRANSLATE_CODE[targetLanguage.toUpperCase()] || targetLanguage.toLowerCase();
+
+        // Only translate if source and target are different
+        if (srcCode !== tgtCode) {
+            this.logger.log(`Translating [${srcCode} → ${tgtCode}]: "${sourceText.substring(0, 50)}..."`);
+            const result = await this.translateService.translate(sourceText, srcCode, tgtCode);
+            finalText = result.translatedText;
+            this.logger.log(`Translation result: "${finalText.substring(0, 50)}..."`);
+        }
+
+        // Map target language to MediaLanguage enum (DB only supports VI, EN, ALL)
+        // For non-VI/EN languages, we store as 'EN' (foreign) with a descriptive name
+        const dbLanguage: MediaLanguage = targetLanguage.toUpperCase() === 'VI' ? MediaLanguage.VI : MediaLanguage.EN;
+
+        const result = await this.generateForPoi(poiId, dbLanguage, finalText, voice || VOICE_MAP[targetLanguage.toUpperCase()]?.default);
+
+        return {
+            ...result,
+            translatedText: finalText,
+            sourceLanguage: srcCode,
+            targetLanguage: tgtCode,
+        };
+    }
+
+    /**
+     * Get supported TTS languages with their voices.
+     */
+    getSupportedTtsLanguages() {
+        return Object.entries(VOICE_MAP).map(([code, voices]) => ({
+            code,
+            translateCode: LANG_TO_TRANSLATE_CODE[code] || code.toLowerCase(),
+            defaultVoice: voices.default,
+            alternatives: voices.alternatives,
+        }));
     }
 
     async getAvailableVoices(language?: string) {

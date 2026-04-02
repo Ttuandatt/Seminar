@@ -10,6 +10,7 @@ import { touristService } from '../../services/touristService';
 import { getMediaUrl } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
+import { useGlobalAudio } from '../../context/AudioContext';
 
 const { width } = Dimensions.get('window');
 
@@ -25,9 +26,18 @@ export default function PoiDetailScreen() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
+    const { stopAndClearAudio } = useGlobalAudio();
+
     useEffect(() => {
         fetchData();
         checkAuth();
+
+        return () => {
+            // Defer the state update to avoid commitPassiveUnmountOnFiber crash
+            setTimeout(() => {
+                stopAndClearAudio();
+            }, 0);
+        };
     }, [id]);
 
     const checkAuth = async () => {
@@ -66,7 +76,7 @@ export default function PoiDetailScreen() {
                 if (isLoggedIn) {
                     touristService.addHistory({ poiId: data.id, triggerType: 'MANUAL' }).catch(() => { });
                 } else {
-                    publicService.logTrigger({ deviceId: 'anonymous', poiId: data.id, triggerType: 'MANUAL', userAction: 'VIEW' }).catch(() => { });
+                    publicService.logTrigger({ deviceId: 'anonymous', poiId: data.id, triggerType: 'MANUAL', userAction: 'ACCEPTED' }).catch(() => { });
                 }
             }
         } catch (error) {
@@ -178,7 +188,7 @@ export default function PoiDetailScreen() {
                 </Text>
 
                 {/* Audio Player Component */}
-                {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} />}
+                {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} autoPlay />}
                 {!audio && <Text style={styles.noAudioText}>{t('poi.noAudio')}</Text>}
 
                 <View style={styles.descriptionCard}>

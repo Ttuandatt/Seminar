@@ -44,7 +44,7 @@ export default function LoginScreen() {
                     setEmail(''); setPassword('');
                     setErrors({});
                     setBanner(null);
-                    router.back();
+                    router.replace('/(tabs)');
                 }, 300);
             } else {
                 setBanner(t('login.errorNoToken') || 'Đăng nhập thất bại.');

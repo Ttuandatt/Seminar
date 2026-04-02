@@ -1,7 +1,7 @@
 import api from '../lib/api';
 import type { POI } from './poi.service';
 
-export type TourStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type TourStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
 export interface Tour {
     id: string;

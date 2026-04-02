@@ -44,9 +44,15 @@ export default function MoreScreen() {
                     displayName: profile.displayName || profile.user?.fullName || 'Tourist User',
                     email: profile.user?.email || 'tourist@gpstours.com'
                 });
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Failed to get profile', error);
-                // If token is invalid/expired, we could log them out here
+                // If token is invalid/expired, auto-logout
+                if (error?.response?.status === 401) {
+                    await AsyncStorage.removeItem('accessToken');
+                    setIsLoggedIn(false);
+                    setUserProfile(null);
+                    return;
+                }
             }
         } else {
             setIsLoggedIn(false);

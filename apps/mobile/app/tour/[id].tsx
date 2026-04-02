@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -18,9 +18,11 @@ export default function TourDetailScreen() {
     const [tour, setTour] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchData();
-    }, [id]);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchData();
+        }, [id])
+    );
 
     const fetchData = async () => {
         try {
