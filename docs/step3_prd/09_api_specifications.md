@@ -1,10 +1,10 @@
 # 🔌 API Specifications
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25  
-> **Base URL (Dev):** `http://localhost:3000/api/v1`  
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-22
+> **Base URL (Dev):** `http://localhost:3000/api/v1`
 > **Base URL (Prod):** `https://api.gpstours.vn/v1` *(chưa deploy)*
 
 ---
@@ -21,6 +21,7 @@
 | Pagination | `page`, `limit` query params |
 | Sorting | `sort`, `order` query params |
 | Error format | `{ error: { code, message, details } }` |
+| CORS | `origin: true`, `credentials: true` (hỗ trợ mobile LAN IP) |
 
 ### 1.2 Status Codes
 
@@ -496,6 +497,60 @@ Remove media from POI.
 **Headers:** `Authorization: Bearer <token>`
 
 **Response:** `204 No Content`
+
+---
+
+### GET /pois/:id/qr
+
+Get QR code information for a POI. Auto-generates if not exists.
+
+**Headers:** `Authorization: Bearer <token>` (Admin or Shop Owner)
+
+**Response (200):**
+```json
+{
+  "poiId": "uuid-123",
+  "poiName": "Chùa Linh Ứng",
+  "qrCodeUrl": "/uploads/qr/poi_uuid-123.png",
+  "qrDataUrl": "data:image/png;base64,...",
+  "qrContent": "gpstours:poi:uuid-123"
+}
+```
+
+**Notes:**
+- `qrDataUrl` is a base64 data URL for inline display in the admin UI
+- `qrCodeUrl` is the file path served by the static file server
+- If POI doesn't have a QR code yet, this endpoint auto-generates one
+
+---
+
+### POST /pois/:id/qr/regenerate
+
+Force regenerate QR code for a POI.
+
+**Headers:** `Authorization: Bearer <token>` (Admin only)
+
+**Response (200):**
+```json
+{
+  "poiId": "uuid-123",
+  "qrCodeUrl": "/uploads/qr/poi_uuid-123.png",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
+---
+
+### GET /pois/:id/qr/download
+
+Download QR code as PNG file.
+
+**Headers:** `Authorization: Bearer <token>` (Admin or Shop Owner)
+
+**Response:** Binary PNG file download (`Content-Disposition: attachment`)
+
+**Errors:**
+- `404`: POI not found
 
 ---
 
@@ -1039,6 +1094,64 @@ Get POIs owned by current Shop Owner.
 
 ---
 
+### GET /shop-owner/pois/:id
+
+Get full detail of a single POI owned by the current Shop Owner. Used to populate the edit form and display existing media/audio.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "nameVi": "Quán Bún Mắm Tùng",
+  "nameEn": "Tung Bun Mam Restaurant",
+  "descriptionVi": "...",
+  "descriptionEn": "...",
+  "category": "DINING",
+  "status": "ACTIVE",
+  "latitude": 10.7575,
+  "longitude": 106.6993,
+  "triggerRadius": 15,
+  "ownerId": "user-uuid",
+  "createdAt": "2026-03-01T00:00:00Z",
+  "updatedAt": "2026-03-20T00:00:00Z",
+  "media": [
+    {
+      "id": "media-uuid",
+      "type": "IMAGE",
+      "language": "ALL",
+      "url": "/uploads/abc.jpg",
+      "originalName": "shop-photo.jpg",
+      "sizeBytes": 245000
+    },
+    {
+      "id": "media-uuid-2",
+      "type": "AUDIO",
+      "language": "VI",
+      "url": "/uploads/tts/tts_vi.mp3",
+      "originalName": "tts_vi.mp3",
+      "sizeBytes": 125000
+    }
+  ],
+  "owner": {
+    "id": "user-uuid",
+    "fullName": "Nguyễn Văn A",
+    "shopOwnerProfile": {
+      "shopName": "Quán Bún Mắm Tùng"
+    }
+  }
+}
+```
+
+**Errors:**
+- `403`: Not your POI (`ownerId !== current_user.id`)
+- `404`: POI not found or soft-deleted
+
+> **Ownership check:** Backend verifies `poi.ownerId === jwt.userId` before returning data. Shop Owner cannot access POIs owned by others.
+
+---
+
 ### POST /shop-owner/pois
 
 Create new POI (Shop Owner).
@@ -1149,7 +1262,92 @@ Update Shop Owner profile.
 
 ---
 
-## 9. Trigger & Analytics APIs
+## 9. TTS (Text-to-Speech) APIs
+
+> **Note:** TTS sử dụng Microsoft Edge TTS engine. Khi Admin/Shop Owner tạo hoặc cập nhật POI description, hệ thống có thể tự động hoặc thủ công sinh audio từ text.
+
+### POST /tts/generate/:poiId
+
+Generate TTS audio cho một POI. Audio cũ được archive (`orderIndex: -1`) và tự xóa sau 30 ngày.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Roles:** `ADMIN`, `SHOP_OWNER`
+
+**Request:**
+```json
+{
+  "language": "VI",
+  "voice": "vi-VN-HoaiMyNeural"
+}
+```
+
+**Available Voices:**
+
+| Language | Voice ID | Description |
+|----------|----------|-------------|
+| VI | `vi-VN-HoaiMyNeural` | Giọng nữ (mặc định) |
+| VI | `vi-VN-NamMinhNeural` | Giọng nam |
+| EN | `en-US-AriaNeural` | Female (default) |
+| EN | `en-US-GuyNeural` | Male |
+| EN | `en-US-JennyNeural` | Female (alternative) |
+
+**Response (201):**
+```json
+{
+  "id": "media-uuid",
+  "type": "AUDIO",
+  "language": "VI",
+  "url": "/uploads/tts/<uuid>/tts_vi.mp3",
+  "originalName": "tts_vi.mp3",
+  "sizeBytes": 125000,
+  "orderIndex": 0,
+  "message": "TTS audio generated successfully"
+}
+```
+
+**Audio specs:** MP3, 24 kHz, 96 kbps mono.
+
+**Errors:**
+- `400`: POI không có description cho ngôn ngữ yêu cầu
+- `404`: POI not found
+- `500`: TTS engine error
+
+---
+
+### GET /tts/voices
+
+Get danh sách available TTS voices.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query:** `?language=VI`
+
+**Response (200):**
+```json
+{
+  "voices": [
+    {
+      "id": "vi-VN-HoaiMyNeural",
+      "name": "Hoài My",
+      "language": "VI",
+      "gender": "FEMALE",
+      "isDefault": true
+    },
+    {
+      "id": "vi-VN-NamMinhNeural",
+      "name": "Nam Minh",
+      "language": "VI",
+      "gender": "MALE",
+      "isDefault": false
+    }
+  ]
+}
+```
+
+---
+
+## 10. Trigger & Analytics APIs
 
 ### POST /public/trigger-log
 
@@ -1228,7 +1426,7 @@ Export analytics data to CSV.
 
 ---
 
-## 10. Error Response Format
+## 11. Error Response Format
 
 ```json
 {
@@ -1257,19 +1455,21 @@ Export analytics data to CSV.
 
 ---
 
-## 11. API Summary
+## 12. API Summary
 
 | Section | Endpoints | Auth Required |
 |---------|-----------|---------------|
 | 2. Auth | 6 | No (except logout) |
-| 3. POI Admin | 8 | Yes (Bearer JWT) |
-| 4. Tour Admin | 6 | Yes (Bearer JWT) |
-| 5. Upload | 2 | Yes (Bearer JWT) |
-| 6. Public | 6 | No |
-| 7. Tourist User | 9 | Yes (Tourist JWT) |
-| **8. Shop Owner** | **9** | **Yes (Shop Owner JWT)** |
-| 9. Analytics | 3 | Mixed |
-| **Total** | **49** | |
+| 3. User Profile | 2 | Yes (Bearer JWT) |
+| 4. POI Admin | 8 | Yes (Bearer JWT) |
+| 5. Tour Admin | 6 | Yes (Bearer JWT) |
+| 6. Upload | 2 | Yes (Bearer JWT) |
+| 7. Public | 7 | No |
+| 8. Tourist User | 9 | Yes (Tourist JWT) |
+| **9. Shop Owner** | **9** | **Yes (Shop Owner JWT)** |
+| **10. TTS** | **2** | **Yes (Admin/Shop Owner JWT)** |
+| 11. Analytics | 3 | Mixed |
+| **Total** | **54** | |
 
 ---
 

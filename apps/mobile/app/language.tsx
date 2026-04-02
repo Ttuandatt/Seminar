@@ -1,33 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check, Globe } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../context/LanguageContext';
 
 const LANGUAGES = [
-    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳', description: 'Ngôn ngữ mặc định' },
-    { code: 'en', name: 'English', flag: '🇬🇧', description: 'Default language' },
+    { code: 'vi' as const, flag: '\u{1F1FB}\u{1F1F3}' },
+    { code: 'en' as const, flag: '\u{1F1EC}\u{1F1E7}' },
 ];
 
 export default function LanguageScreen() {
-    const [selected, setSelected] = useState('vi');
     const router = useRouter();
+    const { t } = useTranslation();
+    const { lang, setLanguage } = useLanguage();
 
-    useEffect(() => {
-        loadLanguage();
-    }, []);
-
-    const loadLanguage = async () => {
-        const lang = await AsyncStorage.getItem('app_language');
-        if (lang) setSelected(lang);
-    };
-
-    const selectLanguage = async (code: string) => {
-        setSelected(code);
-        await AsyncStorage.setItem('app_language', code);
-        const name = LANGUAGES.find(l => l.code === code)?.name;
-        Alert.alert('Thành công', `Đã chuyển sang ${name}`, [
-            { text: 'OK', onPress: () => router.back() }
+    const selectLanguage = async (code: 'vi' | 'en') => {
+        await setLanguage(code);
+        const name = t(`languageScreen.${code}`);
+        Alert.alert(t('common.success'), t('languageScreen.changed', { name }), [
+            { text: t('common.ok'), onPress: () => router.back() }
         ]);
     };
 
@@ -35,31 +27,31 @@ export default function LanguageScreen() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Globe size={24} color="#3b82f6" />
-                <Text style={styles.headerTitle}>Chọn ngôn ngữ</Text>
+                <Text style={styles.headerTitle}>{t('languageScreen.title')}</Text>
             </View>
             <Text style={styles.headerSubtitle}>
-                Ngôn ngữ hiển thị cho nội dung POI và audio thuyết minh
+                {t('languageScreen.subtitle')}
             </Text>
 
             <View style={styles.list}>
-                {LANGUAGES.map((lang) => (
+                {LANGUAGES.map((item) => (
                     <TouchableOpacity
-                        key={lang.code}
+                        key={item.code}
                         style={[
                             styles.langItem,
-                            selected === lang.code && styles.langItemActive,
+                            lang === item.code && styles.langItemActive,
                         ]}
-                        onPress={() => selectLanguage(lang.code)}
+                        onPress={() => selectLanguage(item.code)}
                     >
-                        <Text style={styles.flag}>{lang.flag}</Text>
+                        <Text style={styles.flag}>{item.flag}</Text>
                         <View style={styles.langInfo}>
                             <Text style={[
                                 styles.langName,
-                                selected === lang.code && styles.langNameActive,
-                            ]}>{lang.name}</Text>
-                            <Text style={styles.langDesc}>{lang.description}</Text>
+                                lang === item.code && styles.langNameActive,
+                            ]}>{t(`languageScreen.${item.code}`)}</Text>
+                            <Text style={styles.langDesc}>{t(`languageScreen.${item.code}Desc`)}</Text>
                         </View>
-                        {selected === lang.code && (
+                        {lang === item.code && (
                             <View style={styles.checkCircle}>
                                 <Check size={16} color="#fff" />
                             </View>
@@ -69,7 +61,7 @@ export default function LanguageScreen() {
             </View>
 
             <Text style={styles.note}>
-                Lưu ý: Một số POI có thể chưa có nội dung bằng ngôn ngữ bạn chọn. Khi đó, nội dung Tiếng Việt sẽ được hiển thị.
+                {t('languageScreen.note')}
             </Text>
         </View>
     );

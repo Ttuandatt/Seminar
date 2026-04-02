@@ -1,3 +1,5 @@
+import api from '../lib/api';
+
 export type ShopOwnerPOIStatus = 'ACTIVE' | 'DRAFT' | 'IN_REVIEW';
 
 export interface ShopOwnerPortalProfile {
@@ -20,6 +22,8 @@ export interface ShopOwnerPOI {
   plays: number;
   audioCompletion: number;
   coverEmoji: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ShopOwnerOverviewStat {
@@ -79,227 +83,240 @@ export interface ShopOwnerCreatePOIPayload {
   };
 }
 
-const wait = (ms = 600) => new Promise((resolve) => setTimeout(resolve, ms));
+// ─── Backend response types ───────────────────────
 
-let ownerProfile: ShopOwnerPortalProfile = {
-  id: 'owner-001',
-  businessName: 'Quán Bún Mắm Tùng',
-  ownerName: 'Nguyễn Văn Tùng',
-  email: 'tung@gpstours.vn',
-  phone: '0901 234 567',
-  address: '123 Vĩnh Khánh, Q.4, TP.HCM',
-  avatarEmoji: 'SO',
-};
+interface BackendShopOwner {
+  id: string;
+  userId: string;
+  shopName: string | null;
+  phone: string | null;
+  shopAddress: string | null;
+  user: { email: string; fullName: string };
+}
 
-let ownerPois: ShopOwnerPOI[] = [
-  {
-    id: 'poi-001',
-    name: 'Quán Bún Mắm Tùng',
-    status: 'ACTIVE',
-    address: '123 Vĩnh Khánh, Q.4',
-    lastUpdated: '2 giờ trước',
-    views: 220,
-    plays: 140,
-    audioCompletion: 64,
-    coverEmoji: 'Q1',
-  },
-  {
-    id: 'poi-002',
-    name: 'Chi nhánh 2 - Vĩnh Hội',
-    status: 'DRAFT',
-    address: '85 Vĩnh Hội, Q.4',
-    lastUpdated: 'Hôm qua',
-    views: 130,
-    plays: 70,
-    audioCompletion: 54,
-    coverEmoji: 'CN',
-  },
-];
+interface BackendPoi {
+  id: string;
+  nameVi: string;
+  nameEn?: string | null;
+  descriptionVi: string;
+  category: string;
+  status: string;
+  latitude: number;
+  longitude: number;
+  triggerRadius: number;
+  createdAt: string;
+  updatedAt: string;
+  media?: { type: string; url: string }[];
+  _count?: { viewHistory?: number; triggerLogs?: number };
+}
 
-const baseWeekly: ShopOwnerAnalyticsPoint[] = [
-  { day: 'T2', views: 52, plays: 31 },
-  { day: 'T3', views: 48, plays: 28 },
-  { day: 'T4', views: 63, plays: 37 },
-  { day: 'T5', views: 58, plays: 34 },
-  { day: 'T6', views: 64, plays: 39 },
-  { day: 'T7', views: 46, plays: 26 },
-  { day: 'CN', views: 59, plays: 35 },
-];
+interface BackendAnalytics {
+  totalViews: number;
+  totalAudioPlays: number;
+  pois: {
+    id: string;
+    nameVi: string;
+    viewCount: number;
+    audioPlayCount: number;
+    audioPlayRate: number;
+  }[];
+}
 
-const analyticsSeed: Record<'7d' | '30d' | '90d', ShopOwnerAnalytics> = {
-  '7d': {
-    summary: [
-      { label: 'Views', value: '350', change: '+12% vs tuần trước', description: 'Lượt xem POI' },
-      { label: 'Audio plays', value: '210', change: '+8% vs tuần trước', description: 'Số lần nghe audio' },
-      { label: 'Play-through', value: '60%', change: '+3% ổn định', description: 'Tỷ lệ nghe hết audio' },
-    ],
-    daily: baseWeekly,
-    breakdown: ownerPois.map((poi) => ({
-      id: poi.id,
-      name: poi.name,
-      views: poi.views,
-      plays: poi.plays,
-      completion: poi.audioCompletion,
-    })),
-  },
-  '30d': {
-    summary: [
-      { label: 'Views', value: '1.4K', change: '+18% vs tháng trước', description: 'Lượt xem POI' },
-      { label: 'Audio plays', value: '840', change: '+11% vs tháng trước', description: 'Số lần nghe audio' },
-      { label: 'Play-through', value: '58%', change: '-2% vs tháng trước', description: 'Tỷ lệ nghe hết audio' },
-    ],
-    daily: baseWeekly.map((point, index) => ({
-      day: `Tuần ${index + 1}`,
-      views: point.views * 4,
-      plays: point.plays * 4,
-    })),
-    breakdown: ownerPois.map((poi) => ({
-      id: poi.id,
-      name: poi.name,
-      views: poi.views * 4,
-      plays: poi.plays * 4,
-      completion: poi.audioCompletion - 2,
-    })),
-  },
-  '90d': {
-    summary: [
-      { label: 'Views', value: '4.3K', change: '+32% vs quý trước', description: 'Lượt xem POI' },
-      { label: 'Audio plays', value: '2.6K', change: '+24% vs quý trước', description: 'Số lần nghe audio' },
-      { label: 'Play-through', value: '61%', change: '+1% vs quý trước', description: 'Tỷ lệ nghe hết audio' },
-    ],
-    daily: baseWeekly.map((point, index) => ({
-      day: `Tháng ${index + 1}`,
-      views: point.views * 12,
-      plays: point.plays * 12,
-    })),
-    breakdown: ownerPois.map((poi) => ({
-      id: poi.id,
-      name: poi.name,
-      views: poi.views * 12,
-      plays: poi.plays * 12,
-      completion: poi.audioCompletion,
-    })),
-  },
-};
+// ─── Transformers ─────────────────────────────────
+
+function toProfile(raw: BackendShopOwner): ShopOwnerPortalProfile {
+  return {
+    id: raw.id,
+    businessName: raw.shopName || raw.user.fullName,
+    ownerName: raw.user.fullName,
+    email: raw.user.email,
+    phone: raw.phone || undefined,
+    address: raw.shopAddress || undefined,
+    avatarEmoji: (raw.shopName || raw.user.fullName).slice(0, 2).toUpperCase(),
+  };
+}
+
+function toPoi(raw: BackendPoi): ShopOwnerPOI {
+  const viewCount = raw._count?.viewHistory ?? 0;
+  const triggerCount = raw._count?.triggerLogs ?? 0;
+  const hasAudio = raw.media?.some(m => m.type === 'AUDIO') ?? false;
+
+  return {
+    id: raw.id,
+    name: raw.nameVi,
+    status: raw.status as ShopOwnerPOIStatus,
+    address: `${raw.latitude.toFixed(4)}, ${raw.longitude.toFixed(4)}`,
+    lastUpdated: formatRelativeDate(raw.updatedAt),
+    views: viewCount,
+    plays: triggerCount,
+    audioCompletion: hasAudio ? Math.min(100, Math.round((triggerCount / Math.max(viewCount, 1)) * 100)) : 0,
+    coverEmoji: raw.nameVi.slice(0, 2).toUpperCase(),
+    latitude: raw.latitude,
+    longitude: raw.longitude,
+  };
+}
+
+function formatRelativeDate(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('vi-VN');
+}
+
+function getDateRange(range: '7d' | '30d' | '90d'): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date();
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+  start.setDate(start.getDate() - days);
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0],
+  };
+}
+
+// ─── Service ──────────────────────────────────────
 
 export const shopOwnerPortalService = {
-  async login(payload: { email: string; password: string }) {
-    await wait();
-    if (!payload.email.includes('@') || payload.password.length < 6) {
-      throw new Error('Email hoặc mật khẩu không hợp lệ');
-    }
-    return { token: 'owner-mock-token', owner: ownerProfile };
-  },
-
-  async register(payload: {
-    email: string;
-    password: string;
-    fullName: string;
-    businessName: string;
-    phone?: string;
-  }) {
-    await wait(900);
-    if (!payload.email.includes('@')) {
-      throw new Error('Email không hợp lệ');
-    }
-    ownerProfile = {
-      ...ownerProfile,
-      email: payload.email,
-      ownerName: payload.fullName,
-      businessName: payload.businessName,
-      phone: payload.phone || ownerProfile.phone,
-    };
-    return { token: 'owner-mock-token', owner: ownerProfile };
-  },
-
-  async getProfile() {
-    await wait(400);
-    return ownerProfile;
+  async getProfile(): Promise<ShopOwnerPortalProfile> {
+    const { data } = await api.get<BackendShopOwner>('/shop-owner/me');
+    return toProfile(data);
   },
 
   async getOverview(): Promise<ShopOwnerOverview> {
-    await wait(500);
-    const totalViews = ownerPois.reduce((sum, poi) => sum + poi.views, 0);
-    const totalPlays = ownerPois.reduce((sum, poi) => sum + poi.plays, 0);
+    const [profileRes, poisRes] = await Promise.all([
+      api.get<BackendShopOwner>('/shop-owner/me'),
+      api.get<BackendPoi[]>('/shop-owner/pois'),
+    ]);
+
+    const profile = toProfile(profileRes.data);
+    const pois = poisRes.data.map(toPoi);
+    const totalViews = pois.reduce((sum, p) => sum + p.views, 0);
+    const totalPlays = pois.reduce((sum, p) => sum + p.plays, 0);
     const audioRate = totalViews ? Math.round((totalPlays / totalViews) * 100) : 0;
 
     return {
-      profile: ownerProfile,
+      profile,
       stats: [
         {
           label: 'My POIs',
-          value: ownerPois.length.toString(),
-          change: '+1 mới tuần này',
-          description: 'POIs đang hoạt động',
+          value: pois.length.toString(),
+          change: `${pois.filter(p => p.status === 'ACTIVE').length} active`,
+          description: 'Total POIs owned by you',
         },
         {
-          label: 'Views (7d)',
+          label: 'Total Views',
           value: totalViews.toString(),
-          change: '+12% so với tuần trước',
-          description: 'Lượt xem organic',
+          change: 'All time',
+          description: 'Across all your POIs',
         },
         {
-          label: 'Audio completion',
+          label: 'Audio Rate',
           value: `${audioRate}%`,
-          change: 'Tỉ lệ nghe hết audio',
-          description: 'Chỉ số trải nghiệm',
+          change: 'Triggers / views',
+          description: 'Audio engagement metric',
         },
       ],
-      pois: ownerPois,
+      pois,
       tips: [
-        'Bạn có thể xoá POI do mình sở hữu. Admin vẫn có thể can thiệp nếu cần thiết.',
-        'Giữ audio dưới 4 phút giúp tăng tỉ lệ nghe hết.',
+        'You can delete POIs you own. Admins can also manage them if needed.',
+        'Keep audio under 4 minutes for better completion rates.',
       ],
     };
   },
 
   async getAnalytics(range: '7d' | '30d' | '90d' = '7d'): Promise<ShopOwnerAnalytics> {
-    await wait(500);
-    return analyticsSeed[range];
+    const { startDate, endDate } = getDateRange(range);
+    const { data } = await api.get<BackendAnalytics>('/shop-owner/analytics', {
+      params: { startDate, endDate },
+    });
+
+    const totalViews = data.totalViews;
+    const totalPlays = data.totalAudioPlays;
+    const playRate = totalViews > 0 ? Math.round((totalPlays / totalViews) * 100) : 0;
+
+    const rangeLabel = range === '7d' ? '7 days' : range === '30d' ? '30 days' : '90 days';
+
+    return {
+      summary: [
+        { label: 'Views', value: totalViews.toString(), change: `Last ${rangeLabel}`, description: 'POI views' },
+        { label: 'Audio plays', value: totalPlays.toString(), change: `Last ${rangeLabel}`, description: 'Audio trigger count' },
+        { label: 'Play-through', value: `${playRate}%`, change: 'Audio / views ratio', description: 'Audio engagement' },
+      ],
+      daily: [], // Backend doesn't support daily breakdown yet
+      breakdown: data.pois.map(poi => ({
+        id: poi.id,
+        name: poi.nameVi,
+        views: poi.viewCount,
+        plays: poi.audioPlayCount,
+        completion: Math.round(poi.audioPlayRate * 100),
+      })),
+    };
   },
 
-  async updateProfile(payload: ShopOwnerProfilePayload) {
-    await wait(500);
-    ownerProfile = { ...ownerProfile, ...payload };
-    return ownerProfile;
+  async updateProfile(payload: ShopOwnerProfilePayload): Promise<ShopOwnerPortalProfile> {
+    const { data } = await api.patch<BackendShopOwner>('/shop-owner/me', {
+      shopName: payload.businessName,
+      phone: payload.phone,
+      shopAddress: payload.address,
+    });
+    return toProfile(data);
   },
 
-  async deletePoi(poiId: string) {
-    await wait(500);
-    const exists = ownerPois.find((poi) => poi.id === poiId);
-    if (!exists) {
-      throw new Error('Không tìm thấy POI thuộc quyền sở hữu của bạn.');
-    }
-    ownerPois = ownerPois.filter((poi) => poi.id !== poiId);
-    return { message: 'POI đã được xoá khỏi tài khoản của bạn.' };
+  async deletePoi(poiId: string): Promise<{ message: string }> {
+    await api.delete(`/pois/${poiId}`);
+    return { message: 'POI has been deleted.' };
   },
 
-  async createPoi(payload: ShopOwnerCreatePOIPayload) {
-    await wait(700);
-    const nameVi = payload.nameVi?.trim();
-    if (!nameVi) {
-      throw new Error('Tên POI không được để trống.');
-    }
-    if (!payload.descriptionVi?.trim()) {
-      throw new Error('Vui lòng cung cấp mô tả tiếng Việt cho POI.');
-    }
-    if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
-      throw new Error('Toạ độ không hợp lệ.');
-    }
+  async getOnePoi(id: string) {
+    const { data } = await api.get(`/shop-owner/pois/${id}`);
+    return data;
+  },
 
-    const newPoi: ShopOwnerPOI = {
-      id: `poi-${Date.now()}`,
-      name: nameVi,
-      status: 'IN_REVIEW',
-      address: payload.address?.trim() || 'Chưa cập nhật',
-      lastUpdated: 'Vừa tạo',
+  async updatePoi(id: string, payload: Record<string, string>) {
+    const { data } = await api.put(`/shop-owner/pois/${id}`, payload);
+    return data;
+  },
+
+  async uploadMedia(poiId: string, file: File, type: 'IMAGE' | 'AUDIO', language?: 'VI' | 'EN') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    if (language) formData.append('language', language);
+    const { data } = await api.post(`/shop-owner/pois/${poiId}/media`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
+  async createPoi(payload: ShopOwnerCreatePOIPayload): Promise<ShopOwnerPOI> {
+    const formData = new FormData();
+    formData.append('nameVi', payload.nameVi);
+    if (payload.nameEn) formData.append('nameEn', payload.nameEn);
+    formData.append('descriptionVi', payload.descriptionVi);
+    if (payload.descriptionEn) formData.append('descriptionEn', payload.descriptionEn);
+    formData.append('latitude', payload.latitude.toString());
+    formData.append('longitude', payload.longitude.toString());
+
+    const { data } = await api.post('/shop-owner/pois', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return {
+      id: data.id,
+      name: payload.nameVi,
+      status: 'IN_REVIEW' as ShopOwnerPOIStatus,
+      address: `${payload.latitude.toFixed(4)}, ${payload.longitude.toFixed(4)}`,
+      lastUpdated: 'Just now',
       views: 0,
       plays: 0,
       audioCompletion: 0,
-      coverEmoji: nameVi.slice(0, 2).toUpperCase(),
+      coverEmoji: payload.nameVi.slice(0, 2).toUpperCase(),
+      latitude: payload.latitude,
+      longitude: payload.longitude,
     };
-
-    ownerPois = [newPoi, ...ownerPois];
-    return newPoi;
   },
 };

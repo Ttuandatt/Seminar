@@ -4,11 +4,15 @@ import { useRouter } from 'expo-router';
 import { touristService } from '../services/touristService';
 import { getMediaUrl } from '../services/api';
 import { Heart } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function FavoritesScreen() {
     const [favorites, setFavorites] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const { t } = useTranslation();
+    const { getPoiName } = useLanguage();
 
     useEffect(() => {
         fetchFavorites();
@@ -37,7 +41,7 @@ export default function FavoritesScreen() {
         return (
             <View style={styles.centered}>
                 <Heart size={48} color="#cbd5e1" />
-                <Text style={styles.emptyText}>Bạn chưa có địa điểm yêu thích nào.</Text>
+                <Text style={styles.emptyText}>{t('favorites.empty')}</Text>
             </View>
         );
     }
@@ -45,7 +49,7 @@ export default function FavoritesScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Địa điểm yêu thích</Text>
+                <Text style={styles.headerTitle}>{t('favorites.title')}</Text>
             </View>
 
             <FlatList
@@ -63,8 +67,8 @@ export default function FavoritesScreen() {
                         >
                             <Image source={{ uri: imageUrl }} style={styles.cardImage} />
                             <View style={styles.cardContent}>
-                                <Text style={styles.cardTitle}>{poi.nameVi}</Text>
-                                <Text style={styles.cardType}>{poi.poiType === 'MAIN' ? 'Cột mốc chính' : 'Điểm lân cận'}</Text>
+                                <Text style={styles.cardTitle}>{getPoiName(poi)}</Text>
+                                <Text style={styles.cardType}>{poi.poiType === 'MAIN' ? t('favorites.mainPoint') : t('favorites.nearbyPoint')}</Text>
                                 <View style={styles.heartIcon}>
                                     <Heart size={20} color="#e11d48" fill="#e11d48" />
                                 </View>

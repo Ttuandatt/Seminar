@@ -3,16 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { Mail, ArrowLeft } from 'lucide-react-native';
 import api from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
     const router = useRouter();
+    const { t } = useTranslation();
 
     const handleReset = async () => {
         if (!email) {
-            Alert.alert('Lỗi', 'Vui lòng nhập email.');
+            Alert.alert(t('common.error'), t('forgotPassword.errorEmpty'));
             return;
         }
         setLoading(true);
@@ -34,12 +36,12 @@ export default function ForgotPasswordScreen() {
                     <View style={styles.successCircle}>
                         <Mail size={48} color="#10b981" />
                     </View>
-                    <Text style={styles.successTitle}>Email đã được gửi!</Text>
+                    <Text style={styles.successTitle}>{t('forgotPassword.sentTitle')}</Text>
                     <Text style={styles.successText}>
-                        Nếu tài khoản với email này tồn tại, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút.
+                        {t('forgotPassword.sentMessage')}
                     </Text>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Text style={styles.backButtonText}>Quay về Đăng nhập</Text>
+                        <Text style={styles.backButtonText}>{t('forgotPassword.backToLogin')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -57,9 +59,9 @@ export default function ForgotPasswordScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.header}>
-                    <Text style={styles.title}>Quên mật khẩu?</Text>
+                    <Text style={styles.title}>{t('forgotPassword.title')}</Text>
                     <Text style={styles.subtitle}>
-                        Nhập email đăng ký của bạn, chúng tôi sẽ gửi link đặt lại mật khẩu.
+                        {t('forgotPassword.subtitle')}
                     </Text>
                 </View>
 
@@ -80,7 +82,7 @@ export default function ForgotPasswordScreen() {
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.resetButtonText}>Gửi link đặt lại</Text>
+                            <Text style={styles.resetButtonText}>{t('forgotPassword.sendButton')}</Text>
                         )}
                     </TouchableOpacity>
                 </View>

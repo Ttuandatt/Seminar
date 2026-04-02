@@ -2,6 +2,7 @@ import { Search, Bell, Menu, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { profileService } from '../../services/profile.service';
+import { useAuth } from '../../contexts/AuthContext';
 
 const getInitials = (fullName?: string) => {
   if (!fullName) return 'U';
@@ -13,14 +14,17 @@ const getInitials = (fullName?: string) => {
 
 const Header = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', 'me'],
     queryFn: profileService.getProfile,
     staleTime: 5 * 60 * 1000,
   });
 
+  const profilePath = user?.role === 'SHOP_OWNER' ? '/owner/profile' : '/admin/profile';
+
   const handleProfileClick = () => {
-    navigate('/admin/profile');
+    navigate(profilePath);
   };
 
   const renderAvatar = () => {
@@ -67,7 +71,7 @@ const Header = () => {
             {renderAvatar()}
           </div>
           <span className="text-sm font-medium text-slate-700 hidden sm:block">
-            {profile?.fullName ?? (isLoading ? 'Đang tải...' : 'Hồ sơ cá nhân')}
+            {profile?.fullName ?? (isLoading ? 'Loading...' : 'Profile')}
           </span>
         </button>
       </div>

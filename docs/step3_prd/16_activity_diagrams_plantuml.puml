@@ -1,0 +1,1413 @@
+' ============================================================
+' Activity Diagrams – PlantUML
+' Project: GPS Tours & Pho Am Thuc Vinh Khanh
+' Version: 1.0 | Date: 2026-03-28
+' ============================================================
+
+
+' ============================================================
+' UC-01: Login
+' ============================================================
+@startuml
+start
+
+:User opens Login page;
+:Show form with Email + Password;
+
+repeat
+  :Enter email/password and click "Login";
+  :Validate email format and non-empty password;
+  if (Format valid?) then (No)
+    :Show format error;
+  else (Yes)
+    repeat
+      :Lookup user by email and compare bcrypt password;
+      if (Credentials correct?) then (No)
+        :Show "Incorrect email or password";
+      else (Yes)
+        if (Account locked?) then (Yes)
+          :Show "Account has been locked. Contact administrator.";
+          stop
+        else
+          if (≥5 failed attempts in 15m?) then (Yes)
+            :Temporarily lock account and notify;
+            stop
+          else (No)
+            :Issue JWT access token (15m)\nand refresh token (7d, Redis);
+            :Redirect by role\n(Admin → Dashboard,\nShop Owner → Portal,\nTourist → App);
+            stop
+          endif
+        endif
+      endif
+    repeat while (Retry lookup?) is (Yes)
+  endif
+repeat while (Retry input?) is (Yes)
+
+@enduml
+
+
+' ============================================================
+' UC-02: Register
+' ============================================================
+@startuml
+start
+
+:User opens Registration page;
+:Show form: email, password, confirm password,\nfullName, select role (Tourist / Shop Owner);
+
+repeat
+  :Fill in form fields;
+
+  if (Selected role?) then (Shop Owner)
+    :Enter additional shopName + phone;
+  else (Tourist)
+  endif
+
+  :Click "Register";
+  :Validate input data;
+
+  if (All validations pass?) then (No)
+    split
+      :Email already exists\n"This email is already registered" [E1];
+    split again
+      :Password < 8 chars or\nmissing uppercase/digit [E2];
+    split again
+      :Password != Confirm Password\n"Passwords do not match" [E3];
+    end split
+  else (Yes)
+  endif
+repeat while (Validation failed?) is (Yes)
+
+fork
+  :Hash password with bcrypt (cost 12);
+fork again
+  :Prepare role-specific data;
+end fork
+
+:Create User record in database;
+
+if (Selected role?) then (Shop Owner [A1])
+  :Create ShopOwner record linked to User;
+else (Tourist)
+endif
+
+fork
+  :Issue JWT tokens (access + refresh);
+fork again
+  :Auto-login for Actor;
+end fork
+
+if (Role?) then (Shop Owner)
+  :Redirect to Shop Owner Portal;
+else (Tourist)
+  :Redirect to Map screen;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-03: Logout
+' ============================================================
+@startuml
+start
+
+:User clicks "Logout" button;
+:Show confirmation "Do you want to logout?";
+
+if (Confirm?) then (No [A1])
+  :Cancel — stay logged in;
+  stop
+else (Yes)
+endif
+
+fork
+  :Call API logout:\ndelete refresh token from Redis;
+fork again
+  :Clear tokens from client storage\n(localStorage / AsyncStorage);
+end fork
+
+:Redirect to login page;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-04: Forgot Password
+' ============================================================
+@startuml
+start
+
+:User clicks "Forgot Password" on login page;
+:Show email input form;
+
+:Enter email and click "Send";
+:Check if email exists in system;
+
+if (Email exists?) then (No [E1])
+  :Show success message anyway\n(prevent info leakage);
+  stop
+else (Yes)
+endif
+
+fork
+  :Generate reset token (UUID, expires 15 min);
+fork again
+  :Store token in database;
+end fork
+
+:Send email with reset link\nhttps://app/reset-password?token=<uuid>;
+:Show "Password reset email sent";
+
+:User opens link from email;
+:Enter new password;
+
+if (Token valid & not expired?) then (No [E2])
+  :Show "Link expired. Please request again.";
+  stop
+else (Yes)
+endif
+
+fork
+  :Hash new password;
+fork again
+  :Delete used token;
+end fork
+
+:Update password in database;
+:Show "Password reset successful";
+:Redirect to login page;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-05: Edit Personal Profile
+' ============================================================
+@startuml
+start
+
+:Tourist opens "Edit Profile" screen;
+:Show form with current data:\nfullName, phone (editable), email (readonly);
+
+repeat
+  :Edit information and click "Save";
+  :Validate fullName not empty;
+  if (Valid?) then (No)
+    :Show validation error;
+  else (Yes)
+  endif
+repeat while (Validation failed?) is (Yes)
+
+:Update User record in database;
+:Show "Update successful";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-10: Create POI (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "POI Management" → "+ Create POI";
+:Show POI creation form with language tabs [VI] [EN] [ZH];
+
+:Enter name and description (Vietnamese, required);
+:Select location on map or enter lat/lng;
+:Select category, set trigger_radius (default 50m);
+
+if (Add EN/ZH content?) then (Yes [A1])
+  :Enter EN and/or ZH name + description;
+else (No)
+endif
+
+if (Action?) then (Cancel [A2])
+  :Confirm cancel → redirect to list;
+  stop
+else (Save Draft / Publish)
+endif
+
+:Validate required fields;
+
+if (Valid?) then (No)
+  split
+    :Missing nameVi or lat/lng [E1];
+  split again
+    :Invalid coordinates [E2];
+  end split
+  :Return to fix form;
+  kill
+else (Yes)
+endif
+
+if (Save as?) then (Draft)
+  :Create POI record (status = DRAFT);
+else (Publish)
+  :Create POI record (status = ACTIVE);
+endif
+
+:Show "POI created successfully";
+:Redirect to POI list;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-11: View POI List (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "POI Management";
+:Show POI table: name, category, status, created date, views;
+
+fork
+  :Filter by status (DRAFT / ACTIVE / ARCHIVED);
+fork again
+  :Filter by category;
+fork again
+  :Search by name (realtime, debounce 300ms);
+end fork
+
+:Update list based on filters;
+:Admin clicks on a POI;
+:Navigate to UC-12 (View POI Detail);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-12: View POI Detail (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects POI from list (UC-11);
+:Show POI detail page;
+
+fork
+  :Name (VI/EN/ZH);
+fork again
+  :Description (VI/EN/ZH);
+fork again
+  :Location on map;
+fork again
+  :Image gallery;
+fork again
+  :Audio list;
+fork again
+  :Status + statistics;
+end fork
+
+if (Action?) then (Edit)
+  :Navigate to UC-13;
+else if (Change Status)
+  :Navigate to UC-15;
+else (View Only)
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-13: Edit POI (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin clicks "Edit" from POI detail (UC-12);
+:Show edit form with current data;
+
+repeat
+  :Modify information and click "Save Changes";
+  :Validate required fields;
+  if (Valid?) then (No [E1])
+    :Highlight errors;
+  else (Yes)
+  endif
+repeat while (Validation failed?) is (Yes)
+
+:Update POI record in database;
+:Show "Update successful";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-14: Delete POI – Soft Delete (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin clicks "Delete" on target POI;
+:Show confirmation "Are you sure you want to delete this POI?";
+
+if (Confirm?) then (No [A1])
+  :Cancel — no action;
+  stop
+else (Yes)
+endif
+
+:Set deletedAt = now() on POI record;
+:POI hidden from list and Tourist App;
+:Show "Deleted successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-15: Change POI Status (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects POI from list or detail page;
+:Show status dropdown (DRAFT / ACTIVE / ARCHIVED);
+:Select new status;
+
+if (New status = ARCHIVED?) then (Yes)
+  :Show confirmation dialog;
+  if (Confirm?) then (No)
+    :Cancel;
+    stop
+  else (Yes)
+  endif
+else (No)
+endif
+
+:Update POI.status in database;
+:Display new status badge;
+
+note right
+  If ACTIVE → POI appears
+  on Tourist App immediately
+end note
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-16: Upload Image for POI (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens POI detail / edit form;
+:Show image upload area (drag & drop);
+
+repeat
+  :Select or drag-drop image file (JPEG / PNG / WebP);
+  :Validate file format and size <= 5MB;
+  if (Valid?) then (No [E1])
+    :Show "Invalid file: [reason]";
+  else (Yes)
+  endif
+repeat while (Invalid file?) is (Yes)
+
+fork
+  :Save file to /uploads/;
+fork again
+  :Create PoiMedia record (type=IMAGE, language=ALL);
+end fork
+
+:Display image preview;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-17: Generate TTS Audio for POI (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens POI detail page;
+:Select language tab (VI / EN / ZH);
+:Click "Generate TTS Audio";
+
+:Show processing status;
+:Read POI description for selected language;
+
+if (Description exists?) then (No [E1])
+  :Show "No [language] content to generate audio";
+  stop
+else (Yes)
+endif
+
+if (Existing audio for this language?) then (Yes [A1])
+  :Delete old PoiMedia record;
+else (No)
+endif
+
+:Call TtsService.generateAudio(text, language, poiId);
+
+note right
+  VI → vi-VN-HoaiMyNeural
+  EN → en-US-AriaNeural
+  ZH → zh-CN-XiaoxiaoNeural
+end note
+
+if (TTS service OK?) then (No [E2])
+  :Show "Cannot generate audio. Please try again.";
+  stop
+else (Yes)
+endif
+
+fork
+  :Save audio file to /uploads/;
+fork again
+  :Create PoiMedia record (type=AUDIO, language=VI/EN/ZH);
+end fork
+
+:Display audio player;
+:Toast "Audio generated successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-18: View POI Map Overview (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin accesses /admin/map;
+
+fork
+  :Load all POIs (limit 200) with media;
+fork again
+  :Load all Tours with tourPois;
+end fork
+
+:Render Leaflet map centered HCM City [10.76, 106.70], zoom 15;
+:Display markers by category color (8 colors)\n+ trigger radius circles;
+
+fork
+  :Filter by status (All / Active / Draft / Archived);
+fork again
+  :Select Tour from dropdown;
+fork again
+  :Click marker POI;
+end fork
+
+split
+  :Hide/show markers by status;
+split again
+  :Draw Polyline connecting POIs by orderIndex;
+split again
+  :Show popup: name, category, status,\naudio badge, View/Edit buttons;
+end split
+
+if (Click "Edit" in popup?) then (Yes)
+  :Navigate to /admin/pois/:id/edit;
+else (No)
+  :Continue browsing map;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-19: View/Download POI QR Code (Admin, Shop Owner)
+' ============================================================
+@startuml
+start
+
+:User opens POI detail page;
+:Click "View QR Code";
+
+:Generate QR code image from POI deep link URL;
+:Display QR code preview;
+
+if (Download?) then (Yes)
+  :Click "Download QR";
+  :Download QR image file;
+else (No)
+  :Close preview;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-20: Create Own POI (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner opens "POI Management" → "+ Create New POI";
+:Show POI creation form;
+
+:Enter name and description (Vietnamese, required);
+:Select location on map;
+
+if (Add English content?) then (Yes)
+  :Enter EN name + description;
+else (No)
+endif
+
+:Click "Create POI";
+
+:Create POI record\n(ownerId = userId, createdById = userId, status = DRAFT);
+:Show "POI created successfully. Pending admin approval.";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-21: View Own POI List (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner opens "POI Management";
+:Query POIs where ownerId = userId, deletedAt = null;
+:Display list: POI name, status, views, thumbnail;
+
+:Click on a POI;
+:Navigate to POI detail (UC-22 edit form);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-22: Edit Own POI (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner selects POI from list (UC-21);
+
+if (Mode?) then (View [A1])
+  :Navigate to /owner/pois/:id (readOnly = true);
+  :All inputs disabled, only "Back" button;
+  stop
+else (Edit)
+endif
+
+:Click "Edit";
+:GET /shop-owner/pois/:id;
+:Check ownerId === userId;
+
+if (Owner match?) then (No [E1])
+  :Return 403 Forbidden;
+  :Redirect to dashboard;
+  stop
+else (Yes)
+endif
+
+:Populate form with current data\n(name, description VI/EN, coordinates, category, media);
+
+:Edit information;
+
+if (Generate TTS?) then (Yes)
+  :Click "Generate TTS Audio" (VI or EN) → UC-24;
+else (No)
+endif
+
+:Click "Save Changes";
+
+fork
+  :PUT /shop-owner/pois/:id with updated data;
+fork again
+  :POST /shop-owner/pois/:id/media for new uploads;
+end fork
+
+:Show "Update successful";
+:Redirect to /owner/dashboard;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-23: Upload Image/Audio for POI (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner opens POI edit form (UC-22) → "Media" section;
+:Show upload area (image + audio);
+
+:Select file (image or audio) and language (VI/EN/ZH/ALL);
+
+:Check ownership (ownerId === userId);
+
+if (Authorized?) then (No [E2])
+  :Return 403 Forbidden;
+  stop
+else (Yes)
+endif
+
+:Validate file (format + size);
+
+if (Valid?) then (No [E1])
+  :Show "Unsupported format or size";
+  kill
+else (Yes)
+endif
+
+fork
+  :Save file to /uploads/;
+fork again
+  :Create PoiMedia record;
+end fork
+
+:Display media preview;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-24: Generate TTS Audio (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner opens POI edit form;
+:Select language tab (VI / EN);
+:Click "Generate TTS Audio";
+
+:Check poi.ownerId === userId;
+
+if (Authorized?) then (No [E2])
+  :Return 403 Forbidden;
+  stop
+else (Yes)
+endif
+
+:Read POI description for selected language;
+
+if (Description exists?) then (No [E1])
+  :Show "No [language] content to generate audio";
+  stop
+else (Yes)
+endif
+
+:Call TtsService.generateAudio();
+
+fork
+  :Save audio file to /uploads/;
+fork again
+  :Create/replace PoiMedia record (type=AUDIO);
+end fork
+
+:Display audio player;
+:Toast "Audio generated successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-25: Delete Own POI – Soft Delete (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner selects POI from list and clicks "Delete";
+:Show confirmation dialog;
+
+if (Confirm?) then (No)
+  :Cancel;
+  stop
+else (Yes)
+endif
+
+:Check poi.ownerId === userId;
+
+if (Authorized?) then (No [E1])
+  :Return 403 Forbidden;
+  stop
+else (Yes)
+endif
+
+:Set deletedAt = now();
+:POI hidden from Tourist App and owner's list;
+:Show "Deleted successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-30: Create Tour (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "Tour Management" → "+ Create Tour";
+:Show tour creation form;
+
+:Enter tour name (Vietnamese, required);
+:Enter description (optional);
+:Search and select POIs to add;
+:Arrange POI order;
+:Click "Save";
+
+if (Tour name empty?) then (Yes [E1])
+  :Show "Please enter tour name";
+  kill
+else (No)
+endif
+
+fork
+  :Create Tour record (status = DRAFT);
+fork again
+  :Create TourPoi records with orderIndex;
+end fork
+
+:Show "Tour created successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-31: View Tour List (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "Tour Management";
+:Show tour table: name, status, POI count, created date;
+
+:Click on a tour;
+:Navigate to tour detail;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-32: Edit Tour (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects tour from list and clicks "Edit";
+:Show form with current data;
+
+:Modify name or description;
+:Click "Save";
+
+:Update Tour record;
+:Toast "Update successful";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-33: Add/Remove POI from Tour (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens tour management page (UC-31);
+:Show current POIs in tour and POI search box;
+
+split
+  :Search POI and click "+ Add to Tour";
+  if (POI already in tour?) then (Yes [E1])
+    :Show "POI already in tour";
+    kill
+  else (No)
+    :Create TourPoi record;
+  endif
+split again
+  :Click "Remove" on a POI;
+  :Delete TourPoi record;
+split again
+  :Drag & drop to reorder POIs;
+  :Update orderIndex for all TourPoi records;
+end split
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-34: Change Tour Status (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects tour and changes status from dropdown;
+
+if (New status = ARCHIVED?) then (Yes)
+  :Show confirmation dialog;
+  if (Confirm?) then (No)
+    :Cancel;
+    stop
+  else (Yes)
+  endif
+else (No)
+endif
+
+:Update Tour.status;
+:Display new status badge;
+
+note right
+  If ACTIVE → tour appears
+  on Tourist App
+end note
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-35: Delete Tour (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin clicks "Delete" on target tour;
+:Show confirmation dialog;
+
+if (Confirm?) then (No)
+  :Cancel;
+  stop
+else (Yes)
+endif
+
+:Delete Tour record and all related TourPoi records (cascade);
+:Show "Tour deleted successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-40: Create Shop Owner Account (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "Shop Management" → "+ Create Shop Owner";
+:Show form: email, temp password, fullName,\nshopName, phone, shopAddress;
+
+repeat
+  :Fill in all fields and click "Create";
+  :Check if email already exists;
+  if (Email exists?) then (Yes [E1])
+    :Show "This email is already in use";
+  else (No)
+  endif
+repeat while (Email conflict?) is (Yes)
+
+fork
+  :Create User record (role = SHOP_OWNER);
+fork again
+  :Create ShopOwner record;
+end fork
+
+:Send email notification to Shop Owner with temp password;
+:Show "Account created successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-41: View Shop List (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin opens "Shop Management";
+:Show shop table: shop name, owner email, status, POI count;
+
+fork
+  :Filter by status;
+fork again
+  :Search by name;
+end fork
+
+:Update list (realtime);
+:Click on a shop;
+:Navigate to UC-42 (View Shop Detail);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-42: View Shop Detail (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects shop from list (UC-41);
+:Show shop info: name, address, phone, email,\nstatus, POI list, statistics;
+
+if (Action?) then (Approve/Reject)
+  :Navigate to UC-43;
+else if (Lock/Unlock)
+  :Navigate to UC-45;
+else (View Only)
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-43: Approve Shop (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin views shop detail (UC-42) with PENDING status;
+:Show "Approve" and "Reject" buttons;
+
+if (Decision?) then (Approve)
+  :Update ShopOwner status → APPROVED;
+  :Notify Shop Owner: "Your shop has been approved";
+else (Reject [A1])
+  :Enter rejection reason;
+  :Update ShopOwner status → REJECTED;
+  :Send email with rejection reason;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-44: Delete Shop – Soft Delete (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin clicks "Delete Shop" from detail page (UC-42);
+:Show warning confirmation;
+
+if (Confirm?) then (No)
+  :Cancel;
+  stop
+else (Yes)
+endif
+
+:Set deletedAt on ShopOwner record;
+:Cascade: hide all shop's POIs;
+:Show "Deleted successfully";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-45: Lock/Unlock Shop Owner Account (Admin)
+' ============================================================
+@startuml
+start
+
+:Admin selects Shop Owner account;
+
+if (Current status?) then (ACTIVE → Lock)
+  :Click "Lock Account";
+  :Show confirmation;
+  if (Confirm?) then (No)
+    :Cancel;
+    stop
+  else (Yes)
+  endif
+  :Update User.status = LOCKED;
+  :Invalidate all current JWT sessions;
+  :Show "Account locked";
+else (LOCKED → Unlock [A1])
+  :Click "Unlock Account";
+  :Update User.status = ACTIVE;
+  :Show "Account unlocked";
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-46: View Own Shop Info (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner opens "Shop Info" / "Profile";
+:Query ShopOwner record by userId;
+:Display: shopName, phone, shopAddress, email;
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-47: Edit Shop Info (Shop Owner)
+' ============================================================
+@startuml
+start
+
+:Shop Owner clicks "Edit" from UC-46 screen;
+:Show form with current info;
+
+:Modify shopName, phone, shopAddress;
+:Click "Save";
+
+:Update ShopOwner record (where userId = currentUser.id);
+:Show "Update successful";
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-50: View POI Map (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist opens "Map" tab;
+:Request location permission;
+
+if (Grant permission?) then (No [A1])
+  :Map shows POIs only,\nno user location, no auto-trigger;
+else (Yes)
+endif
+
+fork
+  :Initialize MapView;
+fork again
+  :Load POIs (status=ACTIVE) from API;
+end fork
+
+:Display POI markers (color by category);
+:Show 50m radius circle around Tourist location;
+:Start GPS tracking (watchPositionAsync, update every 5m);
+
+:Tap on a marker;
+:Open bottom sheet → UC-51 (POI Detail);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-51: View POI Detail (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist taps marker on map or opens POI link;
+:Call API GET /public/pois/:id;
+
+fork
+  :Display image carousel;
+fork again
+  :Display name + description (by selected language);
+fork again
+  :Display "Play Audio" button;
+end fork
+
+:Log ViewHistory (triggerType = MANUAL);
+
+if (Action?) then (Play Audio)
+  :Navigate to UC-53;
+else if (Change Language [A1])
+  :Navigate to UC-54;
+else if (Favorite [A2])
+  :Navigate to UC-55;
+else (View Only)
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-52: Scan QR to Open POI (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist taps "Scan QR" tab or QR button on map;
+:Request camera permission;
+
+if (Grant permission?) then (No [E1])
+  :Show guide to grant camera access;
+  stop
+else (Yes)
+endif
+
+:Display QR viewfinder;
+:Point camera at QR code;
+
+:Decode QR → extract POI ID;
+
+if (QR valid & POI exists?) then (No [E2])
+  :Show "Invalid QR code";
+  stop
+else (Yes)
+endif
+
+:Call API GET /public/pois/:id;
+:Navigate to POI detail (UC-51);
+:Log ViewHistory (triggerType = QR);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-53: Listen to POI Audio (Tourist)
+' ============================================================
+@startuml
+start
+
+if (Trigger source?) then (Manual)
+  :Tap "Play Audio" in POI detail;
+else (Auto-trigger [A1])
+  :GPS detects Tourist in trigger zone;
+  :Criteria Engine selects best POI;
+endif
+
+:Find audio media matching current language (VI/EN/ZH/ALL);
+
+if (Audio exists?) then (No [E1])
+  :Audio button disabled;\n"No audio for this language";
+  stop
+else (Yes)
+endif
+
+:Call AudioContext.playGlobalAudio(url, poiId);
+
+if (Load audio OK?) then (No [E2])
+  :Show "Cannot load audio. Check connection.";
+  stop
+else (Yes)
+endif
+
+:Stream audio from server;
+:Display AudioPlayer component (progress bar, pause/resume);
+
+if (Action?) then (Pause)
+  :Tap Pause → Pause playback;
+  :Tap Resume → Resume from paused position;
+else if (Change Language [A2])
+  :Select new language (UC-54);
+  :Find audio for new language → restart playback;
+else (Listen to end)
+endif
+
+note right
+  If played >= 30s →
+  ViewHistory.audioPlayed = true
+end note
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-54: Select Content Language (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist opens "Settings" → "Language"\nor taps language button on POI page;
+:Show language options: VI / EN / ZH;
+
+:Select language;
+:Save language code to AsyncStorage ('app_language');
+
+if (Content available in selected language?) then (No [A1])
+  :Show Vietnamese (fallback)\nwith note "No [language] content";
+else (Yes)
+  :Update UI: POI name, description,\naudio player in selected language;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-55: Favorite POI (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist taps heart icon on POI detail (UC-51);
+
+if (Tourist logged in?) then (No [E1])
+  :Show "Login to save favorites";
+  :Redirect to login screen;
+  stop
+else (Yes)
+endif
+
+:Check current favorite status;
+
+if (Already favorited?) then (Yes → Remove)
+  :DELETE /tourist/favorites/{poiId};
+  :Delete Favorite record;
+  :Icon changes to empty heart;
+else (No → Add)
+  :POST /tourist/favorites/{poiId};
+  :Create Favorite record;
+  :Icon changes to filled heart;
+endif
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-56: View Visit History (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist opens "History" tab;
+
+if (Tourist logged in?) then (No [E1])
+  :Show "Login to view history";
+  stop
+else (Yes)
+endif
+
+:Call API GET /tourist/history;
+
+if (History exists?) then (No [E2])
+  :Show empty state "No visit history yet";
+  stop
+else (Yes)
+endif
+
+:Display ViewHistory list:\nPOI image, name, datetime, triggerType, audioPlayed icon;
+
+:Tap on a history item;
+:Navigate to POI detail (UC-51);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-60: View Tour List (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist opens "Tours" tab;
+:Call API GET /public/tours (status = ACTIVE);
+
+if (ACTIVE tours exist?) then (No [E1])
+  :Show "No tours available. Check back later!";
+  stop
+else (Yes)
+endif
+
+:Display tour list: name, POI count, thumbnail;
+
+:Tap on a tour;
+:Navigate to UC-61 (View Tour Detail);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-61: View Tour Detail (Tourist)
+' ============================================================
+@startuml
+start
+
+:Tourist selects tour from list (UC-60);
+:Call API GET /public/tours/:id (with POI list);
+
+fork
+  :Display tour name and description;
+fork again
+  :Display map with POI markers and polyline route;
+fork again
+  :Display POI list by order\nwith number, name, estimated distance;
+end fork
+
+:Tap on a POI in tour;
+:Navigate to UC-51 (View POI Detail);
+
+stop
+
+@enduml
+
+
+' ============================================================
+' UC-62: Create Tour (Admin) — Reference
+' ============================================================
+' Equivalent to UC-30. See UC-30 activity diagram above.
+
+
+' ============================================================
+' UC-63: Edit Tour (Admin) — Reference
+' ============================================================
+' Equivalent to UC-32. See UC-32 activity diagram above.

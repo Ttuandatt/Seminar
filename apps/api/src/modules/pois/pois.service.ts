@@ -1,20 +1,43 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreatePoiDto, UpdatePoiDto, QueryPoiDto } from './dto';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role, MediaLanguage } from '@prisma/client';
+import { TtsService } from '../tts/tts.service';
+import { QrService } from '../qr/qr.service';
+import { SeedExportService } from '../seed-export/seed-export.service';
 
 @Injectable()
 export class PoisService {
-    constructor(private prisma: PrismaService) { }
+    private readonly logger = new Logger(PoisService.name);
+
+    constructor(
+        private prisma: PrismaService,
+        private ttsService: TtsService,
+        private qrService: QrService,
+        private seedExportService: SeedExportService,
+    ) { }
 
     async create(dto: CreatePoiDto, userId: string) {
-        return this.prisma.poi.create({
+        const poi = await this.prisma.poi.create({
             data: {
                 ...dto,
                 createdById: userId,
             },
             include: { media: true },
         });
+
+        // Auto-generate TTS from description (fire-and-forget)
+        this.autoGenerateTts(poi.id, dto.descriptionVi, dto.descriptionEn);
+
+        // Auto-generate QR code (fire-and-forget)
+        this.qrService.generateForPoi(poi.id)
+            .then(url => this.logger.log(`QR code generated for POI ${poi.id}: ${url}`))
+            .catch(err => this.logger.error(`QR generation failed for POI ${poi.id}: ${err.message}`));
+
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
+
+        return poi;
     }
 
     async findAll(query: QueryPoiDto) {
@@ -91,12 +114,28 @@ export class PoisService {
     }
 
     async update(id: string, dto: UpdatePoiDto) {
-        await this.findOne(id);
-        return this.prisma.poi.update({
+        const existing = await this.findOne(id);
+        const poi = await this.prisma.poi.update({
             where: { id },
             data: dto,
             include: { media: true },
         });
+
+        // Re-generate TTS if description changed
+        const viChanged = dto.descriptionVi && dto.descriptionVi !== existing.descriptionVi;
+        const enChanged = dto.descriptionEn && dto.descriptionEn !== existing.descriptionEn;
+        if (viChanged || enChanged) {
+            this.autoGenerateTts(
+                id,
+                viChanged ? dto.descriptionVi : undefined,
+                enChanged ? dto.descriptionEn : undefined,
+            );
+        }
+
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
+
+        return poi;
     }
 
     async updateStatus(id: string, status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED') {
@@ -116,9 +155,57 @@ export class PoisService {
             throw new ForbiddenException('Only the owner or an admin can delete this POI.');
         }
 
-        return this.prisma.poi.update({
+        const result = await this.prisma.poi.update({
             where: { id },
             data: { deletedAt: new Date() },
         });
+
+        // Auto-export seed data (fire-and-forget)
+        this.seedExportService.exportSeedData().catch(() => {});
+
+        return result;
+    }
+
+    /**
+     * Strip [Address: ...] prefix that admin panel prepends to descriptions.
+     * TTS should only read the actual narration text, not metadata.
+     */
+    private cleanTextForTts(text: string): string {
+        return text.replace(/^\[Address:.*?\]\s*/s, '').trim();
+    }
+
+    private autoGenerateTts(poiId: string, descriptionVi?: string, descriptionEn?: string | null) {
+        const tasks: Promise<unknown>[] = [];
+
+        if (descriptionVi) {
+            const cleanText = this.cleanTextForTts(descriptionVi);
+            if (cleanText.length < 10) {
+                this.logger.warn(`TTS VI skipped for POI ${poiId}: cleaned text too short (${cleanText.length} chars)`);
+            } else {
+                tasks.push(
+                    this.ttsService.generateForPoi(poiId, MediaLanguage.VI, cleanText)
+                        .then(res => this.logger.log(`TTS VI generated for POI ${poiId}: ${res.url}`))
+                        .catch(err => this.logger.error(`TTS VI failed for POI ${poiId}: ${err.message}`))
+                );
+            }
+        }
+
+        if (descriptionEn) {
+            const cleanText = this.cleanTextForTts(descriptionEn);
+            if (cleanText.length < 10) {
+                this.logger.warn(`TTS EN skipped for POI ${poiId}: cleaned text too short (${cleanText.length} chars)`);
+            } else {
+                tasks.push(
+                    this.ttsService.generateForPoi(poiId, MediaLanguage.EN, cleanText)
+                        .then(res => this.logger.log(`TTS EN generated for POI ${poiId}: ${res.url}`))
+                        .catch(err => this.logger.error(`TTS EN failed for POI ${poiId}: ${err.message}`))
+                );
+            }
+        }
+
+        // Fire and forget — don't block the response
+        if (tasks.length > 0) {
+            Promise.all(tasks).catch(() => {});
+        }
     }
 }

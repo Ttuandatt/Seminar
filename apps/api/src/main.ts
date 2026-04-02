@@ -10,9 +10,9 @@ async function bootstrap() {
   // Global prefix: /api/v1
   app.setGlobalPrefix('api/v1');
 
-  // CORS
+  // CORS — allow all origins in dev (mobile device uses LAN IP)
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:19006'], // Vite + Expo
+    origin: true,
     credentials: true,
   });
 
@@ -41,7 +41,7 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`🚀 API running on http://localhost:${port}/api/v1`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 API running on http://0.0.0.0:${port}/api/v1`);
 }
 bootstrap();

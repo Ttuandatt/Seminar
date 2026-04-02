@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -13,6 +13,9 @@ import {
     PlayCircle,
     Image as ImageIcon,
     Headphones,
+    QrCode,
+    Download,
+    RefreshCw,
 } from 'lucide-react';
 import { poiService, type POI, type POIMedia, type SavePOIPayload, POI_CATEGORY_OPTIONS } from '../../services/poi.service';
 import { merchantService, type Merchant } from '../../services/merchant.service';
@@ -20,6 +23,9 @@ import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { POI_FORM_LABELS } from '../../constants/form-labels';
+import usePoiTts from '../../hooks/usePoiTts';
+import { translateService } from '../../services/translate.service';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -33,6 +39,8 @@ type MediaResource = POIMedia & {
     mimetype?: string | null;
     lang?: string | null;
     title?: string | null;
+    originalName?: string | null;
+    orderIndex?: number | null;
 };
 
 const isAudioMedia = (media: MediaResource) => {
@@ -49,16 +57,27 @@ const isAudioMedia = (media: MediaResource) => {
 
 const getMediaLabel = (media: MediaResource) => media?.language || media?.lang || 'N/A';
 
+const isActiveMedia = (media?: MediaResource | null) =>
+    Boolean(media) && (media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0);
+
+const sanitizeMediaList = (media?: MediaResource[] | null) => {
+    if (!Array.isArray(media)) return [];
+    return media.filter((item) => isActiveMedia(item));
+};
+
 const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const isEditMode = !!id;
+    const [draftPoiId, setDraftPoiId] = useState<string | null>(null);
+    const poiId = id ?? draftPoiId ?? undefined;
+    const isEditMode = !!poiId;
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
     const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
+    const L = POI_FORM_LABELS[activeLang];
     const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
 
     const [formData, setFormData] = useState({
@@ -92,6 +111,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [currentOwnerInfo, setCurrentOwnerInfo] = useState<{ id: string; label: string } | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
+    const [qrData, setQrData] = useState<{ qrDataUrl: string; qrCodeUrl: string; qrContent: string } | null>(null);
+    const [qrLoading, setQrLoading] = useState(false);
+    const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
+    const [translatingEn, setTranslatingEn] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -121,7 +144,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         ownerId: poi.owner?.id || '',
                     });
 
-                    setExistingMedia((poi.media as MediaResource[]) || []);
+                    setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
 
                     if (poi.owner) {
                         const ownerLabel = poi.owner.shopOwnerProfile?.shopName || poi.owner.fullName;
@@ -129,6 +152,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     } else {
                         setCurrentOwnerInfo(null);
                     }
+
+                    // Fetch QR code
+                    poiService.getQrCode(id)
+                        .then(qr => setQrData({ qrDataUrl: qr.qrDataUrl, qrCodeUrl: qr.qrCodeUrl, qrContent: qr.qrContent }))
+                        .catch(() => {}); // QR is non-critical
                 })
                 .catch((err) => {
                     console.error('Failed to fetch POI:', err);
@@ -169,6 +197,119 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             previews.forEach((preview) => URL.revokeObjectURL(preview.url));
         };
     }, [audioQueue]);
+
+    const refreshMedia = useCallback(async (targetPoiId?: string) => {
+        const effectivePoiId = targetPoiId ?? poiId;
+        if (!effectivePoiId) return;
+        const poi = await poiService.getOne(effectivePoiId);
+        setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
+    }, [poiId]);
+
+    const { generating: ttsGenerating, generateTts } = usePoiTts({
+        getPoiId: () => poiId,
+        getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
+        getSourceDescriptionFor: (language) => (language === 'EN' ? formData.description : undefined),
+        refreshMedia,
+        onSuccessToast: (language) =>
+            showToast({
+                variant: 'success',
+                title: `TTS ${language} đã tạo`,
+                description: `Audio ${language} đã được tạo thành công.`,
+            }),
+        onErrorToast: (language, message) =>
+            showToast({
+                variant: 'error',
+                title: `TTS ${language} thất bại`,
+                description: message,
+            }),
+        getMissingPoiMessage: () => 'Vui lòng lưu POI trước khi tạo TTS audio.',
+        getShortDescriptionMessage: (language) =>
+            language === 'VI'
+                ? 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.'
+                : 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.',
+        getTranslationFallbackMessage: (language) =>
+            language === 'EN'
+                ? 'Mô tả EN đang trống/ngắn, hệ thống đã dùng mô tả VI để dịch và tạo audio.'
+                : undefined,
+        ensurePoiExists: async () => {
+            if (poiId) {
+                return { poiId };
+            }
+
+            const { errors, lat, lng } = collectValidationState();
+            if (errors.length > 0) {
+                const primaryMessage = errors[0];
+                setError(errors.join(' '));
+                showToast({
+                    variant: 'error',
+                    title: 'Thiếu thông tin',
+                    description: primaryMessage,
+                });
+                return { handled: true };
+            }
+
+            setEnsuringPoiForTts(true);
+            try {
+                const payload = buildPayload(lat, lng, 'DRAFT');
+                const newPoi = await poiService.create(payload);
+                setDraftPoiId(newPoi.id);
+                showToast({
+                    variant: 'success',
+                    title: 'Đã lưu bản nháp',
+                    description: 'POI đã được lưu tạm thời để tạo audio TTS.',
+                });
+                return { poiId: newPoi.id };
+            } catch (error) {
+                console.error('Failed to auto-save POI for TTS:', error);
+                showToast({
+                    variant: 'error',
+                    title: 'Không thể lưu POI',
+                    description: 'Vui lòng thử lưu POI trước khi tạo audio.',
+                });
+                return { handled: true };
+            } finally {
+                setEnsuringPoiForTts(false);
+            }
+        },
+    });
+
+    const handleAutoTranslateToEnglish = useCallback(async () => {
+        const sourceName = formData.name.trim();
+        const sourceDescription = formData.description.trim();
+
+        if (!sourceName || sourceDescription.length < 10) {
+            showToast({
+                variant: 'error',
+                title: 'Thiếu nội dung tiếng Việt',
+                description: 'Cần tên và mô tả tiếng Việt (ít nhất 10 ký tự) để dịch sang tiếng Anh.',
+            });
+            return;
+        }
+
+        setTranslatingEn(true);
+        try {
+            const result = await translateService.translateBatch([sourceName, sourceDescription], 'vi', 'en');
+            setFormData((prev) => ({
+                ...prev,
+                nameEn: result.translations[0] || prev.nameEn,
+                descriptionEn: result.translations[1] || prev.descriptionEn,
+            }));
+            showToast({
+                variant: 'success',
+                title: 'Đã dịch sang tiếng Anh',
+                description: 'Tên và mô tả EN đã được cập nhật.',
+            });
+        } catch (error) {
+            console.error('Auto-translate EN failed:', error);
+            showToast({
+                variant: 'error',
+                title: 'Dịch tự động thất bại',
+                description: 'Không thể dịch nội dung sang tiếng Anh. Vui lòng thử lại.',
+            });
+        } finally {
+            setTranslatingEn(false);
+        }
+    }, [formData.name, formData.description, showToast]);
 
     // Handle File Selection with Previews
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,10 +359,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     };
 
     const confirmDeleteMedia = async () => {
-        if (!mediaToDelete || !id) return;
+        if (!mediaToDelete || !poiId) return;
         setIsDeletingMedia(true);
         try {
-            await poiService.deleteMedia(id, mediaToDelete.id);
+            await poiService.deleteMedia(poiId, mediaToDelete.id);
             setExistingMedia((prev) => prev.filter((media) => media.id !== mediaToDelete.id));
             showToast({
                 variant: 'success',
@@ -268,16 +409,34 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setFormData((prev) => ({ ...prev, [name]: nextValue }));
     };
 
-    const handleSave = async (nextStatus: WorkflowStatus) => {
-        if (readOnly) return;
-
-        // Client-side validation to prevent 400 from backend
+    const collectValidationState = () => {
         const lat = parseFloat(formData.latitude);
         const lng = parseFloat(formData.longitude);
         const errors: string[] = [];
         if (!formData.name || formData.name.length < 2) errors.push('Tên POI cần ít nhất 2 ký tự.');
         if (!formData.description || formData.description.length < 10) errors.push('Mô tả tiếng Việt cần ít nhất 10 ký tự.');
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) errors.push('Vui lòng chọn vị trí trên bản đồ.');
+        return { errors, lat, lng };
+    };
+
+    const buildPayload = (lat: number, lng: number, status: WorkflowStatus): SavePOIPayload => ({
+        nameVi: formData.name,
+        nameEn: formData.nameEn,
+        descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
+        descriptionEn: formData.descriptionEn,
+        latitude: lat,
+        longitude: lng,
+        category: formData.category,
+        triggerRadius: Number(formData.triggerRadius) || 15,
+        status,
+        ownerId: formData.ownerId || null,
+    });
+
+    const handleSave = async (nextStatus: WorkflowStatus) => {
+        if (readOnly) return;
+
+        // Client-side validation to prevent 400 from backend
+        const { errors, lat, lng } = collectValidationState();
         if (errors.length > 0) {
             setError(errors.join(' '));
             return;
@@ -287,35 +446,25 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setError('');
 
         try {
-            const payload: SavePOIPayload = {
-                nameVi: formData.name,
-                nameEn: formData.nameEn,
-                descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
-                descriptionEn: formData.descriptionEn,
-                latitude: lat,
-                longitude: lng,
-                category: formData.category,
-                triggerRadius: Number(formData.triggerRadius) || 15,
-                status: nextStatus,
-                ownerId: formData.ownerId || null,
-            };
+            const payload = buildPayload(lat, lng, nextStatus);
 
-            let poiId = id;
+            let targetPoiId = poiId;
 
-            if (isEditMode) {
-                await poiService.update(id!, payload);
+            if (targetPoiId) {
+                await poiService.update(targetPoiId, payload);
             } else {
                 const newPoi = await poiService.create(payload);
-                poiId = newPoi.id;
+                targetPoiId = newPoi.id;
+                setDraftPoiId(newPoi.id);
             }
 
-            if (poiId) {
+            if (targetPoiId) {
                 const uploaders: Promise<unknown>[] = [];
 
                 if (imageQueue.length > 0) {
                     uploaders.push(
                         Promise.all(
-                            imageQueue.map((file) => poiService.uploadMedia(poiId!, file, 'IMAGE'))
+                            imageQueue.map((file) => poiService.uploadMedia(targetPoiId!, file, 'IMAGE'))
                         )
                     );
                 }
@@ -324,7 +473,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     uploaders.push(
                         Promise.all(
                             audioQueue.map(({ file, language }) =>
-                                poiService.uploadMedia(poiId!, file, 'AUDIO', language)
+                                poiService.uploadMedia(targetPoiId!, file, 'AUDIO', language)
                             )
                         )
                     );
@@ -335,9 +484,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 }
             }
 
+            const wasRouteEdit = Boolean(id);
             showToast({
                 variant: 'success',
-                title: isEditMode ? 'Đã cập nhật POI' : 'Đã tạo POI',
+                title: wasRouteEdit ? 'Đã cập nhật POI' : 'Đã tạo POI',
                 description: 'Thông tin POI đã được lưu thành công.',
             });
             navigate('/admin/pois');
@@ -358,7 +508,6 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             setLoading(false);
         }
     };
-
     const handlePreview = () => {
         if (!formData.name || !formData.description) {
             showToast({
@@ -369,6 +518,28 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             return;
         }
         setIsPreviewOpen(true);
+    };
+
+    const handleRegenerateQr = async () => {
+        if (!poiId) return;
+        setQrLoading(true);
+        try {
+            const result = await poiService.regenerateQr(poiId);
+            setQrData({ qrDataUrl: result.qrDataUrl, qrCodeUrl: result.qrCodeUrl, qrContent: `gpstours:poi:${poiId}` });
+            showToast({ variant: 'success', title: 'QR Code regenerated', description: 'Mã QR mới đã được tạo.' });
+        } catch {
+            showToast({ variant: 'error', title: 'QR regeneration failed', description: 'Không thể tạo lại mã QR.' });
+        } finally {
+            setQrLoading(false);
+        }
+    };
+
+    const handleDownloadQr = () => {
+        if (!qrData?.qrDataUrl) return;
+        const link = document.createElement('a');
+        link.download = `QR_${formData.name || 'POI'}.png`;
+        link.href = qrData.qrDataUrl;
+        link.click();
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -386,15 +557,9 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }
 
     // Determine Base URL for images
-    // Assuming backend serves static files at /uploads. 
-    // Need to prepend API URL or just / if served by same host?
-    // User's API is on localhost:3000/api. Static files probably at localhost:3000/uploads ?
-    // Let's assume relative path returned by API needs full URL if on different port.
-    // For now assuming proxy or same origin. 
+    // Assuming backend serves static files at /uploads.
     const getImageUrl = (url: string) => {
         if (url.startsWith('http')) return url;
-        // If dev mode, might need to point to API server.
-        // Quick hack: if url starts with /, assumes root.
         return `http://localhost:3000${url}`;
     };
 
@@ -426,6 +591,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const translationField = activeLang === 'VI'
         ? { name: 'name', description: 'description' }
         : { name: 'nameEn', description: 'descriptionEn' };
+    const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);
@@ -483,27 +649,40 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="font-semibold text-slate-900 flex items-center gap-2">
                                 <MapPin className="h-4 w-4 text-blue-600" />
-                                Content
+                                {L.contentHeading}
                             </h2>
-                            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                                {languageTabs.map((tab) => (
+                            <div className="flex items-center gap-3">
+                                {!readOnly && (
                                     <button
-                                        key={tab.code}
                                         type="button"
-                                        onClick={() => setActiveLang(tab.code)}
-                                        className={`rounded-full px-3 py-1 transition-all ${
-                                            activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                                        }`}
+                                        onClick={handleAutoTranslateToEnglish}
+                                        disabled={translatingEn}
+                                        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {tab.label}
+                                        {translatingEn && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                        Auto-translate VI -&gt; EN
                                     </button>
-                                ))}
+                                )}
+                                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
+                                    {languageTabs.map((tab) => (
+                                        <button
+                                            key={tab.code}
+                                            type="button"
+                                            onClick={() => setActiveLang(tab.code)}
+                                            className={`rounded-full px-3 py-1 transition-all ${
+                                                activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">POI Name *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.poiName} {activeLang === 'VI' ? L.required : ''}</label>
                                 <input
                                     name={translationField.name}
                                     value={formData[translationField.name as keyof typeof formData] as string}
@@ -516,7 +695,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Description {activeLang === 'VI' ? '*' : '(optional)'}</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}</label>
                                 <textarea
                                     name={translationField.description}
                                     value={formData[translationField.description as keyof typeof formData] as string}
@@ -528,6 +707,24 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none disabled:opacity-60"
                                     placeholder={activeLang === 'VI' ? 'Mô tả địa điểm...' : 'Optional English copy...'}
                                 />
+                                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                                    <span>{L.ttsDescription}</span>
+                                    {!readOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => generateTts(activeLang)}
+                                            disabled={ensuringPoiForTts || ttsGenerating[activeLang] || !activeDescriptionValue?.trim()}
+                                            className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {ensuringPoiForTts || ttsGenerating[activeLang] ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <Headphones className="h-3.5 w-3.5" />
+                                            )}
+                                            {activeLang === 'VI' ? L.generateVi : L.generateEn}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -535,11 +732,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
                         <h2 className="font-semibold text-slate-900 flex items-center gap-2">
                             <Globe className="h-4 w-4 text-purple-600" />
-                            Classification & Settings
+                            {L.classificationHeading}
                         </h2>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.category} {L.required}</label>
                                 <select
                                     name="category"
                                     value={formData.category}
@@ -554,7 +751,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.address}</label>
                                 <input
                                     name="address"
                                     value={formData.address}
@@ -588,20 +785,20 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
                         <div className="flex items-center justify-between gap-3">
-                            <h2 className="font-semibold text-slate-900">Location</h2>
+                            <h2 className="font-semibold text-slate-900">{L.locationHeading}</h2>
                             {mapPreview && (
                                 <button
                                     type="button"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-500"
                                     onClick={() => navigator.clipboard?.writeText(mapPreview.coordsLabel)}
                                 >
-                                    Copy coords
+                                    {L.copyCoords}
                                 </button>
                             )}
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Latitude *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.latitude} {L.required}</label>
                                 <input
                                     name="latitude"
                                     value={formData.latitude}
@@ -614,7 +811,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Longitude *</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{L.longitude} {L.required}</label>
                                 <input
                                     name="longitude"
                                     value={formData.longitude}
@@ -628,7 +825,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Trigger radius: {formData.triggerRadius} m</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">{L.triggerRadius}: {formData.triggerRadius} m</label>
                             <input
                                 name="triggerRadius"
                                 type="range"
@@ -669,7 +866,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
                         <div className="flex items-center gap-2 text-slate-900 font-semibold">
                             <ImageIcon className="h-4 w-4 text-blue-600" />
-                            Media Assets
+                            {L.mediaHeading}
                         </div>
 
                         {imageMedia.length > 0 && (
@@ -729,14 +926,14 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-slate-900 font-semibold">
                                 <Headphones className="h-4 w-4 text-blue-600" />
-                                Audio guide
+                                {L.audioGuide}
                             </div>
                             {audioMedia.length > 0 && (
                                 <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
                                     {audioMedia.map((media) => (
                                         <div key={media.id} className="flex items-center justify-between gap-3 p-3 text-sm">
                                             <div>
-                                                <p className="font-semibold text-slate-900">{media.title || `Audio ${media.id}`}</p>
+                                                <p className="font-semibold text-slate-900">{media.title || media.originalName || `Audio ${media.id}`}</p>
                                                 <p className="text-xs text-slate-500">Language: {getMediaLabel(media)}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -798,6 +995,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     ))}
                                 </div>
                             )}
+
                         </div>
                     </div>
 
@@ -893,6 +1091,51 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             <li>Ảnh tiêu đề nên có kích thước tối thiểu 1200px.</li>
                         </ul>
                     </div>
+
+                    {isEditMode && (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <QrCode className="h-4 w-4 text-blue-600" />
+                                QR Code
+                            </div>
+                            {qrData?.qrDataUrl ? (
+                                <>
+                                    <div className="flex justify-center">
+                                        <img
+                                            src={qrData.qrDataUrl}
+                                            alt="QR Code"
+                                            className="w-48 h-48 rounded-lg border border-slate-200"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 text-center break-all">{qrData.qrContent}</p>
+                                    <div className="grid gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleDownloadQr}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Download PNG
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRegenerateQr}
+                                            disabled={qrLoading}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                                        >
+                                            {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center py-4 text-center text-slate-400">
+                                    <QrCode className="h-10 w-10 mb-2" />
+                                    <p className="text-xs">QR code will be generated automatically when this POI is saved.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </aside>
             </div>
         </div>

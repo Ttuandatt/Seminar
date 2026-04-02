@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/IT/Projects/ -maxdepth 3 -name *.md)",
+      "Bash(find /d/IT/Projects/IELTS_Instructor/.claude -name *.md)",
+      "Bash(find /d/IT/Projects/Seminar/apps/api/src/modules -name \"*.dto.ts\" | xargs wc -l | tail -1 && find /d/IT/Projects/Seminar/apps/api/src/modules -name \"*.dto.ts\" | sort)",
+      "Bash(wc -l \"D:/IT/Projects/Seminar/docs/step3_prd\"/*.md | tail -1)",
+      "Bash(git -C \"D:/IT/Projects/Seminar\" log --oneline docs/ | head -20)",
+      "Bash(cd \"D:/IT/Projects/Seminar/docs\" && sed -i \\\\\n  -e 's/Tong quan/Tổng quan/g' \\\\\n  -e 's/Kien truc/Kiến trúc/g' \\\\\n  -e 's/Luong xu ly/Luồng xử lý/g' \\\\\n  -e 's/Dich thuat/Dịch thuật/g' \\\\\n  -e 's/Ban do/Bản đồ/g' \\\\\n  -e 's/Ngon ngu/Ngôn ngữ/g' \\\\\n  -e 's/Tai he thong/Tải hệ thống/g' \\\\\n  -e 's/Thuyet Minh Du Lich/Thuyết Minh Du Lịch/g' \\\\\n  -e 's/Am Thuc Thong Minh/Ẩm Thực Thông Minh/g' \\\\\n  -e 's/He thong huong dan du lich tu dong dua tren GPS/Hệ thống hướng dẫn du lịch tự động dựa trên GPS/g' \\\\\n  -e 's/ket hop audio guide da ngon ngu/kết hợp audio guide đa ngôn ngữ/g' \\\\\n  -e 's/Text-to-Speech thong minh/Text-to-Speech thông minh/g' \\\\\n  -e 's/va che do offline cho pho am thuc Vinh Khanh, Quan 4, TP.HCM/và chế độ offline cho phố ẩm thực Vĩnh Khánh, Quận 4, TP.HCM/g' \\\\\n  -e 's/He thong phuc vu 3 doi tuong chinh voi giao dien rieng biet, ket noi qua mot API Backend duy nhat/Hệ thống phục vụ 3 đối tượng chính với giao diện riêng biệt, kết nối qua một API Backend duy nhất/g' \\\\\n  -e 's/Ba vai tro,/Ba vai trò,/g' \\\\\n  -e 's/mot he sinh thai/một hệ sinh thái/g' \\\\\n  -e 's/Du khach su dung mobile app/Du khách sử dụng mobile app/g' \\\\\n  -e 's/Mo app/Mở app/g' \\\\\n  -e 's/di bo/đi bộ/g' \\\\\n  -e 's/he thong tu phat audio/hệ thống tự phát audio/g' \\\\\n  -e 's/Ban do GPS voi POI markers/Bản đồ GPS với POI markers/g' \\\\\n  -e 's/Audio da ngon ngu/Audio đa ngôn ngữ/g' \\\\\n  -e 's/Che do offline voi SQLite/Chế độ offline với SQLite/g' \\\\\n  -e 's/Tour theo lo trinh co san/Tour theo lộ trình có sẵn/g' \\\\\n  -e 's/QR Code scan cho POI/QR Code scan cho POI/g' \\\\\n  -e 's/Chu quan quan ly qua web portal/Chủ quán quản lý qua web portal/g' \\\\\n  -e 's/Dang ky quan/Đăng ký quán/g' \\\\\n  -e 's/Admin duyet phap ly/Admin duyệt pháp lý/g' \\\\\n  system-presentation-standalone.html)",
+      "Bash(cd \"D:/IT/Projects/Seminar/docs\" && sed -i \\\\\n  -e 's/Nhap text mo ta/Nhập text mô tả/g' \\\\\n  -e 's/he thong tu tao audio/hệ thống tự tạo audio/g' \\\\\n  -e 's/Upload hinh anh/Upload hình ảnh/g' \\\\\n  -e 's/audio chuyen nghiep/audio chuyên nghiệp/g' \\\\\n  -e 's/Xem analytics/Xem analytics/g' \\\\\n  -e 's/Quan ly noi dung da ngon ngu/Quản lý nội dung đa ngôn ngữ/g' \\\\\n  -e 's/Quan tri vien he thong/Quản trị viên hệ thống/g' \\\\\n  -e 's/Dashboard real-time \\(users online by role\\)/Dashboard real-time \\(users online by role\\)/g' \\\\\n  -e 's/Duyet quan an moi \\(phap ly\\)/Duyệt quán ăn mới \\(pháp lý\\)/g' \\\\\n  -e 's/Quan ly noi dung/Quản lý nội dung/g' \\\\\n  -e 's/Kien truc he thong/Kiến trúc hệ thống/g' \\\\\n  -e 's/N-tier architecture voi tach biet ro rang giua cac tang. Moi module la mot don vi doc lap/N-tier architecture với tách biệt rõ ràng giữa các tầng. Mỗi module là một đơn vị độc lập/g' \\\\\n  -e 's/Giao dien nguoi dung/Giao diện người dùng/g' \\\\\n  -e 's/Cong nghe/Công nghệ/g' \\\\\n  -e 's/Moi cong nghe duoc chon co ly do cu the, so sanh voi cac alternatives/Mỗi công nghệ được chọn có lý do cụ thể, so sánh với các alternatives/g' \\\\\n  -e 's/Backend Modules/Backend Modules/g' \\\\\n  -e 's/Moi module la mot NestJS feature module doc lap voi controller, service, va DTOs rieng/Mỗi module là một NestJS feature module độc lập với controller, service, và DTOs riêng/g' \\\\\n  -e 's/Admin CRUD + status workflow/Admin CRUD + status workflow/g' \\\\\n  -e 's/Tour CRUD + ordered POI sequences/Tour CRUD + ordered POI sequences/g' \\\\\n  -e 's/Admin quan ly Shop Owners/Admin quản lý Shop Owners/g' \\\\\n  system-presentation-standalone.html)",
+      "Bash(cd \"D:/IT/Projects/Seminar/docs\" && sed -i \\\\\n  -e 's/Luong xu ly tieu bieu/Luồng xử lý tiêu biểu/g' \\\\\n  -e 's/3 luong chinh/3 luồng chính/g' \\\\\n  -e 's/Moi luong the hien cach he thong phoi hop giua client, API gateway, va data layer/Mỗi luồng thể hiện cách hệ thống phối hợp giữa client, API gateway, và data layer/g' \\\\\n  -e 's/Tourist: Mo App/Tourist: Mở App/g' \\\\\n  -e 's/GPS Trigger/GPS Trigger/g' \\\\\n  -e 's/Phat Audio Tu Dong/Phát Audio Tự Động/g' \\\\\n  -e 's/Request GPS permission/Request GPS permission/g' \\\\\n  -e 's/watchPosition moi 2s/watchPosition mỗi 2s/g' \\\\\n  -e 's/Score &amp; rank/Score \\\\&amp; rank/g' \\\\\n  -e 's/Highlight + phat audio/Highlight + phát audio/g' \\\\\n  -e 's/Shop Owner: Dang Ky/Shop Owner: Đăng Ký/g' \\\\\n  -e 's/Tao POI/Tạo POI/g' \\\\\n  -e 's/TTS Tu Dong/TTS Tự Động/g' \\\\\n  -e 's/Dang ky</div>/Đăng ký</div>/g' \\\\\n  -e 's/Nhap thong tin quan/Nhập thông tin quán/g' \\\\\n  -e 's/Dia chi/Địa chỉ/g' \\\\\n  -e 's/toa do GPS/tọa độ GPS/g' \\\\\n  -e 's/Cho duyet/Chờ duyệt/g' \\\\\n  -e 's/Admin xet phap ly/Admin xét pháp lý/g' \\\\\n  -e 's/Duoc duyet/Được duyệt/g' \\\\\n  -e 's/Quan /Quán /g' \\\\\n  system-presentation-standalone.html)",
+      "Bash(ipconfig)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "WebSearch",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(cd:*)",
+      "Bash(npm search:*)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjZmQyNjk1Yy0wNTQ1LTQ3MmQtYmYwMS03NzhjZDc5ZWNiYTgiLCJlbWFpbCI6ImFkbWluQGdwc3RvdXJzLnZuIiwicm9sZSI6IkFETUlOIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaWF0IjoxNzczNTUyMzM1LCJleHAiOjE3NzM1NTMyMzUsImp0aSI6IjM5YTA2MjMxLTQxYjQtNDJiMS05ODAzLTYyNTlkMTMzYjhhYiJ9.yyW7dpTV870iWR--oiJqrRHPntrtfAlIU-poH3z_CSw\" && curl -s \"http://localhost:3000/api/v1/pois?limit=1\" -H \"Authorization: Bearer $TOKEN\" | node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);console.log\\(j.data?.[0]?.id, j.data?.[0]?.nameVi\\)\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjZmQyNjk1Yy0wNTQ1LTQ3MmQtYmYwMS03NzhjZDc5ZWNiYTgiLCJlbWFpbCI6ImFkbWluQGdwc3RvdXJzLnZuIiwicm9sZSI6IkFETUlOIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaWF0IjoxNzczNTUyMzM1LCJleHAiOjE3NzM1NTMyMzUsImp0aSI6IjM5YTA2MjMxLTQxYjQtNDJiMS05ODAzLTYyNTlkMTMzYjhhYiJ9.yyW7dpTV870iWR--oiJqrRHPntrtfAlIU-poH3z_CSw\" && curl -s \"http://localhost:3000/api/v1/public/pois\" | node -e \"process.stdin.on\\('data',d=>{const j=JSON.parse\\(d\\);console.log\\(JSON.stringify\\({id:j[0]?.id,name:j[0]?.nameVi},null,2\\)\\)}\\)\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjZmQyNjk1Yy0wNTQ1LTQ3MmQtYmYwMS03NzhjZDc5ZWNiYTgiLCJlbWFpbCI6ImFkbWluQGdwc3RvdXJzLnZuIiwicm9sZSI6IkFETUlOIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaWF0IjoxNzczNTUyMzM1LCJleHAiOjE3NzM1NTMyMzUsImp0aSI6IjM5YTA2MjMxLTQxYjQtNDJiMS05ODAzLTYyNTlkMTMzYjhhYiJ9.yyW7dpTV870iWR--oiJqrRHPntrtfAlIU-poH3z_CSw\" && curl -s -X POST \"http://localhost:3000/api/v1/tts/generate/d53c269d-673d-45f6-b975-b9f676d90989\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d \"{\\\\\"text\\\\\":\\\\\"Chào mừng bạn đến với Chùa Xá Lợi, một ngôi chùa lịch sử nổi tiếng tại Quận 3, Thành phố Hồ Chí Minh.\\\\\",\\\\\"language\\\\\":\\\\\"VI\\\\\"}\")",
+      "Bash(ls:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:ttuandatt.github.io)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjZmQyNjk1Yy0wNTQ1LTQ3MmQtYmYwMS03NzhjZDc5ZWNiYTgiLCJlbWFpbCI6ImFkbWluQGdwc3RvdXJzLnZuIiwicm9sZSI6IkFETUlOIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaWF0IjoxNzc0MTg1MDc0LCJleHAiOjE3NzQxODU5NzQsImp0aSI6IjNjM2U1NmM1LWE0MDYtNGJhYi1iNTE1LWQxYzViMjJiYTg3MyJ9.0TKy49bZ-5PvWa4o_SCEKgk3U3fNDcWX1uoStSJLFLA\" && curl -s -w \"\\\\nHTTP %{http_code}\" http://localhost:3000/api/v1/pois?limit=2 -H \"Authorization: Bearer $TOKEN\" 2>/dev/null | tail -5)",
+      "Bash(where python:*)",
+      "Bash(python:*)",
+      "Bash(docker ps:*)",
+      "Bash(git clone:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

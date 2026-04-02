@@ -1,9 +1,9 @@
 # 🗃️ Data Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.2  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-25
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -22,8 +22,8 @@
 │ profile (JSON) │       │ longitude(Flt) │       │ est_duration   │
 │ created_at     │       │ trigger_radius │       │ status         │
 │ updated_at     │       │ category       │       │ created_by(FK) │
-└───────┬────────┘       │ poi_type       │       │ created_at     │
-        │                │ status         │       │ updated_at     │
+└───────┬────────┘       │ status         │       │ created_at     │
+        │                │ qr_code_url    │       │ updated_at     │
    ┌────▼────────┐       │ created_by(FK) │       │ deleted_at     │
    │ Shop_Owner  │       │ owner_id (FK)  │       └───────┬────────┘
    │ (profile)   │       │ created_at     │               │
@@ -67,7 +67,7 @@
 > **Lưu ý thiết kế thực tế (Implementation Notes):**
 > - `User` là bảng hợp nhất cho cả Admin, Shop Owner, và Tourist (phân quyền bằng cột `role`).
 > - Không sử dụng PostGIS extension; tọa độ lưu trực tiếp bằng 2 trường `Float`.
-> - Không tạo bảng `QR_Code` riêng; QR validation dùng format string `gpstours:poi:<uuid>` xử lý trên code.
+> - Không tạo bảng `QR_Code` riêng; QR validation dùng format string `gpstours:poi:<uuid>` xử lý trên code. QR code PNG được auto-generate khi tạo POI, lưu tại `/uploads/qr/` và URL lưu trong trường `qr_code_url` của bảng POI.
 > - `PoiStatus` / `TourStatus` dùng giá trị `ARCHIVED` thay vì `INACTIVE`.
 
 ---
@@ -152,13 +152,16 @@
 | `id` | UUID | PK | Primary key |
 | `name_vi` | VARCHAR(200) | NOT NULL | Vietnamese name |
 | `name_en` | VARCHAR(200) | NULL | English name |
+| `name_zh` | VARCHAR(200) | NULL | Chinese name (Simplified) |
 | `description_vi` | TEXT | NOT NULL | Vietnamese description |
 | `description_en` | TEXT | NULL | English description |
+| `description_zh` | TEXT | NULL | Chinese description (Simplified) |
 | `latitude` | FLOAT | NOT NULL | GPS latitude |
 | `longitude` | FLOAT | NOT NULL | GPS longitude |
 | `trigger_radius` | INTEGER | DEFAULT 50 | Radius in meters (5-100) |
 | `category` | ENUM | NOT NULL | Values: DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
 | `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, ARCHIVED |
+| `qr_code_url` | VARCHAR(500) | NULL | URL to generated QR code PNG (`/uploads/qr/poi_<uuid>.png`) |
 | `created_by` | UUID | FK → Admin.id, NULL | Creator (Admin) |
 | `owner_id` | UUID | FK → Shop_Owner.id, NULL | POI owner (Shop Owner) |
 | `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
@@ -187,7 +190,7 @@
 | `id` | UUID | PK | Primary key |
 | `poi_id` | UUID | FK → POI.id, NOT NULL | Parent POI |
 | `type` | ENUM | NOT NULL | Values: IMAGE, AUDIO |
-| `language` | ENUM | NOT NULL | Values: VI, EN, ALL |
+| `language` | ENUM | NOT NULL | Values: VI, EN, ZH, ALL |
 | `url` | VARCHAR(500) | NOT NULL | CDN URL |
 | `filename` | VARCHAR(255) | NOT NULL | Original filename |
 | `size_bytes` | BIGINT | NOT NULL | File size |
@@ -262,7 +265,7 @@
 | `display_name` | VARCHAR(100) | NULL | Display name |
 | `auth_provider` | ENUM | NULL | Values: EMAIL, GOOGLE, FACEBOOK, APPLE |
 | `password_hash` | VARCHAR(255) | NULL | For email login |
-| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN |
+| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN, ZH |
 | `auto_play_audio` | BOOLEAN | DEFAULT true | Auto-play audio on trigger |
 | `push_token` | VARCHAR(255) | NULL | FCM/APNs token |
 | `push_enabled` | BOOLEAN | DEFAULT false | Push notification enabled |
@@ -316,7 +319,11 @@
 
 ---
 
-> **Implementation Note:** Bảng `QR_Code` riêng biệt trong PRD gốc **không được triển khai** trong MVP. Thay vào đó, QR validation sử dụng format string `gpstours:poi:<uuid>` và được xử lý trực tiếp trong code controller (`/public/qr/validate`). Cách tiếp cận này đơn giản hơn cho MVP và tránh tạo thêm entity không cần thiết.
+> **Implementation Note:** Bảng `QR_Code` riêng biệt trong PRD gốc **không được triển khai** trong MVP. Thay vào đó:
+> - QR validation sử dụng format string `gpstours:poi:<uuid>` và được xử lý trực tiếp trong code controller (`/public/qr/validate`).
+> - QR code PNG được **auto-generate** khi tạo POI bởi `QrService` (sử dụng thư viện `qrcode`), lưu tại `/uploads/qr/poi_<uuid>.png` (512x512, error correction level H).
+> - URL file QR được lưu trong trường `qr_code_url` của bảng POI.
+> - Admin có thể xem, download, và regenerate QR code thông qua API endpoints: `GET /pois/:id/qr`, `GET /pois/:id/qr/download`, `POST /pois/:id/qr/regenerate`.
 
 ---
 
@@ -398,6 +405,7 @@ interface POI {
     | 'EXPERIENCES_WORKSHOPS'
     | 'OUTDOOR_SCENIC';
   status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+  qrCodeUrl?: string; // Auto-generated QR code PNG URL
   media: POIMedia[];
   createdBy?: string;
   ownerId?: string;  // Shop Owner FK
@@ -410,7 +418,7 @@ interface POIMedia {
   id: string;
   poiId: string;
   type: 'IMAGE' | 'AUDIO';
-  language: 'VI' | 'EN' | 'ALL';
+  language: 'VI' | 'EN' | 'ZH' | 'ALL';
   url: string;
   filename: string;
   sizeBytes: number;

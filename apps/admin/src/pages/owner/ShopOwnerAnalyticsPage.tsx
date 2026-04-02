@@ -98,25 +98,31 @@ const ShopOwnerAnalyticsPage = () => {
           </div>
         </div>
         <div className="mt-6 grid gap-3 text-sm text-slate-500 md:grid-cols-[1fr_auto]">
-          <div className="flex items-end gap-4 overflow-x-auto pb-4">
-            {data.daily.map((point) => (
-              <div key={point.day} className="flex flex-col items-center gap-2">
-                <div className="flex items-end gap-1">
-                  <div
-                    className="w-3 rounded-full bg-blue-200"
-                    style={{ height: `${(point.views / maxViews) * 140 || 10}px` }}
-                    title={`${point.views} views`}
-                  />
-                  <div
-                    className="w-3 rounded-full bg-blue-500"
-                    style={{ height: `${(point.plays / maxViews) * 140 || 8}px` }}
-                    title={`${point.plays} plays`}
-                  />
+          {data.daily.length > 0 ? (
+            <div className="flex items-end gap-4 overflow-x-auto pb-4">
+              {data.daily.map((point) => (
+                <div key={point.day} className="flex flex-col items-center gap-2">
+                  <div className="flex items-end gap-1">
+                    <div
+                      className="w-3 rounded-full bg-blue-200"
+                      style={{ height: `${(point.views / maxViews) * 140 || 10}px` }}
+                      title={`${point.views} views`}
+                    />
+                    <div
+                      className="w-3 rounded-full bg-blue-500"
+                      style={{ height: `${(point.plays / maxViews) * 140 || 8}px` }}
+                      title={`${point.plays} plays`}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-600">{point.day}</span>
                 </div>
-                <span className="text-xs font-semibold text-slate-600">{point.day}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8 text-sm text-slate-400">
+              Daily breakdown coming soon
+            </div>
+          )}
           <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600">
             <p><span className="inline-block h-3 w-3 rounded-full bg-blue-200 mr-1" /> Views</p>
             <p><span className="inline-block h-3 w-3 rounded-full bg-blue-500 mr-1" /> Audio plays</p>

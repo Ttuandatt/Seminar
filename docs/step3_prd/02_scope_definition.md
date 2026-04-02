@@ -1,9 +1,9 @@
 # 📋 Scope Definition
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-10
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -56,17 +56,22 @@
 | AD-012 | Preview POI | P1 | Preview as Tourist before publish |
 | AD-013 | Upload hình ảnh | P0 | Multiple images/POI |
 | AD-014 | Upload audio | P0 | Audio file/POI |
-| AD-015 | Nội dung đa ngôn ngữ | P1 | VN/EN |
+| AD-015 | Nội dung đa ngôn ngữ | P1 | VI/EN/ZH |
+| AD-016 | TTS Audio Generation | P1 | Tạo audio từ mô tả văn bản (VI/EN/ZH) bằng msedge-tts |
+| AD-017 | Criteria Engine (Admin config) | P1 | Xem/cấu hình thuật toán chọn POI khi vùng phát âm thanh trùng nhau |
+| AD-018 | Map View tổng quan | P1 | Leaflet map hiển thị tất cả POIs, filter status, xem route Tour, legend categories |
+
 ### 2.2 Shop Owner Dashboard
 
 | ID | Feature | Priority | Description |
 |----|---------|----------|-------------|
 | SO-001 | Đăng ký Shop Owner | P1 | Self-registration với thông tin quán |
 | SO-002 | Đăng nhập Shop Owner | P1 | Login với email/password |
-| SO-003 | Quản lý POI của mình | P1 | CRUD POI(s) thuộc sở hữu |
-| SO-004 | Upload media | P1 | Ảnh + audio giới thiệu quán |
+| SO-003 | Quản lý POI của mình | P1 | CRUD POI(s) thuộc sở hữu (Create, Edit, Delete) |
+| SO-004 | Upload media | P1 | Ảnh + audio (VI/EN/ZH) giới thiệu quán |
 | SO-005 | Xem analytics | P1 | Lượt xem, audio plays của POI(s) mình |
-| SO-006 | Cập nhật profile | P1 | Thông tin shop owner |
+| SO-006 | Cập nhật profile | P1 | Thông tin shop owner (tên, địa chỉ, SĐT) |
+| SO-007 | TTS Audio Generation | P1 | Tạo audio TTS từ nội dung mô tả POI (VI/EN) |
 
 ### 2.3 Tourist App (Mobile)
 
@@ -78,7 +83,7 @@
 | TA-004 | Phát audio | P0 | Audio player |
 | TA-005 | Auto-trigger theo GPS | P0 | Geofence enter |
 | TA-006 | Quét QR fallback | P1 | Manual trigger |
-| TA-007 | Chọn ngôn ngữ | P0 | VN/EN switch |
+| TA-007 | Chọn ngôn ngữ | P0 | VI/EN/ZH switch — thay đổi cả text và audio |
 | TA-008 | Điều khiển audio | P0 | Play/Pause/Seek |
 | TA-009 | Onboarding flow | P1 | First-time user guide |
 | TA-010 | Chọn Tour | P1 | Tour selection |
@@ -87,6 +92,10 @@
 | TA-013 | Favorites | P1 | Save/unsave POIs |
 | TA-014 | View History | P1 | Xem lịch sử POIs đã xem |
 | TA-015 | Landing Page | P1 | Trang đón khách full-screen với background image, nút “Bắt đầu hành trình” + “Đã có tài khoản” |
+| TA-016 | Device Capability Check | P1 | Kiểm tra GPS và Internet khi khởi động — chặn nếu thiếu yêu cầu |
+| TA-017 | Criteria Engine (Mobile) | P1 | Khi nhiều POI trùng vùng GPS, chọn POI tốt nhất theo thuật toán scoring (priority + distance + not-played + autoPlay) |
+| TA-018 | Audio Queue (Singleton) | P0 | Global AudioContext quản lý 1 audio player duy nhất, auto-stop khi chuyển POI, seek/pause/resume |
+| TA-019 | i18n UI Strings | P1 | Quốc tế hóa giao diện app (i18next) — labels, buttons, messages chuyển ngôn ngữ cùng POI content |
 
 ### 2.4 Backend
 
@@ -103,6 +112,7 @@
 | BE-008 | Trigger Logging | P1 | GPS/QR trigger event logging |
 | BE-009 | Password Reset | P1 | Email-based reset flow |
 | BE-010 | Rate limiting | P1 | API protection |
+| BE-011 | TTS Service | P1 | msedge-tts: synthesize audio VI (vi-VN-HoaiMyNeural) / EN (en-US-AriaNeural) / ZH (zh-CN-XiaoxiaoNeural) |
 
 ---
 
@@ -191,7 +201,7 @@
 | Timeline | MVP trong 8-10 tuần |
 | Team size | Small team (2-3 devs) |
 | Budget | Limited |
-| Languages | VN/EN initially |
+| Languages | VI/EN/ZH |
 
 ---
 
@@ -290,7 +300,7 @@
 |--------|------------|--------------|
 | **POIs** | 20-50 | 500 |
 | **Tours** | 3-5 | 50 |
-| **Audio files** | 40-100 (2 lang × POIs) | 1,000 |
+| **Audio files** | 60-150 (3 lang × POIs) | 1,500 |
 | **Images** | 60-150 (3/POI) | 5,000 |
 
 ### 10.3 User Scope
@@ -300,7 +310,7 @@
 | **Admin users** | 3-5 |
 | **Tourist users** | 100-500 |
 | **Concurrent users** | 50 |
-| **Languages** | 2 (VN, EN) |
+| **Languages** | 3 (VI, EN, ZH) |
 
 ---
 

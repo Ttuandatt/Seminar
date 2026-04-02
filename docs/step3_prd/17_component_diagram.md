@@ -1,9 +1,9 @@
 # 📐 Component Diagram
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 1.2  
-> **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-03-13
+> **Phiên bản:** 2.0
+> **Ngày tạo:** 2026-02-10
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -29,9 +29,13 @@ graph TB
         AuthModule["🔐 Auth Module"]
         POIModule["📍 POI Module"]
         TourModule["🗺️ Tour Module"]
-        UploadModule["📁 Upload Module"]
+        MediaModule["📁 Media Module"]
+        TtsModule["🔊 TTS Module"]
+        QrModule["📱 QR Code Module"]
         AnalyticsModule["📊 Analytics Module"]
         UserModule["👤 User Module"]
+        MerchantsModule["🏪 Merchants Module"]
+        ProfileModule["👤 Profile Module"]
     end
 
     subgraph Data["💾 DATA LAYER"]
@@ -53,17 +57,26 @@ graph TB
     Gateway --> AuthModule
     Gateway --> POIModule
     Gateway --> TourModule
-    Gateway --> UploadModule
+    Gateway --> MediaModule
+    Gateway --> TtsModule
+    Gateway --> QrModule
     Gateway --> AnalyticsModule
     Gateway --> UserModule
+    Gateway --> MerchantsModule
+    Gateway --> ProfileModule
 
     AuthModule --> DB
     AuthModule --> Cache
     POIModule --> DB
     TourModule --> DB
-    UploadModule --> S3
+    MediaModule --> S3
+    TtsModule --> DB
+    TtsModule --> S3
+    QrModule --> DB
     AnalyticsModule --> DB
     UserModule --> DB
+    MerchantsModule --> DB
+    ProfileModule --> DB
 
     TouristApp --> NativeMaps
     AdminUI --> OSM
@@ -90,17 +103,21 @@ graph TB
 
         subgraph AdminPages["Admin Pages (role='admin')"]
             AdminDashboard["Dashboard Overview"]
-            POIList["POI List + CRUD"]
-            POIForm["POI Create/Edit Form"]
+            POIList["POI List + CRUD (List/Map toggle)"]
+            POIForm["POI Create/Edit Form + QR Code"]
             TourList["Tour List + CRUD"]
             TourForm["Tour Create/Edit Form"]
+            MapViewPage["🗺️ Map View (Leaflet, role-aware)"]
+            MerchantList["🏪 Merchant List"]
+            AdminAnalytics["📊 Analytics Dashboard"]
             AdminSettings["Settings"]
         end
 
         subgraph ShopPages["Shop Owner Pages (role='shop_owner')"]
-            ShopDashboard["Shop Dashboard"]
+            ShopDashboard["Shop Dashboard (List/Map toggle)"]
             MyPOIs["My POIs List"]
-            ShopPOIForm["POI Create/Edit Form"]
+            ShopPOIForm["POI Create/View/Edit Form + TTS"]
+            ShopMapView["🗺️ Map View (role-aware)"]
             ShopAnalytics["Analytics Dashboard"]
             ShopProfile["Profile Settings"]
         end
@@ -110,6 +127,7 @@ graph TB
             MediaUpload["MediaUploader (Images + Audio)"]
             DataTable["DataTable (sortable, filterable)"]
             FormComponents["Form Components (shadcn/ui)"]
+            FormLabels["FormLabels (VI/EN bilingual constants)"]
         end
 
         subgraph Services["API Services"]
@@ -152,35 +170,52 @@ graph TB
 graph TB
     subgraph MobileApp["React Native + Expo SDK 54"]
         Navigation["expo-router (file-based)"]
-        
+
+        subgraph Contexts["Context Providers"]
+            AudioContext["🔊 AudioContext (global audio queue)"]
+            LanguageContext["🌐 LanguageContext (i18n)"]
+        end
+
         subgraph Tabs["Tab Screens"]
             MapScreen["🗺️ MapScreen (tabs/index)"]
-            TourList["🗺️ TourListScreen (tabs/tours)"]
+            TourListScreen["🗺️ TourListScreen (tabs/tours)"]
             MoreScreen["⚙️ MoreScreen (tabs/more)"]
         end
 
         subgraph DetailScreens["Detail Screens"]
             POIDetail["📍 POIDetailScreen (poi/[id])"]
             TourDetail["🗺️ TourDetailScreen (tour/[id])"]
+            TourFollow["🧭 TourFollowScreen (tour/follow/[id])"]
+        end
+
+        subgraph AuthScreens["Auth Screens"]
+            LoginScreen["🔐 LoginScreen"]
+            RegisterScreen["📝 RegisterScreen"]
         end
 
         subgraph Components["Shared Components"]
-            AudioPlayer["🎧 AudioPlayer (expo-av)"]
+            AudioPlayer["🎧 AudioPlayer (expo-audio)"]
+            POITriggerSheet["📍 POITriggerSheet"]
         end
 
         subgraph ApiLayer["API Services"]
             ApiService["api.ts (Axios + auto LAN IP)"]
             PublicAPI["publicService.ts"]
+            AuthAPI2["authService.ts"]
             TouristAPI["touristService.ts"]
         end
     end
 
-    Navigation --> Tabs
-    Navigation --> DetailScreens
+    Navigation --> Contexts
+    Contexts --> Tabs
+    Contexts --> DetailScreens
+    Contexts --> AuthScreens
     MapScreen --> Components
     POIDetail --> Components
+    AudioPlayer --> AudioContext
     Tabs --> ApiLayer
     DetailScreens --> ApiLayer
+    AuthScreens --> ApiLayer
 ```
 
 **Tech Stack (Actual Implementation):**
@@ -224,8 +259,7 @@ graph TB
 
             subgraph POIMod["POIModule"]
                 POIController["POIController"]
-                AdminPOIController["AdminPOIController"]
-                ShopPOIController["ShopOwnerPOIController"]
+                PublicController["PublicController"]
                 POIService["POIService"]
             end
 
@@ -234,10 +268,19 @@ graph TB
                 TourService["TourService"]
             end
 
-            subgraph UploadMod["UploadModule"]
-                UploadController["UploadController"]
-                UploadService["UploadService"]
-                S3Provider["S3Provider"]
+            subgraph MediaMod["MediaModule"]
+                MediaController["MediaController"]
+                MediaService["MediaService"]
+            end
+
+            subgraph TtsMod["TtsModule"]
+                TtsController["TtsController"]
+                TtsService["TtsService (MsEdgeTTS)"]
+            end
+
+            subgraph QrMod["QrModule"]
+                QrController["QrController"]
+                QrService["QrService (qrcode lib)"]
             end
 
             subgraph AnalyticsMod["AnalyticsModule"]
@@ -248,7 +291,23 @@ graph TB
             subgraph UserMod["UserModule"]
                 UserController["UserController"]
                 UserService["UserService"]
-                ShopOwnerService["ShopOwnerService"]
+            end
+
+            subgraph MerchantsMod["MerchantsModule"]
+                MerchantsController["MerchantsController"]
+                MerchantsService["MerchantsService"]
+            end
+
+            subgraph ProfileMod["ProfileModule"]
+                ProfileController["ProfileController"]
+            end
+
+            subgraph ShopOwnerMod["ShopOwnerModule"]
+                ShopOwnerController["ShopOwnerController"]
+            end
+
+            subgraph TouristMod["TouristModule"]
+                TouristController["TouristController"]
             end
         end
 
@@ -268,26 +327,45 @@ graph TB
 ```mermaid
 graph LR
     AuthMod2["AuthModule"] --> UserMod2["UserModule"]
-    POIMod2["POIModule"] --> UploadMod2["UploadModule"]
+    POIMod2["POIModule"] --> MediaMod2["MediaModule"]
     POIMod2 --> AuthMod2
     TourMod2["TourModule"] --> POIMod2
     TourMod2 --> AuthMod2
+    TtsMod2["TtsModule"] --> POIMod2
+    TtsMod2 --> AuthMod2
+    QrMod2["QrModule"] --> POIMod2
+    QrMod2 --> AuthMod2
     AnalyticsMod2["AnalyticsModule"] --> POIMod2
     AnalyticsMod2 --> AuthMod2
     ShopMod["ShopOwnerModule"] --> POIMod2
     ShopMod --> AuthMod2
     ShopMod --> AnalyticsMod2
+    MerchantsMod2["MerchantsModule"] --> AuthMod2
+    ProfileMod2["ProfileModule"] --> AuthMod2
+    TouristMod2["TouristModule"] --> AuthMod2
+    TouristMod2 --> POIMod2
 ```
 
 ### 3.2 API Route Structure
 
 | Prefix | Controller | Guard | Description |
 |--------|-----------|-------|-------------|
-| `/auth/*` | AuthController | None (public) | Login, Register |
-| `/admin/*` | Admin*Controller | JWT + RolesGuard('admin') | Admin CRUD operations |
-| `/shop-owner/*` | ShopOwner*Controller | JWT + RolesGuard('shop_owner') | Shop Owner operations |
-| `/public/*` | Public*Controller | None (public) | Tourist read-only APIs |
-| `/upload/*` | UploadController | JWT | Media upload |
+| `/auth/*` | AuthController | None (public) | Login, Register, Refresh |
+| `/public/*` | PublicController | None (public) | Tourist read-only APIs |
+| `/pois/*` | POIController | JWT + RolesGuard('admin') | Admin POI CRUD |
+| `/pois/:poiId/media/*` | MediaController | JWT + RolesGuard('admin') | POI media upload |
+| `/pois/:id/qr*` | QrController | JWT + RolesGuard('admin', 'shop_owner') | QR code get/download/regenerate |
+| `/tours/*` | TourController | JWT + RolesGuard('admin') | Admin Tour CRUD |
+| `/tts/*` | TtsController | JWT + RolesGuard('admin', 'shop_owner') | TTS generation |
+| `/admin/analytics/*` | AnalyticsController | JWT + RolesGuard('admin') | Analytics dashboard |
+| `/merchants/*` | MerchantsController | JWT + RolesGuard('admin') | Merchant management |
+| `/me`, `/me/avatar` | ProfileController | JWT | User profile |
+| `/shop-owner/pois` | ShopOwnerController | JWT + RolesGuard('shop_owner') | List own POIs |
+| `/shop-owner/pois/:id` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Get own POI detail (with media) |
+| `/shop-owner/pois/:id` (PUT) | ShopOwnerController | JWT + RolesGuard('shop_owner') | Update own POI |
+| `/shop-owner/pois/:id/media` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Upload media to own POI |
+| `/shop-owner/me`, `/shop-owner/analytics` | ShopOwnerController | JWT + RolesGuard('shop_owner') | Profile & Analytics |
+| `/tourist/*` | TouristController | JWT + RolesGuard('tourist') | Tourist favorites, history |
 
 ---
 

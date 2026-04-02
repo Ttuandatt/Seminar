@@ -8,6 +8,7 @@ type AudioContextType = {
     isPlaying: boolean;
     position: number;
     duration: number;
+    hasError: boolean;
     playGlobalAudio: (audioUrl: string, poiId: string) => void;
     pauseGlobalAudio: () => void;
     resumeGlobalAudio: () => void;
@@ -20,6 +21,7 @@ const AudioContext = createContext<AudioContextType | null>(null);
 export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
     const [currentPoiId, setCurrentPoiId] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
 
     // Provide the URL wrapped in getMediaUrl to useAudioPlayer
     const fullSource = currentAudioUrl ? getMediaUrl(currentAudioUrl) : null;
@@ -32,15 +34,38 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const status = useAudioPlayerStatus(player);
 
+    const restartIfEnded = () => {
+        if (
+            status.duration > 0 &&
+            (status.playbackState === 'ended' || status.currentTime >= status.duration - 0.05)
+        ) {
+            player.seekTo(0);
+        }
+    };
+
     // Watch for source changes to auto-play
     useEffect(() => {
         if (fullSource) {
-            player.replace(fullSource);
-            player.play();
+            setHasError(false);
+            try {
+                player.replace(fullSource);
+                player.play();
+            } catch (e) {
+                console.error('[Audio] Failed to load audio:', e);
+                setHasError(true);
+            }
         } else {
             player.pause();
         }
     }, [fullSource]);
+
+    // Detect error via playbackState (e.g. "error", "failed")
+    useEffect(() => {
+        if (status.playbackState === 'error' || status.playbackState === 'failed') {
+            console.error('[Audio] Playback error, state:', status.playbackState);
+            setHasError(true);
+        }
+    }, [status.playbackState]);
 
     const playGlobalAudio = (audioUrl: string, poiId: string) => {
         // If it's a new POI, this will trigger the useEffect above to replace & play
@@ -48,7 +73,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             setCurrentPoiId(poiId);
             setCurrentAudioUrl(audioUrl);
         } else {
-            // Same POI, just resume
+            // Same POI, ensure we restart if the previous playback already ended
+            restartIfEnded();
             player.play();
         }
     };
@@ -58,6 +84,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
 
     const resumeGlobalAudio = () => {
+        restartIfEnded();
         player.play();
     };
 
@@ -71,6 +98,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         player.seekTo(0);
         setCurrentPoiId(null);
         setCurrentAudioUrl(null);
+        setHasError(false);
     };
 
     return (
@@ -81,6 +109,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 isPlaying: status.playing,
                 position: status.currentTime * 1000, // convert back to ms for UI
                 duration: status.duration * 1000,
+                hasError,
                 playGlobalAudio,
                 pauseGlobalAudio,
                 resumeGlobalAudio,

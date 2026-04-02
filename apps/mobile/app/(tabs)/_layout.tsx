@@ -2,11 +2,10 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { Map, List, Menu } from 'lucide-react-native';
-
-import { useColorScheme } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
-    const colorScheme = useColorScheme();
+    const { t } = useTranslation();
 
     return (
         <Tabs
@@ -45,7 +44,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Map',
+                    title: t('tabs.map'),
                     headerShown: false,
                     tabBarIcon: ({ color }) => <Map size={24} color={color} />,
                 }}
@@ -53,14 +52,14 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="tours"
                 options={{
-                    title: 'Tours',
+                    title: t('tabs.tours'),
                     tabBarIcon: ({ color }) => <List size={24} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="more"
                 options={{
-                    title: 'More',
+                    title: t('tabs.more'),
                     tabBarIcon: ({ color }) => <Menu size={24} color={color} />,
                 }}
             />

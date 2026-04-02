@@ -1,15 +1,17 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { publicService, Poi } from '../../services/publicService';
-import { LocateFixed, Layers } from 'lucide-react-native';
+import { LocateFixed, Layers, ChevronRight, MapPin } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
 import AudioPlayer from '../../components/AudioPlayer';
 import { getMediaUrl } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { organicMapStyle } from '../../utils/mapStyle';
+import { useLanguage } from '../../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 const VINH_KHANH_REGION = {
@@ -19,26 +21,29 @@ const VINH_KHANH_REGION = {
     longitudeDelta: 0.02,
 };
 
+type NearbyPoi = Poi & { distanceM: number };
+
 export default function MapScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
+    const { lang, getPoiName } = useLanguage();
     const mapRef = useRef<MapView>(null);
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [pois, setPois] = useState<Poi[]>([]);
-    const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
-    const [lang, setLang] = useState<'vi' | 'en'>('vi');
     const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-    const triggeredPoiIds = useRef<Set<string>>(new Set());
+
+    // Queue: POIs currently within trigger radius, sorted by distance
+    const [nearbyQueue, setNearbyQueue] = useState<NearbyPoi[]>([]);
+    // Manual selection (tap on marker when not in range)
+    const [manualSelectedPoi, setManualSelectedPoi] = useState<Poi | null>(null);
 
     useEffect(() => {
-        const loadLang = async () => {
-            const savedLang = await AsyncStorage.getItem('appLanguage');
-            if (savedLang === 'en' || savedLang === 'vi') setLang(savedLang);
+        const loadSettings = async () => {
             const autoPlay = await AsyncStorage.getItem('autoPlayAudio');
             if (autoPlay !== null) setAutoPlayEnabled(autoPlay === 'true');
         };
-        loadLang();
+        loadSettings();
     }, []);
 
     useEffect(() => {
@@ -46,54 +51,42 @@ export default function MapScreen() {
 
         (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied');
-                return;
-            }
+            if (status !== 'granted') return;
 
-            // Quick initial location
             let initLoc = await Location.getCurrentPositionAsync({});
             setLocation(initLoc);
 
-            // Continuous background tracking for auto-trigger
             locationSubscription = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.High,
                     timeInterval: 2000,
-                    distanceInterval: 5, // update every 5 meters
+                    distanceInterval: 5,
                 },
                 (newLocation) => {
                     setLocation(newLocation);
 
-                    // Check for nearby POIs
                     if (pois.length > 0) {
+                        const inRange: NearbyPoi[] = [];
+
                         for (const poi of pois) {
                             const dist = getDistance(
                                 { latitude: newLocation.coords.latitude, longitude: newLocation.coords.longitude },
                                 { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
                             );
-
-                            const radius = poi.triggerRadius || 50; // default 50m
+                            const radius = poi.triggerRadius || 50;
 
                             if (dist <= radius) {
-                                // Inside trigger radius
-                                if (!triggeredPoiIds.current.has(poi.id)) {
-                                    triggeredPoiIds.current.add(poi.id);
-
-                                    // Auto-trigger (open bottom sheet) if user isn't already viewing one
-                                    setSelectedPoi(current => {
-                                        if (!current) {
-                                            return poi;
-                                        }
-                                        return current;
-                                    });
-                                }
-                            } else {
-                                // Walked out of radius, reset so it can trigger again next time
-                                if (triggeredPoiIds.current.has(poi.id)) {
-                                    triggeredPoiIds.current.delete(poi.id);
-                                }
+                                inRange.push({ ...poi, distanceM: dist });
                             }
+                        }
+
+                        // Sort by distance (closest first = highest priority)
+                        inRange.sort((a, b) => a.distanceM - b.distanceM);
+                        setNearbyQueue(inRange);
+
+                        // Clear manual selection if user is in range of POIs
+                        if (inRange.length > 0) {
+                            setManualSelectedPoi(null);
                         }
                     }
                 }
@@ -101,45 +94,34 @@ export default function MapScreen() {
         })();
 
         return () => {
-            if (locationSubscription) {
-                locationSubscription.remove();
-            }
+            if (locationSubscription) locationSubscription.remove();
         };
-    }, [pois]); // Re-subscribe if POIs list changes
+    }, [pois]);
 
     const fetchPois = useCallback(async () => {
         try {
             const data = await publicService.getAllPois();
             console.log('[Map] fetched POIs:', data.length);
-            data.forEach(p => console.log(`[Map] POI: ${p.nameVi} | lat=${p.latitude} lng=${p.longitude} | cat=${p.category}`));
+            data.forEach(p => console.log(`[Map] POI: ${p.nameVi} | radius=${p.triggerRadius}m | media=${p.media?.length}`));
             setPois(data);
         } catch (error) {
             console.error('[Map] fetchPois error:', error);
         }
     }, []);
 
-    // Initial load
-    useEffect(() => {
-        fetchPois();
-    }, [fetchPois]);
-
-    // Refetch every time user navigates back to this tab
-    useFocusEffect(
-        useCallback(() => {
-            fetchPois();
-        }, [fetchPois])
-    );
+    useEffect(() => { fetchPois(); }, [fetchPois]);
+    useFocusEffect(useCallback(() => { fetchPois(); }, [fetchPois]));
 
     const handleMarkerPress = (poi: Poi) => {
-        setSelectedPoi(poi);
+        // Always switch to tapped POI — clear queue view and show this POI
+        setNearbyQueue([]);
+        setManualSelectedPoi(poi);
     };
 
     const goToUserLocation = async () => {
         try {
             let loc = await Location.getLastKnownPositionAsync({});
-            if (!loc) {
-                loc = await Location.getCurrentPositionAsync({});
-            }
+            if (!loc) loc = await Location.getCurrentPositionAsync({});
             if (loc) {
                 setLocation(loc);
                 mapRef.current?.animateToRegion({
@@ -158,6 +140,24 @@ export default function MapScreen() {
         setMapType(prev => prev === 'standard' ? 'satellite' : 'standard');
     };
 
+    // Helper: get audio for a POI in current language
+    const getAudioForPoi = (poi: Poi) => {
+        return poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
+            ?? poi.media?.find(m => m.type === 'AUDIO');
+    };
+
+    const getImageForPoi = (poi: Poi) => {
+        return poi.media?.find(m => m.type === 'IMAGE');
+    };
+
+    const formatDistance = (meters: number) => {
+        return meters < 1000 ? `${Math.round(meters)}m` : `${(meters / 1000).toFixed(1)}km`;
+    };
+
+    const hasQueue = nearbyQueue.length > 0;
+    const hasManual = !hasQueue && manualSelectedPoi !== null;
+    const showBottomSheet = hasQueue || hasManual;
+
     return (
         <View style={styles.container}>
             <MapView
@@ -169,7 +169,7 @@ export default function MapScreen() {
                 showsMyLocationButton={false}
                 customMapStyle={organicMapStyle}
             >
-                {/* Range circle — geographic 50m, matches POI trigger radius */}
+                {/* User range circle */}
                 {location && (
                     <Circle
                         center={{
@@ -184,11 +184,29 @@ export default function MapScreen() {
                     />
                 )}
 
+                {/* POI trigger radius circles */}
+                {pois.map((poi) => (
+                    <Circle
+                        key={`circle-${poi.id}`}
+                        center={{ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }}
+                        radius={poi.triggerRadius || 50}
+                        fillColor={nearbyQueue.some(p => p.id === poi.id)
+                            ? "rgba(12, 74, 110, 0.15)"
+                            : "rgba(12, 74, 110, 0.06)"}
+                        strokeColor={nearbyQueue.some(p => p.id === poi.id)
+                            ? "rgba(12, 74, 110, 0.5)"
+                            : "rgba(12, 74, 110, 0.2)"}
+                        strokeWidth={1}
+                        zIndex={0}
+                    />
+                ))}
+
+                {/* POI markers */}
                 {pois.map((poi) => (
                     <Marker
                         key={poi.id}
                         coordinate={{ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }}
-                        title={poi.nameVi}
+                        title={getPoiName(poi)}
                         description={poi.category}
                         pinColor={poi.category === 'CULTURAL_LANDMARKS' ? '#EF4444' : '#F97316'}
                         tracksViewChanges={false}
@@ -197,39 +215,98 @@ export default function MapScreen() {
                 ))}
             </MapView>
 
-            <View style={[styles.mapControls, { bottom: selectedPoi ? 260 : 120 }]}>
-                <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={toggleMapType}
-                >
+            <View style={[styles.mapControls, { bottom: showBottomSheet ? 280 : 120 }]}>
+                <TouchableOpacity style={styles.controlButton} onPress={toggleMapType}>
                     <Layers size={24} color={mapType === 'satellite' ? '#F97316' : '#0f172a'} />
                 </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.controlButton, { marginTop: 12 }]}
-                    onPress={goToUserLocation}
-                >
+                <TouchableOpacity style={[styles.controlButton, { marginTop: 12 }]} onPress={goToUserLocation}>
                     <LocateFixed size={24} color="#0f172a" />
                 </TouchableOpacity>
             </View>
 
-            {selectedPoi && (() => {
-                const imageMedia = selectedPoi.media?.find(m => m.type === 'IMAGE');
-                const audioMedia = selectedPoi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
-                    ?? selectedPoi.media?.find(m => m.type === 'AUDIO');
+            {/* ===== AUDIO QUEUE BOTTOM SHEET ===== */}
+            {hasQueue && (
+                <View style={styles.queueSheet}>
+                    <View style={styles.queueHeader}>
+                        <View style={styles.queueBadge}>
+                            <MapPin size={14} color="#fff" />
+                        </View>
+                        <Text style={styles.queueTitle}>
+                            {t('map.nearbyPois', { count: nearbyQueue.length })}
+                        </Text>
+                        <TouchableOpacity onPress={() => setNearbyQueue([])}>
+                            <Text style={styles.closeButtonText}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        style={styles.queueList}
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {nearbyQueue.map((poi, index) => {
+                            const imageMedia = getImageForPoi(poi);
+                            const audioMedia = getAudioForPoi(poi);
+                            const isFirst = index === 0;
+
+                            return (
+                                <View key={poi.id} style={[styles.queueItem, isFirst && styles.queueItemActive]}>
+                                    <View style={styles.queueItemRow}>
+                                        <View style={styles.priorityBadge}>
+                                            <Text style={styles.priorityText}>{index + 1}</Text>
+                                        </View>
+                                        <Image
+                                            source={{ uri: imageMedia ? getMediaUrl(imageMedia.url) : 'https://via.placeholder.com/60' }}
+                                            style={styles.queueImage}
+                                        />
+                                        <View style={styles.queueItemInfo}>
+                                            <Text style={styles.queueItemName} numberOfLines={1}>{getPoiName(poi)}</Text>
+                                            <Text style={styles.queueItemMeta}>
+                                                {t(`categories.${poi.category}`, t('categories.DEFAULT'))}
+                                                {' • '}{formatDistance(poi.distanceM)}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            style={styles.queueDetailBtn}
+                                            onPress={() => router.push(`/poi/${poi.id}`)}
+                                        >
+                                            <ChevronRight size={18} color="#64748B" />
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {/* Audio player for every POI in queue */}
+                                    {audioMedia?.url && (
+                                        <View style={styles.queueAudio}>
+                                            <AudioPlayer
+                                                audioUrl={getMediaUrl(audioMedia.url)}
+                                                poiId={poi.id}
+                                                autoPlay={isFirst && autoPlayEnabled}
+                                            />
+                                        </View>
+                                    )}
+                                    {!audioMedia && (
+                                        <Text style={styles.noAudioHint}>{t('poi.noAudio')}</Text>
+                                    )}
+                                </View>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+            )}
+
+            {/* ===== MANUAL SELECTION (tap marker outside range) ===== */}
+            {hasManual && (() => {
+                const poi = manualSelectedPoi!;
+                const imageMedia = getImageForPoi(poi);
+                const audioMedia = getAudioForPoi(poi);
                 const distanceM = location ? getDistance(
                     { latitude: location.coords.latitude, longitude: location.coords.longitude },
-                    { latitude: Number(selectedPoi.latitude), longitude: Number(selectedPoi.longitude) }
+                    { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
                 ) : null;
-                const distanceText = distanceM !== null
-                    ? distanceM < 1000 ? `${Math.round(distanceM)}m` : `${(distanceM / 1000).toFixed(1)}km`
-                    : null;
 
                 return (
                     <View style={styles.bottomSheet}>
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setSelectedPoi(null)}
-                        >
+                        <TouchableOpacity style={styles.closeButton} onPress={() => setManualSelectedPoi(null)}>
                             <Text style={styles.closeButtonText}>✕</Text>
                         </TouchableOpacity>
 
@@ -239,30 +316,23 @@ export default function MapScreen() {
                                 style={styles.poiImage}
                             />
                             <View style={styles.poiInfo}>
-                                <Text style={styles.poiTitle} numberOfLines={1}>{selectedPoi.nameVi}</Text>
+                                <Text style={styles.poiTitle} numberOfLines={1}>{getPoiName(poi)}</Text>
                                 <Text style={styles.poiType}>
-                                    {selectedPoi.category === 'CULTURAL_LANDMARKS' ? '📍 Di tích văn hóa' :
-                                     selectedPoi.category === 'DINING' ? '🍽️ Ăn uống' :
-                                     selectedPoi.category === 'CAFES_DESSERTS' ? '☕ Cà phê & tráng miệng' :
-                                     selectedPoi.category === 'STREET_FOOD' ? '🥢 Ẩm thực đường phố' :
-                                     selectedPoi.category === 'BARS_NIGHTLIFE' ? '🍸 Bar & giải trí đêm' :
-                                     selectedPoi.category === 'MARKETS_SPECIALTY' ? '🛒 Chợ & đặc sản' :
-                                     selectedPoi.category === 'EXPERIENCES_WORKSHOPS' ? '🎨 Trải nghiệm' :
-                                     selectedPoi.category === 'OUTDOOR_SCENIC' ? '🌿 Ngoài trời' : '📍 Điểm tham quan'}
-                                    {distanceText && ` • ${distanceText}`}
+                                    {t(`categories.${poi.category}`, t('categories.DEFAULT'))}
+                                    {distanceM !== null && ` • ${formatDistance(distanceM)}`}
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.detailButton}
-                                    onPress={() => router.push(`/poi/${selectedPoi.id}`)}
+                                    onPress={() => router.push(`/poi/${poi.id}`)}
                                 >
-                                    <Text style={styles.detailButtonText}>Xem chi tiết</Text>
+                                    <Text style={styles.detailButtonText}>{t('map.viewDetails')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
 
                         {audioMedia?.url && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={getMediaUrl(audioMedia.url)} poiId={selectedPoi.id} autoPlay={autoPlayEnabled} />
+                                <AudioPlayer audioUrl={getMediaUrl(audioMedia.url)} poiId={poi.id} autoPlay={false} />
                             </View>
                         )}
                     </View>
@@ -273,19 +343,13 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    map: {
-        width: '100%',
-        height: '100%',
-    },
+    container: { flex: 1 },
+    map: { width: '100%', height: '100%' },
     mapControls: {
         position: 'absolute',
         right: 16,
         zIndex: 2,
     },
-
     controlButton: {
         backgroundColor: '#ffffff',
         width: 52,
@@ -299,9 +363,114 @@ const styles = StyleSheet.create({
         shadowRadius: 12,
         elevation: 6,
     },
+
+    /* ===== Queue Sheet ===== */
+    queueSheet: {
+        position: 'absolute',
+        bottom: 100,
+        left: 12,
+        right: 12,
+        maxHeight: 320,
+        backgroundColor: 'rgba(255, 255, 255, 0.97)',
+        borderRadius: 24,
+        padding: 16,
+        shadowColor: '#0C4A6E',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 8,
+    },
+    queueHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    queueBadge: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#0C4A6E',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 8,
+    },
+    queueTitle: {
+        flex: 1,
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#64748B',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    queueList: {
+        maxHeight: 240,
+    },
+    queueItem: {
+        marginBottom: 10,
+        borderRadius: 16,
+        backgroundColor: '#F8FAFC',
+        padding: 12,
+    },
+    queueItemActive: {
+        backgroundColor: '#F0F9FF',
+        borderWidth: 1,
+        borderColor: '#BAE6FD',
+    },
+    queueItemRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    priorityBadge: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#F97316',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    priorityText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    queueImage: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#E2E8F0',
+    },
+    queueItemInfo: {
+        flex: 1,
+        marginLeft: 10,
+    },
+    queueItemName: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#1E293B',
+    },
+    queueItemMeta: {
+        fontSize: 12,
+        color: '#64748B',
+        marginTop: 2,
+    },
+    queueDetailBtn: {
+        padding: 8,
+    },
+    queueAudio: {
+        marginTop: 8,
+    },
+    noAudioHint: {
+        marginTop: 8,
+        fontSize: 12,
+        color: '#94A3B8',
+        fontStyle: 'italic',
+    },
+
+    /* ===== Manual Selection Sheet (old style) ===== */
     bottomSheet: {
         position: 'absolute',
-        bottom: 100, // accommodate floating tab bar
+        bottom: 100,
         left: 16,
         right: 16,
         backgroundColor: 'rgba(255, 255, 255, 0.96)',
@@ -313,12 +482,8 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 8,
     },
-    poiPreviewRow: {
-        flexDirection: 'row',
-    },
-    audioWrapper: {
-        marginTop: 8,
-    },
+    poiPreviewRow: { flexDirection: 'row' },
+    audioWrapper: { marginTop: 8 },
     closeButton: {
         position: 'absolute',
         top: 12,

@@ -13,6 +13,10 @@ import { ShopOwnerModule } from './modules/shop-owner/shop-owner.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { TtsModule } from './modules/tts/tts.module';
+import { QrModule } from './modules/qr/qr.module';
+import { SeedExportModule } from './modules/seed-export/seed-export.module';
+import { TranslateModule } from './modules/translate/translate.module';
 
 @Module({
   imports: [
@@ -22,6 +26,7 @@ import { ProfileModule } from './modules/profile/profile.module';
       serveRoot: '/uploads',
     }),
     PrismaModule,
+    SeedExportModule,
     AuthModule,
     PoisModule,
     MediaModule,
@@ -32,6 +37,9 @@ import { ProfileModule } from './modules/profile/profile.module';
     AnalyticsModule,
     MerchantsModule,
     ProfileModule,
+    TtsModule,
+    QrModule,
+    TranslateModule,
   ],
 })
 export class AppModule { }

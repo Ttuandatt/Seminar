@@ -5,4 +5,9 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   cacheDir: 'node_modules/.vite-admin-cache',
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+    clearMocks: true,
+  },
 })

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { User, Mail, Camera } from 'lucide-react-native';
 import { touristService } from '../services/touristService';
+import { useTranslation } from 'react-i18next';
 
 export default function EditProfileScreen() {
     const [fullName, setFullName] = useState('');
@@ -10,6 +11,7 @@ export default function EditProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const router = useRouter();
+    const { t } = useTranslation();
 
     useEffect(() => {
         loadProfile();
@@ -21,7 +23,7 @@ export default function EditProfileScreen() {
             setFullName(profile.fullName || profile.displayName || '');
             setEmail(profile.email || '');
         } catch (error) {
-            Alert.alert('Lỗi', 'Không thể tải thông tin cá nhân.');
+            Alert.alert(t('common.error'), t('editProfile.loadError'));
         } finally {
             setLoading(false);
         }
@@ -29,18 +31,18 @@ export default function EditProfileScreen() {
 
     const handleSave = async () => {
         if (!fullName.trim()) {
-            Alert.alert('Lỗi', 'Tên không được để trống.');
+            Alert.alert(t('common.error'), t('editProfile.nameEmpty'));
             return;
         }
         setSaving(true);
         try {
             await touristService.updateProfile({ fullName: fullName.trim() });
-            Alert.alert('Thành công', 'Cập nhật thông tin thành công.', [
+            Alert.alert(t('common.success'), t('editProfile.updateSuccess'), [
                 { text: 'OK', onPress: () => router.back() }
             ]);
         } catch (error: any) {
-            const msg = error.response?.data?.message || 'Không thể cập nhật thông tin.';
-            Alert.alert('Lỗi', msg);
+            const msg = error.response?.data?.message || t('editProfile.updateError');
+            Alert.alert(t('common.error'), msg);
         } finally {
             setSaving(false);
         }
@@ -72,18 +74,18 @@ export default function EditProfileScreen() {
 
                 {/* Form */}
                 <View style={styles.form}>
-                    <Text style={styles.label}>Họ và tên</Text>
+                    <Text style={styles.label}>{t('editProfile.fullNameLabel')}</Text>
                     <View style={styles.inputContainer}>
                         <User size={20} color="#64748b" style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Nhập họ và tên"
+                            placeholder={t('editProfile.fullNamePlaceholder')}
                             value={fullName}
                             onChangeText={setFullName}
                         />
                     </View>
 
-                    <Text style={styles.label}>Email</Text>
+                    <Text style={styles.label}>{t('editProfile.emailLabel')}</Text>
                     <View style={[styles.inputContainer, styles.disabledInput]}>
                         <Mail size={20} color="#94a3b8" style={styles.inputIcon} />
                         <TextInput
@@ -92,13 +94,13 @@ export default function EditProfileScreen() {
                             editable={false}
                         />
                     </View>
-                    <Text style={styles.hint}>Email không thể thay đổi</Text>
+                    <Text style={styles.hint}>{t('editProfile.emailHint')}</Text>
 
                     <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
                         {saving ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
+                            <Text style={styles.saveButtonText}>{t('editProfile.saveButton')}</Text>
                         )}
                     </TouchableOpacity>
                 </View>

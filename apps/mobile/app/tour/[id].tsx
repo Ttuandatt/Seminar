@@ -3,6 +3,8 @@ import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { MapPin, Navigation } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../context/LanguageContext';
 import { publicService, Tour } from '../../services/publicService';
 
 const { width } = Dimensions.get('window');
@@ -10,6 +12,8 @@ const { width } = Dimensions.get('window');
 export default function TourDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
+    const { t } = useTranslation();
+    const { getTourName, getTourDescription, getPoiName } = useLanguage();
 
     const [tour, setTour] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
@@ -42,7 +46,7 @@ export default function TourDetailScreen() {
     if (!tour || !tour.tourPois || tour.tourPois.length === 0) {
         return (
             <View style={styles.centered}>
-                <Text style={styles.errorText}>Tour không tồn tại hoặc chưa có điểm dừng.</Text>
+                <Text style={styles.errorText}>{t('tours.notFound')}</Text>
             </View>
         );
     }
@@ -78,7 +82,7 @@ export default function TourDetailScreen() {
                         <Marker
                             key={tp.id}
                             coordinate={{ latitude: tp.poi.latitude, longitude: tp.poi.longitude }}
-                            title={`${index + 1}. ${tp.poi.nameVi}`}
+                            title={`${index + 1}. ${getPoiName(tp.poi)}`}
                             pinColor={index === 0 ? 'green' : index === tour.tourPois!.length - 1 ? 'red' : 'blue'}
                         />
                     ))}
@@ -88,11 +92,11 @@ export default function TourDetailScreen() {
             {/* Tour Info & POI List */}
             <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 40 }}>
                 <View style={styles.header}>
-                    <Text style={styles.title}>{tour.nameVi}</Text>
-                    <Text style={styles.description}>{tour.descriptionVi}</Text>
+                    <Text style={styles.title}>{getTourName(tour)}</Text>
+                    <Text style={styles.description}>{getTourDescription(tour)}</Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>🗺️ Lộ trình ({(tour.tourPois?.length || 0)} điểm)</Text>
+                <Text style={styles.sectionTitle}>{t('tours.route')} ({tour.tourPois?.length || 0} {t('tours.points')})</Text>
 
                 <View style={styles.timeline}>
                     {tour.tourPois.map((tp, index) => (
@@ -108,8 +112,8 @@ export default function TourDetailScreen() {
                                 {index < tour.tourPois!.length - 1 && <View style={styles.timelineLine} />}
                             </View>
                             <View style={styles.timelineContent}>
-                                <Text style={styles.poiName}>{tp.poi.nameVi}</Text>
-                                <Text style={styles.poiType}>{tp.poi.poiType === 'MAIN' ? 'Điểm chính' : 'Lân cận'}</Text>
+                                <Text style={styles.poiName}>{getPoiName(tp.poi)}</Text>
+                                <Text style={styles.poiType}>{tp.poi.poiType === 'MAIN' ? t('tours.mainPoint') : t('tours.nearby')}</Text>
                             </View>
                         </TouchableOpacity>
                     ))}
@@ -123,7 +127,7 @@ export default function TourDetailScreen() {
                     onPress={() => router.push(`/tour/follow/${tour.id}`)}
                 >
                     <Navigation size={20} color="#fff" />
-                    <Text style={styles.startButtonText}>Bắt đầu Tour</Text>
+                    <Text style={styles.startButtonText}>{t('tours.startTour')}</Text>
                 </TouchableOpacity>
             </View>
         </View>

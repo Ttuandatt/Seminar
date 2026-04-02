@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   MapPin,
   Map,
+  Globe,
   BarChart3,
   Settings,
   LogOut,
@@ -21,15 +22,38 @@ const getInitials = (fullName?: string) => {
   return initials.toUpperCase();
 };
 
+const adminNavItems = [
+  { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
+  { icon: MapPin, label: 'POIs', path: '/admin/pois' },
+  { icon: Map, label: 'Tours', path: '/admin/tours' },
+  { icon: Globe, label: 'Map View', path: '/admin/map' },
+  { icon: Store, label: 'Merchants', path: '/admin/merchants' },
+  { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+  { icon: UserCircle2, label: 'Profile', path: '/admin/profile' },
+  { icon: Settings, label: 'Settings', path: '/admin/settings' },
+];
+
+const shopOwnerNavItems = [
+  { icon: MapPin, label: 'My POIs', path: '/owner/dashboard' },
+  { icon: Globe, label: 'Map View', path: '/owner/map' },
+  { icon: BarChart3, label: 'Analytics', path: '/owner/analytics' },
+  { icon: UserCircle2, label: 'Profile', path: '/owner/profile' },
+];
+
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { data: profile } = useQuery({
     queryKey: ['profile', 'me'],
     queryFn: profileService.getProfile,
     staleTime: 5 * 60 * 1000,
   });
+
+  const isShopOwner = user?.role === 'SHOP_OWNER';
+  const navItems = isShopOwner ? shopOwnerNavItems : adminNavItems;
+  const profilePath = isShopOwner ? '/owner/profile' : '/admin/profile';
+
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = async () => {
@@ -39,16 +63,6 @@ const Sidebar = () => {
       navigate('/login', { replace: true });
     }
   };
-
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
-    { icon: MapPin, label: 'POIs', path: '/admin/pois' },
-    { icon: Map, label: 'Tours', path: '/admin/tours' },
-    { icon: Store, label: 'Merchants', path: '/admin/merchants' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-    { icon: UserCircle2, label: 'Profile', path: '/admin/profile' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
-  ];
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white border-r border-slate-200 transition-transform hidden md:block">
@@ -92,11 +106,11 @@ const Sidebar = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">{profile?.fullName ?? 'Admin User'}</p>
-              <p className="text-xs text-slate-500 truncate">{profile?.email ?? 'admin@gpstours.vn'}</p>
+              <p className="text-sm font-medium text-slate-900 truncate">{profile?.fullName ?? 'User'}</p>
+              <p className="text-xs text-slate-500 truncate">{profile?.email ?? user?.email ?? ''}</p>
             </div>
             <button
-              onClick={() => navigate('/admin/profile')}
+              onClick={() => navigate(profilePath)}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600"
             >
               View

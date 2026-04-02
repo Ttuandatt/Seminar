@@ -1,9 +1,9 @@
 # 📐 Sequence Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
-> **Ngày tạo:** 2026-02-10  
-> **Cập nhật:** 2026-03-13
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-10
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -14,20 +14,24 @@
 | SD-01 | Admin Login | Admin | UC-01 |
 | SD-02 | Shop Owner Register + Login | Shop Owner | UC-02, UC-03 |
 | SD-03 | Admin Create POI | Admin | UC-11 |
-| SD-04 | Shop Owner Create POI | Shop Owner | UC-40 |
-| SD-05 | Create Tour | Admin | UC-21 |
-| SD-06 | Tourist View Map + Auto-trigger | Tourist, System | UC-30, UC-51 |
-| SD-07 | Tourist Follow Tour | Tourist | UC-33 |
-| SD-08 | Overlap Zone Handling | System | UC-52 |
+| SD-04 | Shop Owner Create POI | Shop Owner | UC-20 |
+| SD-05 | Create Tour | Admin | UC-30 |
+| SD-06 | Tourist View Map + Auto-trigger | Tourist, System | UC-50, UC-52 |
+| SD-07 | Tourist Follow Tour | Tourist | UC-61 |
+| SD-08 | Criteria Engine — Overlap Zone Handling | System | UC-52 |
 | SD-09 | Quên mật khẩu (Forgot Password) | Admin, Shop Owner | UC-04 |
 | SD-10 | Chỉnh sửa POI (Edit POI) | Admin | UC-12 |
 | SD-11 | Xóa POI (Delete POI + Cascade) | Admin | UC-13 |
-| SD-12 | Tourist Lưu POI yêu thích | Tourist | UC-36 |
+| SD-12 | Tourist Lưu POI yêu thích | Tourist | UC-56 |
 | SD-13 | Shop Owner Xem Analytics | Shop Owner | UC-41 |
-| SD-14 | Tourist Chuyển đổi ngôn ngữ | Tourist | UC-34 |
+| SD-14 | Tourist Chuyển đổi ngôn ngữ (VI/EN/ZH) | Tourist | UC-54 |
 | SD-15 | **Tourist Đăng ký & Đăng nhập** | Tourist | FR-404 |
 | SD-16 | **Global Audio Singleton** | Tourist, System | FR-403 |
 | SD-17 | **QR Code Offline Fallback (SQLite)** | Tourist | FR-503 |
+| SD-18 | **TTS Audio Generation** | Admin, Shop Owner | UC-16, UC-24 |
+| SD-19 | **Device Capability Check** | Tourist, System | UC-50 |
+| SD-20 | **Admin Map View** | Admin | UC-17 |
+| SD-21 | **Auto QR Code Generation** | System | UC-19, FR-211 |
 
 ---
 
@@ -181,6 +185,15 @@ sequenceDiagram
     POI->>POI: Validate (lat/lng range, required fields)
     POI->>DB: INSERT INTO pois (...)
     DB-->>POI: POI record
+
+    Note over POI, DB: Auto-generate QR Code (fire-and-forget)
+    POI->>POI: qrService.generateForPoi(poiId)
+    POI->>POI: Generate PNG gpstours:poi:poiId (512px, ECL-H)
+    POI->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+
+    Note over POI, DB: Auto-generate TTS (fire-and-forget)
+    POI->>POI: ttsService.generateForPoi(poiId, descriptionVi, descriptionEn)
+
     POI-->>API: POI created
     API-->>UI: 201 {poi}
     UI->>Admin: Toast "POI created!" → redirect POI List
@@ -220,6 +233,11 @@ sequenceDiagram
     POI->>POI: Auto-set status = 'draft' (chờ Admin duyệt nếu cần)
     POI->>DB: INSERT INTO pois (..., owner_id = shopOwnerId)
     DB-->>POI: POI record
+
+    Note over POI, DB: Auto-generate QR Code (fire-and-forget)
+    POI->>POI: qrService.generateForPoi(poiId)
+    POI->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+
     POI-->>API: POI created
     API-->>UI: 201 {poi}
     UI->>SO: Toast "POI created!" → My POIs list updated
@@ -364,38 +382,49 @@ sequenceDiagram
 
 ---
 
-## SD-08: Overlap Zone Handling
+## SD-08: Criteria Engine — Overlap Zone Handling
 
 ```mermaid
 sequenceDiagram
-    title SD-08: Overlap Zone Handling
+    title SD-08: Criteria Engine — Overlap Zone Handling
     actor Tourist
     participant App as Mobile App
     participant GPS as GPS Service
-    participant Algo as Overlap Algorithm
+    participant CE as Criteria Engine
 
     GPS-->>App: Tourist position (lat, lng)
     App->>App: Calculate distances to all nearby POIs
 
-    Note over App, Algo: Tourist nằm trong 3 trigger zones
+    Note over App, CE: Tourist nằm trong 3 trigger zones đồng thời
 
-    App->>Algo: resolveOverlap([POI_A: 8m, POI_B: 12m, POI_C: 14m])
-    
-    Algo->>Algo: Sort by priority rules
-    Note right of Algo: Rule 1: Distance ASC<br/>Rule 2: Category priority (Dining→Street Food→Cafes→Nightlife→Markets→Cultural→Experiences→Outdoor)<br/>Rule 3: Not recently viewed
+    App->>CE: resolveBestPOI([POI_A: 8m, POI_B: 12m, POI_C: 14m])
 
-    alt POI_A gần nhất + chưa xem
-        Algo-->>App: Winner = POI_A
-        App->>Tourist: Auto-trigger POI_A
-        App->>Tourist: Bottom sheet "Cũng gần bạn: POI_B, POI_C"
-    else POI_A đã xem (cooldown)
-        Algo->>Algo: Skip POI_A
-        Algo-->>App: Winner = POI_B
-        App->>Tourist: Auto-trigger POI_B
+    CE->>CE: Tính score cho từng POI
+    Note right of CE: score = priority×0.30<br/>       + distanceScore×0.30<br/>       + notPlayedBonus×0.25<br/>       + autoPlayScore×0.15
+
+    CE->>CE: POI_A: priority=2, dist=8m → distScore=0.84, notPlayed=1, autoPlay=1
+    Note right of CE: score_A = 2×0.30 + 0.84×0.30 + 1×0.25 + 1×0.15 = 1.402
+
+    CE->>CE: POI_B: priority=1, dist=12m → distScore=0.76, notPlayed=1, autoPlay=1
+    Note right of CE: score_B = 1×0.30 + 0.76×0.30 + 1×0.25 + 1×0.15 = 0.928
+
+    CE->>CE: POI_C: priority=2, dist=14m → distScore=0.72, notPlayed=0 (đã nghe), autoPlay=1
+    Note right of CE: score_C = 2×0.30 + 0.72×0.30 + 0×0.25 + 1×0.15 = 1.066
+
+    CE->>CE: Sort DESC by score: POI_A(1.402) > POI_C(1.066) > POI_B(0.928)
+    CE-->>App: winner = POI_A, others = [POI_C, POI_B]
+
+    alt POI_A win (chưa xem, priority cao, gần nhất)
+        App->>Tourist: Auto-trigger POI_A audio
+        App->>Tourist: Bottom sheet "Cũng gần bạn: POI_C, POI_B"
+    else POI_A đã trong cooldown (vừa trigger < 30s)
+        App->>CE: resolveBestPOI(exclude=[POI_A])
+        CE-->>App: winner = POI_C
+        App->>Tourist: Auto-trigger POI_C audio
     end
 
-    Tourist->>App: Tap POI_C từ bottom sheet
-    App->>Tourist: Hiển thị POI_C detail (manual override)
+    Tourist->>App: Tap POI_B từ bottom sheet
+    App->>Tourist: Hiển thị POI_B detail (manual override, không auto-play)
 ```
 
 ---
@@ -691,11 +720,11 @@ sequenceDiagram
 
 ---
 
-## SD-14: Tourist Chuyển đổi ngôn ngữ
+## SD-14: Tourist Chuyển đổi ngôn ngữ (VI/EN/ZH)
 
 ```mermaid
 sequenceDiagram
-    title SD-14: Tourist Language Switch
+    title SD-14: Tourist Language Switch VI/EN/ZH
     actor Tourist
     participant App as Mobile App (Expo)
     participant i18n as i18n Service
@@ -704,41 +733,47 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Tourist->>App: Mở Settings, nhấn "Language"
-    App->>Tourist: Hiển thị options: [🇻🇳 Tiếng Việt] [🇬🇧 English]
-    Tourist->>App: Chọn "🇬🇧 English"
-    
-    App->>i18n: setLocale('en')
-    i18n->>i18n: Load English translations bundle
-    i18n->>Storage: Save preference: locale = 'en'
+    App->>Tourist: Hiển thị options: [🇻🇳 Tiếng Việt] [🇬🇧 English] [🇨🇳 中文]
+    Tourist->>App: Chọn một ngôn ngữ (ví dụ: 🇨🇳 中文)
+
+    App->>i18n: setLocale('zh')
+    i18n->>i18n: Load Chinese translations bundle
+    i18n->>Storage: Save preference: locale = 'zh'
     Storage-->>i18n: Saved
-    
+
     i18n-->>App: Locale updated
     App->>App: Re-render all UI labels (buttons, tabs, headers)
-    App->>Tourist: UI hiển thị tiếng Anh
+    App->>Tourist: UI hiển thị tiếng Trung
 
     Note over Tourist, DB: === Khi xem POI detail ===
     Tourist->>App: Mở POI detail
     App->>API: GET /public/pois/{id}
     API->>DB: SELECT * FROM pois WHERE id = ?
-    DB-->>API: POI data (name_vi, name_en, desc_vi, desc_en, audio_vi, audio_en)
+    DB-->>API: POI data (name_vi, name_en, name_zh, desc_vi, desc_en, desc_zh, audio_vi, audio_en, audio_zh)
     API-->>App: Full POI data
-    
-    App->>i18n: getCurrentLocale()
-    i18n-->>App: 'en'
-    
-    App->>App: Display name_en, desc_en
-    App->>App: Load audio_en for player
 
-    alt Nội dung EN không có (null)
+    App->>i18n: getCurrentLocale()
+    i18n-->>App: 'zh'
+
+    App->>App: Display name_zh, desc_zh
+    App->>App: Load audio_zh for player
+
+    alt Nội dung ZH không có (null)
         App->>App: Fallback to Vietnamese (name_vi, desc_vi, audio_vi)
-        App->>Tourist: Hiển thị badge "Content not available in English"
+        App->>Tourist: Hiển thị badge "内容暂无中文版本 (fallback VI)"
     end
+
+    Note over Tourist, DB: === Auto-detect ngôn ngữ thiết bị ===
+    Tourist->>App: Lần đầu mở app (chưa có preference)
+    App->>App: Expo.Localization.locale → "zh-CN"
+    App->>i18n: setLocale('zh') — auto-detect
+    App->>Storage: Save preference: locale = 'zh'
 
     Note over Tourist, DB: === Khi đang Follow Tour ===
     Tourist->>App: Auto-trigger POI trong Tour
     App->>i18n: getCurrentLocale()
-    i18n-->>App: 'en'
-    App->>App: Play audio_en (hoặc fallback audio_vi)
+    i18n-->>App: 'zh'
+    App->>App: Play audio_zh (hoặc fallback audio_vi)
     App->>Tourist: Audio thuyết minh phát theo ngôn ngữ đã chọn
 ```
 
@@ -902,27 +937,357 @@ sequenceDiagram
 
 ---
 
+## SD-18: TTS Audio Generation
+
+```mermaid
+sequenceDiagram
+    title SD-18: TTS Audio Generation (Admin / Shop Owner)
+    actor User as Admin / Shop Owner
+    participant UI as Web Dashboard
+    participant API as NestJS API
+    participant TTS as TTS Service (msedge-tts)
+    participant Storage as File Storage (S3/Azure)
+    participant DB as PostgreSQL
+
+    User->>UI: Nhấn "Generate TTS" trên form POI
+    UI->>UI: Đọc description text + ngôn ngữ đang chọn (VI/EN/ZH)
+
+    UI->>API: POST /tts/generate/:poiId {text, language}
+    Note right of API: Roles: ADMIN, SHOP_OWNER<br/>{ text: "...", language: "VI" | "EN" }
+
+    API->>DB: SELECT description_vi / description_en / description_zh FROM pois WHERE id = ?
+    DB-->>API: description text
+
+    alt Mô tả trống
+        API-->>UI: 400 { error: "Description is empty for this language" }
+        UI->>User: Hiển thị lỗi "Vui lòng nhập mô tả trước khi tạo audio"
+    else Mô tả có nội dung
+        API->>TTS: synthesize(text, voice)
+        Note right of TTS: VI → vi-VN-HoaiMyNeural<br/>EN → en-US-AriaNeural<br/>ZH → zh-CN-XiaoxiaoNeural
+
+        alt TTS thành công
+            TTS-->>API: audio buffer (MP3)
+            API->>Storage: Upload audio to /pois/{id}/audio_{lang}.mp3
+            Storage-->>API: publicUrl
+            API->>DB: UPDATE poi_media SET url = publicUrl WHERE poi_id = ? AND language = ? AND media_type = 'AUDIO'
+            DB-->>API: Updated
+            API-->>UI: 200 { audioUrl: "https://cdn/.../audio_vi.mp3" }
+            UI->>UI: Update audio player src
+            UI->>User: Toast "Audio VI đã được tạo thành công"
+        else TTS thất bại (rate limit / network)
+            TTS-->>API: Error
+            API-->>UI: 503 { error: "TTS service unavailable" }
+            UI->>User: Toast "Không thể tạo audio lúc này. Thử lại sau."
+        end
+    end
+
+    Note over User, DB: === Nghe thử trước khi lưu ===
+    User->>UI: Nhấn ▶ Preview audio vừa tạo
+    UI->>UI: Load audio player với audioUrl mới
+    UI->>User: Phát audio preview
+    User->>UI: Nhấn Save POI để lưu
+```
+
+---
+
+## SD-19: Device Capability Check
+
+```mermaid
+sequenceDiagram
+    title SD-19: Device Capability Check (Tourist App Startup)
+    actor Tourist
+    participant App as Mobile App (Expo)
+    participant GPS as expo-location
+    participant Net as expo-network
+    participant UI as Device Check Screen
+
+    Tourist->>App: Mở ứng dụng
+
+    App->>Net: NetInfo.fetch()
+    Net-->>App: { isConnected: true/false, isInternetReachable: true/false }
+
+    App->>GPS: Location.getForegroundPermissionsAsync()
+    GPS-->>App: { status: 'granted' | 'denied' | 'undetermined' }
+
+    alt Internet + GPS đều OK
+        App->>App: Tiếp tục load Landing Page
+        App->>Tourist: Hiển thị màn hình chính
+    else Không có Internet
+        App->>UI: Hiển thị Device Check Screen
+        UI->>Tourist: Icon wifi-off + "Không có kết nối Internet"
+        UI->>Tourist: "Vui lòng bật WiFi hoặc dữ liệu di động để tiếp tục"
+        UI->>Tourist: Nút "Thử lại"
+        Tourist->>UI: Nhấn "Thử lại"
+        UI->>App: Re-check connectivity
+        App->>Net: NetInfo.fetch() again
+        Net-->>App: { isConnected: true }
+        App->>App: Proceed if OK
+    else GPS chưa cấp quyền
+        App->>GPS: Location.requestForegroundPermissionsAsync()
+        GPS->>Tourist: Hệ thống popup "Allow location access?"
+        Tourist->>GPS: Đồng ý / Từ chối
+
+        alt Đồng ý
+            GPS-->>App: { status: 'granted' }
+            App->>App: Tiếp tục load app
+        else Từ chối
+            App->>UI: Hiển thị Device Check Screen
+            UI->>Tourist: Icon location-off + "Cần quyền truy cập vị trí"
+            UI->>Tourist: "Ứng dụng cần GPS để hiển thị điểm tham quan gần bạn"
+            UI->>Tourist: Nút "Mở Cài đặt" + Nút "Bỏ qua (Chế độ hạn chế)"
+            Tourist->>UI: Nhấn "Mở Cài đặt"
+            UI->>App: Linking.openSettings()
+            Tourist->>App: Quay lại app sau khi cấp quyền
+            App->>GPS: Re-check permission
+        end
+    end
+```
+
+---
+
+## SD-20: Admin & Shop Owner Map View
+
+```mermaid
+sequenceDiagram
+    title SD-20: Role-Aware Map View — Visualize POIs & Tours
+    actor User as Admin / Shop Owner
+    participant UI as Web Dashboard (React)
+    participant Auth as useAuth()
+    participant Map as Leaflet Map
+    participant API as NestJS API
+    participant DB as PostgreSQL
+
+    User->>UI: Truy cập /admin/map hoặc /owner/map
+    UI->>Auth: Kiểm tra user.role
+    Auth-->>UI: role = 'ADMIN' hoặc 'SHOP_OWNER'
+
+    alt role = ADMIN
+        UI->>API: GET /pois?limit=200 (with media)
+        UI->>API: GET /tours (with tourPois)
+        API->>DB: SELECT * FROM pois LEFT JOIN poi_media ...
+        API->>DB: SELECT * FROM tours LEFT JOIN tour_pois ...
+        DB-->>API: All POI list + Tour list
+        API-->>UI: {pois: [...], tours: [...]}
+    else role = SHOP_OWNER
+        UI->>API: GET /shop-owner/pois
+        API->>DB: SELECT * FROM pois WHERE owner_id = userId AND deleted_at IS NULL
+        DB-->>API: Own POI list only
+        API-->>UI: {pois: [...]}
+        Note right of UI: Tours dropdown hidden cho Shop Owner
+    end
+
+    UI->>Map: Initialize Leaflet (center: HCM [10.76, 106.70], zoom: 15)
+    UI->>Map: Add OSM tile layer
+
+    loop Cho mỗi POI
+        UI->>Map: addMarker(poi.lat, poi.lng, categoryColor)
+        UI->>Map: addCircle(poi.lat, poi.lng, triggerRadius, statusColor)
+    end
+    Map-->>User: Bản đồ với markers + trigger radius circles
+
+    Note over User, Map: === Filter by Status ===
+    User->>UI: Chọn filter "Active"
+    UI->>Map: Hide markers where status != ACTIVE
+    Map-->>User: Chỉ hiển thị POIs Active
+
+    Note over User, Map: === Show Tour Route (Admin only) ===
+    alt role = ADMIN
+        User->>UI: Chọn Tour từ dropdown
+        UI->>Map: drawPolyline(tour.pois sorted by orderIndex)
+        UI->>Map: Highlight POIs thuộc Tour
+        Map-->>User: Polyline route + highlighted markers
+    end
+
+    Note over User, Map: === Click POI Marker ===
+    User->>Map: Click marker
+    Map->>UI: Popup(poi.name, category, status, hasAudio)
+    UI->>User: Hiển thị popup với nút View/Edit
+
+    alt role = ADMIN
+        User->>UI: Nhấn "Edit"
+        UI->>User: Navigate → /admin/pois/:id/edit
+    else role = SHOP_OWNER
+        User->>UI: Nhấn "Edit"
+        UI->>User: Navigate → /owner/pois/:id/edit
+    end
+```
+
+---
+
+## SD-21: Auto QR Code Generation & View/Download
+
+```mermaid
+sequenceDiagram
+    title SD-21: Auto QR Code Generation + Admin View/Download
+    actor Admin
+    participant UI as Admin Dashboard
+    participant API as NestJS API
+    participant POI as POI Service
+    participant QR as QR Service
+    participant FS as File System
+    participant DB as PostgreSQL
+
+    Note over Admin, DB: === Phase 1: Auto-Generate on POI Creation ===
+    Admin->>UI: Create POI (nhấn Publish)
+    UI->>API: POST /pois {name, desc, lat, lng, ...}
+    API->>POI: createPOI()
+    POI->>DB: INSERT INTO pois (...)
+    DB-->>POI: POI record (poiId)
+
+    POI->>QR: generateForPoi(poiId) [fire-and-forget]
+    QR->>QR: qrData = "gpstours:poi:<poiId>"
+    QR->>QR: QRCode.toFile(512px, ECL-H)
+    QR->>FS: Save /uploads/qr/poi_<poiId>.png
+    QR->>DB: UPDATE pois SET qr_code_url = '/uploads/qr/poi_<id>.png'
+    QR-->>POI: QR URL
+
+    POI-->>API: 201 {poi}
+    API-->>UI: POI created
+
+    Note over Admin, DB: === Phase 2: View QR in Edit Page ===
+    Admin->>UI: Open /admin/pois/:id/edit
+    UI->>API: GET /pois/:id (fetch POI details)
+    UI->>API: GET /pois/:id/qr
+    API->>QR: getQr(poiId)
+    QR->>DB: SELECT qr_code_url FROM pois WHERE id = poiId
+    alt QR code exists
+        QR->>QR: QRCode.toDataURL() → base64
+        QR-->>API: {qrCodeUrl, qrDataUrl, qrContent}
+    else QR code not yet generated
+        QR->>QR: generateForPoi(poiId) → auto-create
+        QR-->>API: {qrCodeUrl, qrDataUrl, qrContent}
+    end
+    API-->>UI: QR code data
+    UI->>Admin: Hiển thị QR code trong sidebar (img + download button)
+
+    Note over Admin, DB: === Phase 3: Download QR ===
+    Admin->>UI: Nhấn "Download PNG"
+    UI->>UI: Create download link from qrDataUrl
+    UI->>Admin: Browser downloads QR_<poiName>.png
+
+    Note over Admin, DB: === Phase 4: Regenerate (Admin only) ===
+    Admin->>UI: Nhấn "Regenerate"
+    UI->>API: POST /pois/:id/qr/regenerate
+    API->>QR: generateForPoi(poiId)
+    QR->>FS: Overwrite /uploads/qr/poi_<id>.png
+    QR->>DB: UPDATE pois SET qr_code_url
+    QR-->>API: New QR data
+    API-->>UI: {qrCodeUrl, qrDataUrl}
+    UI->>Admin: Hiển thị QR code mới + Toast "Regenerated"
+```
+
+---
+
+## SD-22: Shop Owner View/Edit POI + TTS Generation
+
+```mermaid
+sequenceDiagram
+    title SD-22: Shop Owner View/Edit POI + TTS Generation
+    actor SO as Shop Owner
+    participant UI as Shop Owner Dashboard
+    participant Form as ShopOwnerPOIFormPage
+    participant API as NestJS API
+    participant Guard as Auth Guard
+    participant TTS as TTS Service
+    participant DB as PostgreSQL
+
+    Note over SO, DB: === Phase 1: Navigate from Dashboard ===
+    SO->>UI: Xem My POIs list trên Dashboard
+    UI->>SO: Hiển thị danh sách POIs (với nút Edit, View, Delete)
+
+    alt Nhấn "View" (ExternalLink icon)
+        SO->>UI: Click View button
+        UI->>Form: Navigate → /owner/pois/:id (readOnly=true)
+    else Nhấn "Edit" (Edit3 icon)
+        SO->>UI: Click Edit button
+        UI->>Form: Navigate → /owner/pois/:id/edit (readOnly=false)
+    end
+
+    Note over SO, DB: === Phase 2: Fetch POI Detail ===
+    Form->>API: GET /shop-owner/pois/:id
+    API->>Guard: Verify JWT + role = 'SHOP_OWNER'
+    Guard-->>API: userId extracted
+    API->>DB: SELECT * FROM pois WHERE id = :id AND deleted_at IS NULL, include media + owner
+    DB-->>API: POI record with media array
+
+    alt poi.ownerId !== userId
+        API-->>Form: 403 Forbidden
+        Form->>SO: Error → redirect to dashboard
+    else Ownership OK
+        API-->>Form: 200 {poi with media}
+        Form->>Form: Populate formData (nameVi, nameEn, descriptionVi, descriptionEn, lat, lng, ...)
+        Form->>Form: Set existingMedia (images + audio)
+    end
+
+    Note over SO, DB: === Phase 3a: View Mode (readOnly) ===
+    alt readOnly = true
+        Form->>SO: Hiển thị POI details (all inputs disabled)
+        Form->>SO: Hiển thị existing images + audio player
+        Form->>SO: Nút "Back" để quay lại
+    end
+
+    Note over SO, DB: === Phase 4: Edit Mode ===
+    alt readOnly = false
+        SO->>Form: Chỉnh sửa thông tin (tabs VI/EN → labels chuyển ngôn ngữ)
+        SO->>Form: Upload thêm media (images, audio)
+
+        Note over SO, DB: === Phase 4a: TTS Generation ===
+        SO->>Form: Nhấn "Generate VI Audio" hoặc "Generate EN Audio"
+        Form->>API: POST /tts/generate/:poiId {text, language}
+        API->>Guard: Verify JWT + roles ['ADMIN', 'SHOP_OWNER']
+        API->>TTS: synthesize(text, language, voice)
+        TTS-->>API: audio buffer (MP3)
+        API->>DB: INSERT INTO poi_media (type=AUDIO, language, url)
+        API-->>Form: 201 {media record}
+        Form->>API: GET /shop-owner/pois/:id (refresh media list)
+        API-->>Form: Updated POI with new audio
+        Form->>SO: Toast "TTS audio generated" + audio player updated
+
+        Note over SO, DB: === Phase 4b: Save Changes ===
+        SO->>Form: Nhấn "Save Changes"
+        Form->>API: PUT /shop-owner/pois/:id {nameVi, nameEn, descriptionVi}
+        API->>Guard: Verify ownership (ownerId === userId)
+        API->>DB: UPDATE pois SET ...
+        DB-->>API: Updated record
+
+        opt Upload new media files
+            Form->>API: POST /shop-owner/pois/:id/media (images)
+            Form->>API: POST /shop-owner/pois/:id/media (audio files)
+        end
+
+        API-->>Form: Success
+        Form->>SO: Toast "POI updated" → Navigate to /owner/dashboard
+    end
+```
+
+---
+
 ## Summary
 
 | Diagram | Actors | Lifelines | Messages | Complexity |
 |---------|--------|-----------|----------|------------|
 | SD-01 | Admin | 4 | 14 | Medium |
 | SD-02 | Shop Owner | 4 | 22 | High |
-| SD-03 | Admin | 6 | 24 | High |
-| SD-04 | Shop Owner | 5 | 12 | Medium |
+| SD-03 | Admin | 6 | 28 | High |
+| SD-04 | Shop Owner | 5 | 16 | Medium |
 | SD-05 | Admin | 5 | 16 | Medium |
 | SD-06 | Tourist | 5 | 18 | High |
 | SD-07 | Tourist | 5 | 20 | High |
-| SD-08 | Tourist | 3 | 12 | Medium |
+| SD-08 | System | 3 | 18 | High |
 | SD-09 | Admin/Shop Owner | 5 | 28 | High |
 | SD-10 | Admin | 6 | 26 | High |
 | SD-11 | Admin | 6 | 18 | High |
 | SD-12 | Tourist | 4 | 20 | Medium |
 | SD-13 | Shop Owner | 5 | 18 | High |
-| SD-14 | Tourist | 5 | 18 | Medium |
+| SD-14 | Tourist | 5 | 22 | Medium |
 | SD-15 | Tourist | 5 | 22 | High |
 | SD-16 | Tourist | 4 | 16 | High |
 | SD-17 | Tourist | 5 | 24 | High |
+| SD-18 | Admin/Shop Owner | 5 | 20 | High |
+| SD-19 | Tourist/System | 4 | 18 | Medium |
+| SD-20 | Admin/Shop Owner | 5 | 24 | Medium |
+| SD-21 | Admin/System | 6 | 30 | High |
+| SD-22 | Shop Owner | 6 | 28 | High |
 
 ---
 

@@ -2,6 +2,7 @@ import * as SQLite from 'expo-sqlite';
 import api from './api';
 
 const db = SQLite.openDatabaseSync('gpstours.db');
+let databaseInitialized = false;
 
 export interface OfflinePOI {
     id: string;
@@ -16,6 +17,9 @@ export interface OfflinePOI {
 }
 
 export const initDatabase = () => {
+    if (databaseInitialized) {
+        return;
+    }
     try {
         db.execSync(`
             CREATE TABLE IF NOT EXISTS offline_pois (
@@ -30,16 +34,20 @@ export const initDatabase = () => {
                 hasLargeAudio INTEGER DEFAULT 0
             );
         `);
+        databaseInitialized = true;
         console.log("SQLite DB Initialized");
     } catch (e) {
         console.error("SQLite Init Error:", e);
     }
 };
 
+// Ensure the table exists before any consumer tries to read it (e.g. QR scan before manual sync)
+initDatabase();
+
 export const syncOfflinePois = async () => {
     try {
         console.log("Starting offline POI sync...");
-        const response = await api.get('/pois');
+        const response = await api.get('/public/pois');
         const pois = response.data.data || response.data;
 
         initDatabase();
@@ -80,6 +88,7 @@ export const syncOfflinePois = async () => {
 
 export const getOfflinePoi = (id: string): OfflinePOI | null => {
     try {
+        initDatabase();
         const result = db.getFirstSync<OfflinePOI>('SELECT * FROM offline_pois WHERE id = ?;', [id]);
         return result;
     } catch (e) {
@@ -90,6 +99,7 @@ export const getOfflinePoi = (id: string): OfflinePOI | null => {
 
 export const getAllOfflinePois = (): OfflinePOI[] => {
     try {
+        initDatabase();
         return db.getAllSync<OfflinePOI>('SELECT * FROM offline_pois;');
     } catch {
         return [];

@@ -1,11 +1,82 @@
 import 'dotenv/config';
 import { PrismaClient, Role, PoiCategory, PoiStatus, TourStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
+const DATA_JSON_PATH = path.join(__dirname, 'seeds', 'data.json');
 
-async function main() {
-    console.log('🌱 Seeding database...');
+async function seedFromJson() {
+    const raw = fs.readFileSync(DATA_JSON_PATH, 'utf-8');
+    const data = JSON.parse(raw);
+
+    console.log(`📦 Loading from data.json (exported ${data.exportedAt})`);
+    console.log(`   ${data.users.length} users, ${data.pois.length} POIs, ${data.tours.length} tours`);
+
+    // Delete in dependency order
+    await prisma.tourPoi.deleteMany();
+    await prisma.tour.deleteMany();
+    await prisma.poiMedia.deleteMany();
+    await prisma.favorite.deleteMany();
+    await prisma.viewHistory.deleteMany();
+    await prisma.triggerLog.deleteMany();
+    await prisma.poi.deleteMany();
+    await prisma.shopOwner.deleteMany();
+    await prisma.touristUser.deleteMany();
+    await prisma.passwordResetToken.deleteMany();
+    await prisma.revokedToken.deleteMany();
+    await prisma.user.deleteMany();
+    console.log('🗑️  Cleared existing data');
+
+    // Import users
+    for (const user of data.users) {
+        const { shopOwnerProfile, touristProfile, ...userData } = user;
+        await prisma.user.create({
+            data: {
+                ...userData,
+                ...(shopOwnerProfile ? {
+                    shopOwnerProfile: { create: shopOwnerProfile },
+                } : {}),
+                ...(touristProfile ? {
+                    touristProfile: { create: touristProfile },
+                } : {}),
+            },
+        });
+    }
+    console.log(`✅ Imported ${data.users.length} users`);
+
+    // Import POIs
+    for (const poi of data.pois) {
+        const { media, ...poiData } = poi;
+        await prisma.poi.create({
+            data: {
+                ...poiData,
+                ...(media?.length ? {
+                    media: { create: media },
+                } : {}),
+            },
+        });
+    }
+    console.log(`✅ Imported ${data.pois.length} POIs`);
+
+    // Import tours
+    for (const tour of data.tours) {
+        const { tourPois, ...tourData } = tour;
+        await prisma.tour.create({
+            data: {
+                ...tourData,
+                ...(tourPois?.length ? {
+                    tourPois: { create: tourPois },
+                } : {}),
+            },
+        });
+    }
+    console.log(`✅ Imported ${data.tours.length} tours`);
+}
+
+async function seedHardcoded() {
+    console.log('📝 No data.json found, using hardcoded seed data...');
 
     // ─── Admin User ─────────────────────────
     const adminPw = await bcrypt.hash('admin123', 12);
@@ -157,6 +228,16 @@ async function main() {
         },
     });
     console.log(`✅ Tour: ${tour.nameVi} (${pois.length} POIs)`);
+}
+
+async function main() {
+    console.log('🌱 Seeding database...');
+
+    if (fs.existsSync(DATA_JSON_PATH)) {
+        await seedFromJson();
+    } else {
+        await seedHardcoded();
+    }
 
     console.log('\n🎉 Seed complete!');
     console.log('─────────────────────────');

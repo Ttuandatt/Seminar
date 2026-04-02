@@ -3,7 +3,7 @@
 
 > **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-10
+> **Cập nhật:** 2026-03-22
 
 ---
 
@@ -172,8 +172,9 @@ Admin Dashboard (S03) ─── Sidebar Navigation
   ├── 🗺️ Tour Management
   │   ├── Tour List (S07) ─── [+ New Tour]
   │   └── Tour Create/Edit (S08)
+  ├── 🗺️ Map View (S10) ─── [overview map with all POIs]
   ├── 📊 Analytics (S09)
-  └── ⚙️ Settings (S10)
+  └── ⚙️ Settings (S10b)
 ```
 
 ### 3.2 Shop Owner Dashboard — Sitemap
@@ -506,6 +507,50 @@ More Menu ─── Bottom Tab: More
 **Screen ID:** S09  
 **States:** Loading (skeleton), Empty (no data yet), Error, Success  
 **Refs:** FR-601
+
+---
+
+### 4.9 Admin Map View (S10)
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ Sidebar │  🗺️ Map View                              [Admin]   │
+│         │──────────────────────────────────────────────────────│
+│  ...    │  Status: [All ▾]  Tour: [-- Chọn Tour -- ▾]  ☑ Radius│
+│         │──────────────────────────────────────────────────────│
+│         │                                                      │
+│         │       ●(red) ●(blue) ●(green) ... markers            │
+│         │          ╱ ╲                                          │
+│         │     ┌──────────────────┐                              │
+│         │     │ Popup:           │                              │
+│         │     │ 📍 Quán Bún Mắm  │                              │
+│         │     │ 🏷 DINING | ✅ ACTIVE │                         │
+│         │     │ 🎵 Audio: VI, EN │                              │
+│         │     │ [View] [Edit]    │                              │
+│         │     └──────────────────┘                              │
+│         │                                                      │
+│         │  ┌─────────── Legend ───────────┐                     │
+│         │  │ 🔴 Dining    🔵 Street Food │                     │
+│         │  │ 🟢 Cafes     🟡 Bars        │                     │
+│         │  │ 🟣 Markets   🟤 Cultural    │                     │
+│         │  │ 🟠 Experiences 🔘 Outdoor   │                     │
+│         │  └─────────────────────────────┘                     │
+└─────────┴──────────────────────────────────────────────────────┘
+```
+
+**Screen ID:** S10
+**Map Library:** React Leaflet + OpenStreetMap tiles
+**Default Center:** Quận 4, HCM [10.7615, 106.7059], zoom 15
+**Features:**
+- POI markers colored by category (8 categories)
+- Trigger radius circles (stroke: Active=green, Draft=amber, Archived=gray)
+- Status dropdown filter (All / Active / Draft / Archived)
+- Tour selector → Polyline route between POIs
+- Toggle trigger radius visibility
+- Click marker → Popup with name, category, status, audio info, View/Edit buttons
+- Category legend overlay
+**States:** Loading (map skeleton), Empty (no POIs), Error
+**Refs:** FR-210, UC-18
 
 ---
 
@@ -930,9 +975,15 @@ More Menu ─── Bottom Tab: More
 └─────────────────────────────────────────┘
 ```
 
-**Screen ID:** S22  
-**States:** Single POI (1 card), Overlap (primary + "Also nearby" list)  
-**Refs:** FR-502, BR-35~38
+**Screen ID:** S22
+**Audio Queue Behavior (AudioContext):**
+- Singleton player: chỉ 1 audio phát tại 1 thời điểm
+- Auto-play audio khi trigger (delay 500ms)
+- Khi chuyển sang POI mới, audio cũ bị stop ngay lập tức
+- Global state: `currentPoiId`, `isPlaying`, `position`, `duration`, `hasError`
+- Controls: `playGlobalAudio()`, `pauseGlobalAudio()`, `resumeGlobalAudio()`, `seekGlobalAudio()`, `stopAndClearAudio()`
+**States:** Single POI (1 card), Overlap (primary + "Also nearby" list)
+**Refs:** FR-502, FR-403, FR-801, BR-35~38
 
 ---
 

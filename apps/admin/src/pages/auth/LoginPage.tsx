@@ -39,13 +39,6 @@ const LoginPage = () => {
             }
 
             login(response);
-
-            if (response.user.role === 'SHOP_OWNER') {
-                localStorage.setItem('ownerAccessToken', response.accessToken);
-            } else {
-                localStorage.removeItem('ownerAccessToken');
-            }
-
             navigate(redirectPath, { replace: true });
         } catch (error: unknown) {
             console.error('Login error:', error);

@@ -2,15 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateTourDto, UpdateTourDto, SetTourPoisDto, QueryTourDto } from './dto';
 import { Prisma } from '@prisma/client';
+import { SeedExportService } from '../seed-export/seed-export.service';
 
 @Injectable()
 export class ToursService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private seedExportService: SeedExportService,
+    ) { }
 
     async create(dto: CreateTourDto, userId: string) {
-        return this.prisma.tour.create({
+        const tour = await this.prisma.tour.create({
             data: { ...dto, createdById: userId },
         });
+        this.seedExportService.exportSeedData().catch(() => {});
+        return tour;
     }
 
     async findAll(query: QueryTourDto) {
@@ -70,10 +76,12 @@ export class ToursService {
 
     async update(id: string, dto: UpdateTourDto) {
         await this.findOne(id);
-        return this.prisma.tour.update({
+        const tour = await this.prisma.tour.update({
             where: { id },
             data: dto,
         });
+        this.seedExportService.exportSeedData().catch(() => {});
+        return tour;
     }
 
     async setPois(tourId: string, dto: SetTourPoisDto) {
@@ -90,14 +98,18 @@ export class ToursService {
 
         await this.prisma.tourPoi.createMany({ data: tourPois });
 
+        this.seedExportService.exportSeedData().catch(() => {});
+
         return this.findOne(tourId);
     }
 
     async remove(id: string) {
         await this.findOne(id);
-        return this.prisma.tour.update({
+        const tour = await this.prisma.tour.update({
             where: { id },
             data: { deletedAt: new Date() },
         });
+        this.seedExportService.exportSeedData().catch(() => {});
+        return tour;
     }
 }

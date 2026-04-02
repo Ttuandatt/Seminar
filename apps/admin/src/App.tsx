@@ -12,31 +12,42 @@ import MerchantFormPage from './pages/admin/MerchantFormPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import PlaceholderPage from './pages/admin/PlaceholderPage';
 import ProfilePage from './pages/admin/ProfilePage';
-import ShopOwnerLayout from './components/layout/ShopOwnerLayout';
-import ShopOwnerLoginPage from './pages/owner/ShopOwnerLoginPage';
 import ShopOwnerDashboardPage from './pages/owner/ShopOwnerDashboardPage';
 import ShopOwnerAnalyticsPage from './pages/owner/ShopOwnerAnalyticsPage';
 import ShopOwnerProfilePage from './pages/owner/ShopOwnerProfilePage';
 import ShopOwnerPOIFormPage from './pages/owner/ShopOwnerPOIFormPage';
+import MapViewPage from './pages/admin/MapViewPage';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/owner/login" element={<ShopOwnerLoginPage />} />
         <Route path="/owner/register" element={<RegisterPage initialRole="SHOP_OWNER" />} />
 
-        <Route path="/owner" element={<ShopOwnerLayout />}>
+        {/* Shop Owner routes — same DashboardLayout as admin */}
+        <Route
+          path="/owner"
+          element={(
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          )}
+        >
           <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<ShopOwnerDashboardPage />} />
+          <Route path="map" element={<MapViewPage />} />
           <Route path="analytics" element={<ShopOwnerAnalyticsPage />} />
           <Route path="profile" element={<ShopOwnerProfilePage />} />
           <Route path="pois/new" element={<ShopOwnerPOIFormPage />} />
+          <Route path="pois/:id" element={<ShopOwnerPOIFormPage readOnly />} />
+          <Route path="pois/:id/edit" element={<ShopOwnerPOIFormPage />} />
         </Route>
 
+        {/* Admin routes */}
         <Route
           path="/admin"
           element={(
@@ -55,6 +66,7 @@ function App() {
           <Route path="tours/new" element={<TourFormPage />} />
           <Route path="tours/:id" element={<TourFormPage readOnly />} />
           <Route path="tours/:id/edit" element={<TourFormPage />} />
+          <Route path="map" element={<MapViewPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="merchants" element={<MerchantListPage />} />

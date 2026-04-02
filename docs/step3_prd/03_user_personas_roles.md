@@ -1,9 +1,9 @@
 # User Personas & Roles
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
-> **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Phiên bản:** 3.0
+> **Ngày tạo:** 2026-02-08
+> **Cập nhật:** 2026-03-21
 
 ---
 
@@ -63,7 +63,7 @@
 
 ---
 
-### 1.3 Persona 3: Du khách Quốc tế
+### 1.3 Persona 3: Du khách Quốc tế (English)
 
 | Attribute | Description |
 |-----------|-------------|
@@ -90,7 +90,34 @@
 
 ---
 
-### 1.4 Persona 4: Tourist đã đăng ký (Registered Tourist)
+### 1.4 Persona 4: Du khách Trung Quốc
+
+| Attribute | Description |
+|-----------|-------------|
+| **Tên** | Wei - Chinese Traveler |
+| **Tuổi** | 25-55 |
+| **Tech Savvy** | Cao |
+| **Thiết bị** | Android (Huawei/Xiaomi) hoặc iPhone |
+| **Ngôn ngữ** | Tiếng Trung (primary), không nói được tiếng Việt/Anh |
+
+**Goals:**
+- Nghe thuyết minh bằng tiếng Trung (Mandarin)
+- Đọc thông tin POI bằng chữ Hán
+- Không cần người phiên dịch
+
+**Pain Points:**
+- Không đọc được tiếng Việt lẫn tiếng Anh
+- Nội dung chỉ có VI/EN không giúp được gì
+- Cảm giác bị loại trừ khi app không hỗ trợ ngôn ngữ mình
+
+**Behaviors:**
+- Đi theo nhóm, thường có tour guide dẫn đầu
+- Muốn app tự động nhận diện ngôn ngữ thiết bị
+- Thích nghe audio hơn đọc text
+
+---
+
+### 1.5 Persona 5: Tourist đã đăng ký (Registered Tourist)
 
 | Attribute | Description |
 |-----------|-------------|
@@ -117,7 +144,7 @@
 
 ---
 
-### 1.5 Persona 5: Chủ quán (Shop Owner)
+### 1.6 Persona 6: Chủ quán (Shop Owner)
 
 | Attribute | Description |
 |-----------|-------------|
@@ -160,26 +187,38 @@
 
 | Action | Admin | Shop Owner |
 |--------|-------|------------|
-| Login | ✅ | ✅ |
+| Login / Logout | ✅ | ✅ |
 | Create POI | ✅ | ✅ (own) |
 | Edit POI | ✅ | ✅ (own) |
-| Delete POI | ✅ | ❌ |
+| Delete POI (soft) | ✅ | ✅ (own) |
+| Change POI status (DRAFT→ACTIVE) | ✅ | ❌ (cần Admin duyệt) |
+| Upload Media (ảnh/audio) | ✅ | ✅ (own POI) |
+| Generate TTS audio | ✅ | ✅ (own POI) |
 | Create Tour | ✅ | ❌ |
 | Edit Tour | ✅ | ❌ |
 | Delete Tour | ✅ | ❌ |
-| Upload Media | ✅ | ✅ (own POI) |
-| View Reports | ✅ (tất cả) | ✅ (own POI) |
+| Manage Shop Owners | ✅ | ❌ |
+| Lock/Unlock accounts | ✅ | ❌ |
+| View All Analytics | ✅ | ❌ |
+| View Own Analytics | ❌ | ✅ |
 
-> Admin giữ toàn quyền vận hành dashboard; Shop Owner chỉ thao tác trên dữ liệu của mình.
+> Admin giữ toàn quyền vận hành; Shop Owner chỉ thao tác trên dữ liệu của mình. POI của Shop Owner tạo cần Admin duyệt (chuyển ACTIVE) mới hiển thị trên Tourist App.
 
 #### Tourist App Permissions
 
-| Action | Tourist | Notes |
-|--------|---------|-------|
-| View POIs, Play Audio, Select Tour, Change Language, Download Offline, QR Scan | ✅ | Dùng được ở chế độ guest |
-| Save Favorites | ✅* | *Cần đăng nhập |
-| View History | ✅* | *Cần đăng nhập để đồng bộ đa thiết bị |
-| Sync across devices, Social Login | ✅* | *Phụ thuộc tính năng đăng nhập (P1) |
+| Action | Tourist (Guest) | Tourist (Logged-in) |
+|--------|:---:|:---:|
+| Xem bản đồ POI | ✅ | ✅ |
+| Xem chi tiết POI | ✅ | ✅ |
+| Nghe audio thuyết minh (VI/EN/ZH) | ✅ | ✅ |
+| Scan QR | ✅ | ✅ |
+| Chọn ngôn ngữ (VI/EN/ZH) | ✅ | ✅ |
+| Xem danh sách / chi tiết Tour | ✅ | ✅ |
+| Device Capability Check | ✅ | ✅ |
+| Chế độ Offline | ✅ | ✅ |
+| Yêu thích POI | ❌ | ✅ |
+| Xem lịch sử tham quan | ❌ | ✅ |
+| Đồng bộ đa thiết bị | ❌ | ✅ |
 
 ---
 

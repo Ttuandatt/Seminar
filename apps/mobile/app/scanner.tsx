@@ -5,11 +5,13 @@ import { useRouter } from 'expo-router';
 import { publicService } from '../services/publicService';
 import { getOfflinePoi } from '../services/database';
 import { XCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [scanned, setScanned] = useState(false);
     const router = useRouter();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const getCameraPermissions = async () => {
@@ -34,19 +36,19 @@ export default function ScannerScreen() {
                 if (offlinePoi.hasLargeAudio === 1) {
                     // TH2: Require WiFi/Network
                     Alert.alert(
-                        "Dữ liệu lớn",
-                        "Địa điểm này có chứa âm аудіо/video chất lượng cao. Cần kết nối mạng để trải nghiệm tốt nhất.",
+                        t('scanner.largeData'),
+                        t('scanner.largeDataMsg'),
                         [
-                            { text: "Tiếp tục", onPress: () => router.replace(`/poi/${poiId}`) }
+                            { text: t('common.continue'), onPress: () => router.replace(`/poi/${poiId}`) }
                         ]
                     );
                 } else {
                     // TH1: Use SQLite directly
                     Alert.alert(
-                        "Chế độ Offline",
-                        "Hiển thị dữ liệu từ máy của bạn.",
+                        t('scanner.offlineMode'),
+                        t('scanner.offlineMsg'),
                         [
-                            { text: "Tiếp tục", onPress: () => router.replace(`/poi/${poiId}?offline=true`) }
+                            { text: t('common.continue'), onPress: () => router.replace(`/poi/${poiId}?offline=true`) }
                         ]
                     );
                 }
@@ -60,40 +62,42 @@ export default function ScannerScreen() {
                 // Success, navigate to POI
                 router.replace(`/poi/${response.poi.id}`);
             } else {
-                Alert.alert("Lỗi", "Mã QR không hợp lệ hoặc không thuộc hệ thống", [
-                    { text: "Thử lại", onPress: () => setScanned(false) }
+                Alert.alert(t('common.error'), t('scanner.invalidQr'), [
+                    { text: t('common.retry'), onPress: () => setScanned(false) }
                 ]);
             }
         } catch (error) {
             console.error("QR Validation Error:", error);
-            Alert.alert("Lỗi", "Mã QR không hợp lệ hoặc không thể kết nối server!", [
-                { text: "Thử lại", onPress: () => setScanned(false) }
+            Alert.alert(t('common.error'), t('scanner.invalidQrNetwork'), [
+                { text: t('common.retry'), onPress: () => setScanned(false) }
             ]);
         }
     };
 
     if (hasPermission === null) {
-        return <View style={styles.container}><Text>Đang yêu cầu quyền sử dụng camera...</Text></View>;
+        return <View style={styles.container}><Text>{t('scanner.requestingPermission')}</Text></View>;
     }
     if (hasPermission === false) {
-        return <View style={styles.container}><Text>Không có quyền truy cập camera</Text></View>;
+        return <View style={styles.container}><Text>{t('scanner.noPermission')}</Text></View>;
     }
 
     return (
         <View style={styles.container}>
-            <CameraView
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                    barcodeTypes: ["qr"],
-                }}
-                style={StyleSheet.absoluteFillObject}
-            >
+            <View style={styles.cameraWrapper}>
+                <CameraView
+                    onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                    barcodeScannerSettings={{
+                        barcodeTypes: ["qr"],
+                    }}
+                    style={StyleSheet.absoluteFillObject}
+                />
+
                 <View style={styles.overlay}>
                     <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
                         <XCircle size={32} color="#fff" />
                     </TouchableOpacity>
 
-                    <Text style={styles.instructionText}>Quét mã QR tại điểm tham quan</Text>
+                    <Text style={styles.instructionText}>{t('scanner.instruction')}</Text>
 
                     <View style={styles.scannerFrame}>
                         <View style={styles.cornerTopLeft} />
@@ -102,7 +106,7 @@ export default function ScannerScreen() {
                         <View style={styles.cornerBottomRight} />
                     </View>
                 </View>
-            </CameraView>
+            </View>
         </View>
     );
 }
@@ -113,8 +117,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#000',
     },
-    overlay: {
+    cameraWrapper: {
         flex: 1,
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',

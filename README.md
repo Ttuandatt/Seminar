@@ -19,7 +19,7 @@ Seminar/
 
 | Layer | Công nghệ |
 |-------|-----------| 
-| **Backend** | NestJS 11, Prisma 5, PostgreSQL 15, Redis 7 |
+| **Backend** | NestJS 11, Prisma 5, PostgreSQL 15, Redis 7, msedge-tts, qrcode |
 | **Frontend (Web)** | React 19, Vite 7, Tailwind CSS 4, TypeScript 5 |
 | **Frontend (Mobile)** | Expo SDK 54, React Native 0.81, TypeScript 5 |
 | **Auth** | JWT (Access + Refresh Token) |
@@ -103,7 +103,20 @@ npx prisma generate
 
 # Tạo bảng trong database
 npx prisma migrate dev
+
+# Seed data mẫu (POIs, Tours, tài khoản test)
+npm run db:seed
 ```
+
+> Seed sẽ tạo sẵn data mẫu gồm 5 POIs (khu Vĩnh Khánh), 1 Tour, và 3 tài khoản test:
+>
+> | Vai trò | Email | Mật khẩu |
+> |---------|-------|-----------|
+> | Admin | `admin@gpstours.vn` | `admin123` |
+> | Shop Owner | `bunmam@gpstours.vn` | `shop123` |
+> | Tourist | `tourist@example.com` | `tourist123` |
+>
+> Nếu muốn **reset toàn bộ database** và seed lại: `npm run db:reset` (sẽ xóa hết data rồi chạy migrate + seed lại).
 
 ### Bước 5: Chạy Backend
 
@@ -210,11 +223,15 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | **POIs** | `/pois` | CRUD điểm tham quan |
 | **Tours** | `/tours` | CRUD tours, gán POIs vào tour |
 | **Media** | `/media` | Upload hình ảnh, audio |
+| **QR** | `/pois/:id/qr` | Tạo, tái tạo, tải QR code cho POI |
+| **TTS** | `/tts` | Text-to-Speech — tạo audio tự động cho POI |
+| **Profile** | `/profile` | Quản lý hồ sơ cá nhân, upload avatar |
 | **Merchants** | `/merchants` | Admin quản lý Shop Owners |
-| **Shop Owner** | `/shop-owner` | Shop owner tự quản lý profile & POIs |
+| **Shop Owner** | `/shop-owner` | Shop owner tự quản lý profile, POIs & analytics |
 | **Tourist** | `/tourist` | API cho ứng dụng du khách |
-| **Public** | `/public` | API công khai (không cần auth) |
+| **Public** | `/public` | API công khai (không cần auth), QR validate, trigger log |
 | **Analytics** | `/analytics` | Thống kê lượt xem, tương tác |
+| **Seed-Export** | — | Export seed data phục vụ báo cáo & testing |
 
 ### Roles
 
@@ -224,9 +241,11 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | `SHOP_OWNER` | Quản lý cửa hàng & POIs của mình |
 | `TOURIST` | Xem tours, POIs, lưu yêu thích |
 
-### Database Schema (11 entities)
+### Database Schema (12 entities)
 
-`User`, `ShopOwner`, `TouristUser`, `Poi`, `PoiMedia`, `Tour`, `TourPoi`, `Favorite`, `ViewHistory`, `TriggerLog`, `PasswordResetToken`
+`User`, `ShopOwner`, `TouristUser`, `Poi`, `PoiMedia`, `Tour`, `TourPoi`, `Favorite`, `ViewHistory`, `TriggerLog`, `PasswordResetToken`, `RevokedToken`
+
+**Enums chính:** `UserRole`, `UserStatus`, `PoiStatus`, `PoiCategory`, `MediaLanguage` (VI/EN/ALL), `TriggerType` (GPS/QR/MANUAL), `UserAction`
 
 > Chi tiết xem tại `apps/api/prisma/schema.prisma`
 
@@ -234,11 +253,19 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 
 ## 🖥️ Kiến trúc Admin Dashboard
 
-### Pages
+### Pages — Auth
 
 | Route | Trang | Mô tả |
 |-------|-------|--------|
-| `/login` | LoginPage | Đăng nhập admin |
+| `/login` | LoginPage | Đăng nhập |
+| `/register` | RegisterPage | Đăng ký tài khoản |
+| `/forgot-password` | ForgotPasswordPage | Quên mật khẩu |
+| `/reset-password` | ResetPasswordPage | Đặt lại mật khẩu |
+
+### Pages — Admin
+
+| Route | Trang | Mô tả |
+|-------|-------|--------|
 | `/admin` | DashboardPage | Tổng quan KPI |
 | `/admin/pois` | POIListPage | Danh sách POIs |
 | `/admin/pois/new` | POIFormPage | Tạo POI mới |
@@ -249,8 +276,19 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 | `/admin/merchants` | MerchantListPage | Danh sách Merchants |
 | `/admin/merchants/new` | MerchantFormPage | Tạo Merchant |
 | `/admin/merchants/:id/edit` | MerchantFormPage | Sửa Merchant |
+| `/admin/map` | MapViewPage | Bản đồ POI markers & controls |
 | `/admin/analytics` | AnalyticsPage | Thống kê |
 | `/admin/profile` | ProfilePage | Quản lý hồ sơ Admin |
+
+### Pages — Shop Owner
+
+| Route | Trang | Mô tả |
+|-------|-------|--------|
+| `/owner` | ShopOwnerDashboardPage | Dashboard cửa hàng |
+| `/owner/pois/edit` | ShopOwnerPOIFormPage | Chỉnh sửa POI của mình |
+| `/owner/map` | MapViewPage | Bản đồ (dùng chung với Admin) |
+| `/owner/analytics` | ShopOwnerAnalyticsPage | Thống kê cửa hàng |
+| `/owner/profile` | ShopOwnerProfilePage | Quản lý hồ sơ Shop Owner |
 
 ---
 
@@ -271,49 +309,68 @@ Truy cập http://localhost:3000/api/docs khi backend đang chạy để:
 
 ### Screens
 
+**Tab chính (3):**
+
 | Tab/Route | Screen | Mô tả |
 |-----------|--------|--------|
 | `(tabs)/index` | 🗺️ Map Screen | Bản đồ với POI markers, GPS, bottom sheet preview |
 | `(tabs)/tours` | 📋 Tour List | Danh sách tours với badges (số POIs, duration) |
 | `(tabs)/more` | ⚙️ More | Login/Logout, Settings, Favorites link |
+
+**Auth & Onboarding (4):**
+
+| Route | Screen | Mô tả |
+|-------|--------|--------|
+| `login` | Login | Đăng nhập Tourist |
+| `register` | Register | Đăng ký tài khoản |
+| `forgot-password` | Forgot Password | Quên mật khẩu |
+| `onboarding` | Onboarding | Hướng dẫn sử dụng lần đầu |
+
+**Chi tiết & Tính năng (9):**
+
+| Route | Screen | Mô tả |
+|-------|--------|--------|
 | `poi/[id]` | 📍 POI Detail | Image carousel, AudioPlayer, language toggle, favorite |
 | `tour/[id]` | 🗺️ Tour Detail | Route map (Polyline), POI timeline, Start Tour |
+| `tour/follow/[id]` | 🧭 Tour Follow | Chế độ điều hướng theo tour (guided navigation) |
+| `scanner` | 📷 QR Scanner | Quét QR code tại POI |
+| `favorites` | ❤️ Favorites | Danh sách POI đã yêu thích |
+| `history` | 🕐 History | Lịch sử POI đã xem |
+| `edit-profile` | 👤 Edit Profile | Chỉnh sửa thông tin cá nhân |
+| `language` | 🌐 Language | Chọn ngôn ngữ VI/EN |
+| `about` | ℹ️ About | Thông tin ứng dụng |
 
 ### Components
 
 | Component | Chức năng |
 |-----------|-----------|
 | `AudioPlayer.tsx` | Play/Pause, progress bar, time display (Managed by Global Context) |
+| `MapControls` | Nút điều khiển bản đồ (zoom, GPS, layers) |
+| `BottomSheet` | Bottom sheet xem preview POI từ bản đồ |
 
 ### Services
 
 | Service | Chức năng |
 |---------|-----------|
 | `api.ts` | Axios instance, auto LAN IP, JWT interceptors |
-| `publicService.ts` | POIs, Tours, QR validate (no auth) |
+| `publicService.ts` | POIs, Tours, QR validate, trigger log (no auth) |
 | `touristService.ts` | Profile, Favorites, History (JWT required) |
-| `authService.ts` | Login, Register specifically for TOURIST role |
+| `authService.ts` | Login, Register, Forgot/Reset Password for TOURIST |
 | `database.ts` | SQLite management, POI offline synchronization |
 
 ---
 
-## 🧑‍💻 Tạo tài khoản Admin đầu tiên
+## 🧑‍💻 Tài khoản test
 
-Sau khi backend chạy, dùng Swagger hoặc Postman:
+Nếu đã chạy `npm run db:seed` ở Bước 4, hệ thống đã có sẵn 3 tài khoản:
 
-```http
-POST http://localhost:3000/api/v1/auth/register
-Content-Type: application/json
+| Vai trò | Email | Mật khẩu | Đăng nhập tại |
+|---------|-------|-----------|---------------|
+| **Admin** | `admin@gpstours.vn` | `admin123` | http://localhost:5173 → tự chuyển `/admin` |
+| **Shop Owner** | `bunmam@gpstours.vn` | `shop123` | http://localhost:5173 → tự chuyển `/owner` |
+| **Tourist** | `tourist@example.com` | `tourist123` | Mobile App (Expo Go) |
 
-{
-  "email": "admin@gpstours.vn",
-  "password": "admin123",
-  "fullName": "System Admin",
-  "role": "ADMIN"
-}
-```
-
-Sau đó đăng nhập vào Admin Dashboard tại http://localhost:5173 với thông tin trên.
+> Nếu muốn tạo thêm tài khoản, dùng Swagger: http://localhost:3000/api/docs → `POST /auth/register`
 
 ---
 
