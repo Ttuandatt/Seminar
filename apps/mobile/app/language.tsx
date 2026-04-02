@@ -6,18 +6,30 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../context/LanguageContext';
 
 const LANGUAGES = [
-    { code: 'vi' as const, flag: '\u{1F1FB}\u{1F1F3}' },
-    { code: 'en' as const, flag: '\u{1F1EC}\u{1F1E7}' },
+    { code: 'vi' as const, flag: '\u{1F1FB}\u{1F1F3}', label: 'Tiếng Việt', description: 'Vietnamese (default local content)' },
+    { code: 'en' as const, flag: '\u{1F1EC}\u{1F1E7}', label: 'English', description: 'English (best fallback for POI/Tour)' },
+    { code: 'ja' as const, flag: '\u{1F1EF}\u{1F1F5}', label: 'Japanese', description: 'Uses translated/audio content when available' },
+    { code: 'ko' as const, flag: '\u{1F1F0}\u{1F1F7}', label: 'Korean', description: 'Uses translated/audio content when available' },
+    { code: 'zh-cn' as const, flag: '\u{1F1E8}\u{1F1F3}', label: 'Chinese (Simplified)', description: 'Uses translated/audio content when available' },
+    { code: 'zh-tw' as const, flag: '\u{1F1F9}\u{1F1FC}', label: 'Chinese (Traditional)', description: 'Uses translated/audio content when available' },
+    { code: 'fr' as const, flag: '\u{1F1EB}\u{1F1F7}', label: 'French', description: 'Uses translated/audio content when available' },
+    { code: 'de' as const, flag: '\u{1F1E9}\u{1F1EA}', label: 'German', description: 'Uses translated/audio content when available' },
+    { code: 'es' as const, flag: '\u{1F1EA}\u{1F1F8}', label: 'Spanish', description: 'Uses translated/audio content when available' },
+    { code: 'th' as const, flag: '\u{1F1F9}\u{1F1ED}', label: 'Thai', description: 'Uses translated/audio content when available' },
+    { code: 'ru' as const, flag: '\u{1F1F7}\u{1F1FA}', label: 'Russian', description: 'Uses translated/audio content when available' },
 ];
+
+type LanguageCode = (typeof LANGUAGES)[number]['code'];
 
 export default function LanguageScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const { lang, setLanguage } = useLanguage();
 
-    const selectLanguage = async (code: 'vi' | 'en') => {
+    const selectLanguage = async (code: LanguageCode) => {
         await setLanguage(code);
-        const name = t(`languageScreen.${code}`);
+        const selected = LANGUAGES.find((langItem) => langItem.code === code);
+        const name = selected?.label || code.toUpperCase();
         Alert.alert(t('common.success'), t('languageScreen.changed', { name }), [
             { text: t('common.ok'), onPress: () => router.back() }
         ]);
@@ -48,8 +60,8 @@ export default function LanguageScreen() {
                             <Text style={[
                                 styles.langName,
                                 lang === item.code && styles.langNameActive,
-                            ]}>{t(`languageScreen.${item.code}`)}</Text>
-                            <Text style={styles.langDesc}>{t(`languageScreen.${item.code}Desc`)}</Text>
+                            ]}>{item.label}</Text>
+                            <Text style={styles.langDesc}>{item.description}</Text>
                         </View>
                         {lang === item.code && (
                             <View style={styles.checkCircle}>
