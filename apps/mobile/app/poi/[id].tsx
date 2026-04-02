@@ -1,13 +1,27 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Dimensions, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+    StyleSheet,
+    View,
+    Text,
+    ScrollView,
+    Image,
+    TouchableOpacity,
+    Dimensions,
+    ActivityIndicator,
+    NativeSyntheticEvent,
+    NativeScrollEvent,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Heart, Globe } from 'lucide-react-native';
+import { Heart } from 'lucide-react-native';
 import { publicService, Poi } from '../../services/publicService';
 import { getOfflinePoi } from '../../services/database';
 import AudioPlayer from '../../components/AudioPlayer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touristService } from '../../services/touristService';
 import { getMediaUrl } from '../../services/api';
+import PoiLanguageSelector from '../components/PoiLanguageSelector';
+import { usePoiLocalization } from '../hooks/usePoiLocalization';
+import { getLocalizationCopy } from '../services/localizationCopy';
 
 const { width } = Dimensions.get('window');
 
@@ -17,15 +31,32 @@ export default function PoiDetailScreen() {
 
     const [poi, setPoi] = useState<Poi | null>(null);
     const [loading, setLoading] = useState(true);
-    const [lang, setLang] = useState<'vi' | 'en'>('vi');
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isUsingCachedPoi, setIsUsingCachedPoi] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
+    const poiId = typeof id === 'string' ? id : '';
+
+    const {
+        availableLanguages,
+        activeLanguage,
+        setLanguage,
+        getContent,
+        isPending,
+        requestTranslation,
+        getStatusesForLanguage,
+        staleNotice,
+    } = usePoiLocalization(poiId, poi, {
+        isRefreshing,
+        isUsingCachedPoi,
+    });
+
     useEffect(() => {
         fetchData();
         checkAuth();
-    }, [id]);
+    }, [poiId]);
 
     const checkAuth = async () => {
         const token = await AsyncStorage.getItem('accessToken');
@@ -42,39 +73,50 @@ export default function PoiDetailScreen() {
     };
 
     const fetchData = async () => {
+        if (!poiId) {
+            setLoading(false);
+            return;
+        }
+
+        setIsRefreshing(true);
+
         try {
-            if (typeof id === 'string') {
-                if (offline === 'true') {
-                    const localData = getOfflinePoi(id);
-                    if (localData) {
-                        setPoi({
-                            ...localData,
-                            media: [] // Offline mode has no media for now
-                        } as any);
-                        setLoading(false);
-                        return;
-                    }
+            if (offline === 'true') {
+                const localData = getOfflinePoi(poiId);
+                if (localData) {
+                    setPoi({
+                        ...localData,
+                        category: localData.poiType || 'SUB',
+                        media: [],
+                    });
+                    setIsUsingCachedPoi(true);
+                    setLoading(false);
+                    return;
                 }
+            }
 
-                const data = await publicService.getPoiDetail(id);
-                setPoi(data);
+            const data = await publicService.getPoiDetail(poiId);
+            setPoi(data);
+            setIsUsingCachedPoi(false);
 
-                // Log view history
-                if (isLoggedIn) {
-                    touristService.addHistory({ poiId: data.id, triggerType: 'MANUAL' }).catch(() => { });
-                } else {
-                    publicService.logTrigger({ deviceId: 'anonymous', poiId: data.id, triggerType: 'MANUAL', userAction: 'VIEW' }).catch(() => { });
-                }
+            if (isLoggedIn) {
+                touristService.addHistory({ poiId: data.id, triggerType: 'MANUAL' }).catch(() => {});
+            } else {
+                publicService
+                    .logTrigger({
+                        deviceId: 'anonymous',
+                        poiId: data.id,
+                        triggerType: 'MANUAL',
+                        userAction: 'VIEW',
+                    })
+                    .catch(() => {});
             }
         } catch (error) {
             console.error('Error fetching POI details:', error);
         } finally {
+            setIsRefreshing(false);
             setLoading(false);
         }
-    };
-
-    const toggleLanguage = () => {
-        setLang(prev => prev === 'vi' ? 'en' : 'vi');
     };
 
     const toggleFavorite = async () => {
@@ -111,8 +153,18 @@ export default function PoiDetailScreen() {
         );
     }
 
+    const content = getContent(activeLanguage);
+    const pendingForActiveLanguage = isPending(activeLanguage);
+    const shouldShowRequestCta = !content.hasTranslation;
+    const statusByLanguage = availableLanguages.reduce<Record<string, string[]>>((result, language) => {
+        result[language.code] = getStatusesForLanguage(language.code);
+        return result;
+    }, {});
+
     const images = poi.media?.filter(m => m.type === 'IMAGE') || [];
-    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
+    const audio = poi.media?.find(
+        (m) => m.type === 'AUDIO' && (m.language === content.fallbackLanguage || m.language === 'ALL'),
+    )
         ?? poi.media?.find(m => m.type === 'AUDIO');
 
     return (
@@ -160,19 +212,22 @@ export default function PoiDetailScreen() {
 
             <View style={styles.content}>
                 <View style={styles.headerRow}>
-                    <Text style={styles.title}>
-                        {lang === 'vi' ? poi.nameVi : (poi.nameEn || poi.nameVi)}
-                    </Text>
+                    <Text style={styles.title}>{content.name || poi.nameVi}</Text>
                     <View style={styles.actionsRow}>
-                        <TouchableOpacity style={styles.iconButton} onPress={toggleLanguage}>
-                            <Globe size={24} color="#64748b" />
-                            <Text style={styles.langText}>{lang.toUpperCase()}</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity style={styles.iconButton} onPress={toggleFavorite}>
                             <Heart size={24} color={isFavorite ? '#ef4444' : '#64748b'} fill={isFavorite ? '#ef4444' : 'transparent'} />
                         </TouchableOpacity>
                     </View>
                 </View>
+
+                <PoiLanguageSelector
+                    activeLanguage={activeLanguage}
+                    languages={availableLanguages.map((item) => ({ code: item.code, label: item.label }))}
+                    statusByLanguage={statusByLanguage}
+                    onSelectLanguage={setLanguage}
+                />
+
+                {staleNotice ? <Text style={styles.staleNotice}>{staleNotice}</Text> : null}
 
                 <Text style={styles.typeText}>
                     {poi.category === 'CULTURAL_LANDMARKS' ? '📍 Di tích văn hóa' :
@@ -191,9 +246,45 @@ export default function PoiDetailScreen() {
 
                 <View style={styles.descriptionCard}>
                     <Text style={styles.descriptionTitle}>About</Text>
-                    <Text style={styles.description}>
-                        {lang === 'vi' ? poi.descriptionVi : (poi.descriptionEn || poi.descriptionVi)}
-                    </Text>
+                    {content.hasDisplayableContent ? (
+                        <>
+                            {content.fallbackNote ? (
+                                <Text style={styles.fallbackNote}>{content.fallbackNote}</Text>
+                            ) : null}
+                            {pendingForActiveLanguage ? (
+                                <View style={styles.pendingRow}>
+                                    <Text style={styles.pendingBadge}>Pending</Text>
+                                    <Text style={styles.pendingText}>{getLocalizationCopy('ws4.pending.note')}</Text>
+                                </View>
+                            ) : null}
+                            <Text style={styles.description}>{content.description}</Text>
+                        </>
+                    ) : (
+                        <>
+                            <Text style={styles.emptyTitle}>{getLocalizationCopy('ws4.empty.title')}</Text>
+                            <Text style={styles.emptyBody}>{getLocalizationCopy('ws4.empty.body')}</Text>
+                        </>
+                    )}
+
+                    {shouldShowRequestCta ? (
+                        <TouchableOpacity
+                            style={[
+                                styles.requestButton,
+                                pendingForActiveLanguage && styles.requestButtonDisabled,
+                            ]}
+                            disabled={pendingForActiveLanguage}
+                            onPress={() => requestTranslation(activeLanguage)}
+                        >
+                            <Text
+                                style={[
+                                    styles.requestButtonText,
+                                    pendingForActiveLanguage && styles.requestButtonTextDisabled,
+                                ]}
+                            >
+                                {getLocalizationCopy('ws4.request.cta')}
+                            </Text>
+                        </TouchableOpacity>
+                    ) : null}
                 </View>
             </View>
         </ScrollView>
@@ -272,6 +363,15 @@ const styles = StyleSheet.create({
     iconButton: {
         alignItems: 'center',
     },
+    staleNotice: {
+        marginBottom: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderRadius: 10,
+        backgroundColor: '#fff7ed',
+        color: '#9a3412',
+        fontSize: 12,
+    },
     langText: {
         fontSize: 10,
         fontWeight: 'bold',
@@ -301,9 +401,62 @@ const styles = StyleSheet.create({
         color: '#0f172a',
         marginBottom: 8,
     },
+    fallbackNote: {
+        marginBottom: 8,
+        fontSize: 12,
+        color: '#9a3412',
+    },
+    pendingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 10,
+    },
+    pendingBadge: {
+        borderRadius: 999,
+        backgroundColor: '#fef3c7',
+        color: '#92400e',
+        fontSize: 11,
+        fontWeight: '700',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    pendingText: {
+        fontSize: 12,
+        color: '#92400e',
+    },
     description: {
         fontSize: 15,
         lineHeight: 24,
         color: '#334155',
+    },
+    emptyTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#0f172a',
+        marginBottom: 6,
+    },
+    emptyBody: {
+        fontSize: 14,
+        lineHeight: 22,
+        color: '#475569',
+    },
+    requestButton: {
+        marginTop: 14,
+        borderRadius: 10,
+        backgroundColor: '#0C4A6E',
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    requestButtonDisabled: {
+        backgroundColor: '#cbd5e1',
+    },
+    requestButtonText: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    requestButtonTextDisabled: {
+        color: '#64748b',
     },
 });
