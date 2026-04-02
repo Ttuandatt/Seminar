@@ -9,6 +9,7 @@ import { LocalizationPanelProps, LocalizationPanelHandle, LocalizationPanelState
 import { LocalizationAccordionItem } from './LocalizationPanelAccordion';
 import { ConflictModal } from './ConflictModal';
 import { useSupportedLanguages } from '../../hooks/useSupportedLanguages';
+import { localizationAnalytics } from '../../services/localization-analytics';
 import styles from './LocalizationPanel.module.css';
 import { Plus } from 'lucide-react';
 
@@ -46,6 +47,16 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
       }));
     }, [supportedLanguages]);
 
+    // Emit panel view event
+    useEffect(() => {
+      localizationAnalytics.emitDropdownView({
+        poiId,
+        role,
+        languageCount: state.selectedLanguages.length,
+        timestamp: Date.now()
+      });
+    }, [poiId, role]);
+
     const localizationHook = usePoiLocalizations(poiId, {
       clientConfig: {
         baseUrl: '/admin-api',
@@ -75,6 +86,16 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
         ...prev,
         selectedLanguages: Array.from(new Set([...prev.selectedLanguages, language]))
       }));
+      
+      // Emit analytics
+      localizationAnalytics.emitAction({
+        action: 'add_language',
+        language,
+        poiId,
+        role,
+        timestamp: Date.now(),
+        success: true
+      });
     };
 
     const handleRemoveLanguage = (language: BCP47Language) => {
@@ -106,6 +127,18 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
           showConflictModal: false,
           conflictDiffs: []
         }));
+        
+        // Emit conflict resolution analytics
+        state.conflictDiffs.forEach(diff => {
+          localizationAnalytics.emitAction({
+            action: 'conflict_reload',
+            language: diff.language as BCP47Language,
+            poiId,
+            role,
+            timestamp: Date.now(),
+            success: true
+          });
+        });
       } finally {
         setIsHandlingConflict(false);
       }
@@ -118,6 +151,16 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
         const dirtyLanguages = Array.from(localizationHook.state.dirtyMap.keys());
         for (const lang of dirtyLanguages) {
           await localizationHook.saveLanguage(lang, { forceOverwrite: true });
+          
+          // Emit conflict overwrite analytics
+          localizationAnalytics.emitAction({
+            action: 'conflict_overwrite',
+            language: lang,
+            poiId,
+            role,
+            timestamp: Date.now(),
+            success: true
+          });
         }
         setState(prev => ({
           ...prev,
@@ -222,6 +265,8 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
                     return localizationHook.deleteLocalization(language);
                   }}
                   disabled={disabled}
+                  poiId={poiId}
+                  role={role}
                 />
               );
             })}

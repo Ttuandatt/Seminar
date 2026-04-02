@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, FileText, Trash2, Loader2 } from 'lucide-react';
 import { PoiLocalization, BCP47Language, SupportedLanguage } from '@localization-shared';
+import { localizationAnalytics } from '../../services/localization-analytics';
 import styles from './LocalizationPanel.module.css';
 
 export interface AccordionItemProps {
@@ -18,6 +19,8 @@ export interface AccordionItemProps {
   onDelete: (language: BCP47Language) => Promise<void>;
   onGenerateAudio?: (language: BCP47Language) => void;
   disabled?: boolean;
+  poiId?: string;
+  role?: 'admin' | 'shopOwner';
 }
 
 export function LocalizationAccordionItem({
@@ -33,7 +36,9 @@ export function LocalizationAccordionItem({
   onDiscard,
   onDelete,
   onGenerateAudio,
-  disabled = false
+  disabled = false,
+  poiId,
+  role = 'admin'
 }: AccordionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -46,6 +51,32 @@ export function LocalizationAccordionItem({
     setIsSaving(true);
     try {
       await onSave(language);
+      
+      // Emit analytics
+      if (poiId) {
+        localizationAnalytics.emitAction({
+          action: 'save',
+          language,
+          poiId,
+          role,
+          timestamp: Date.now(),
+          success: true
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      if (poiId) {
+        localizationAnalytics.emitAction({
+          action: 'save',
+          language,
+          poiId,
+          role,
+          timestamp: Date.now(),
+          success: false,
+          errorMessage: message
+        });
+      }
+      throw error;
     } finally {
       setIsSaving(false);
     }
@@ -56,6 +87,32 @@ export function LocalizationAccordionItem({
       setIsDeleting(true);
       try {
         await onDelete(language);
+        
+        // Emit analytics
+        if (poiId) {
+          localizationAnalytics.emitAction({
+            action: 'delete',
+            language,
+            poiId,
+            role,
+            timestamp: Date.now(),
+            success: true
+          });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        if (poiId) {
+          localizationAnalytics.emitAction({
+            action: 'delete',
+            language,
+            poiId,
+            role,
+            timestamp: Date.now(),
+            success: false,
+            errorMessage: message
+          });
+        }
+        throw error;
       } finally {
         setIsDeleting(false);
       }
@@ -207,7 +264,21 @@ export function LocalizationAccordionItem({
             </button>
 
             <button
-              onClick={() => onDiscard(language)}
+              onClick={() => {
+                onDiscard(language);
+                
+                // Emit analytics
+                if (poiId) {
+                  localizationAnalytics.emitAction({
+                    action: 'discard',
+                    language,
+                    poiId,
+                    role,
+                    timestamp: Date.now(),
+                    success: true
+                  });
+                }
+              }}
               disabled={!isDirty || disabled}
               type="button"
               style={{
