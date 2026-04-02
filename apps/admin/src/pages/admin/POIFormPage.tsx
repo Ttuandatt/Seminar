@@ -16,15 +16,17 @@ import {
     QrCode,
     Download,
     RefreshCw,
+    Languages,
 } from 'lucide-react';
 import { poiService, type POI, type POIMedia, type SavePOIPayload, POI_CATEGORY_OPTIONS } from '../../services/poi.service';
+import { translateService } from '../../services/translate.service';
 import { merchantService, type Merchant } from '../../services/merchant.service';
 import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
-import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
+
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -113,6 +115,9 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [qrData, setQrData] = useState<{ qrDataUrl: string; qrCodeUrl: string; qrContent: string } | null>(null);
     const [qrLoading, setQrLoading] = useState(false);
     const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
+    const [translating, setTranslating] = useState(false);
+    const [ttsTargetLang, setTtsTargetLang] = useState('VI');
+    const [ttsTranslateGenerating, setTtsTranslateGenerating] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -203,68 +208,132 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
     }, [poiId]);
 
-    const { generating: ttsGenerating, generateTts } = usePoiTts({
-        getPoiId: () => poiId,
-        getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
-        refreshMedia,
-        onSuccessToast: (language) =>
-            showToast({
-                variant: 'success',
-                title: `TTS ${language} đã tạo`,
-                description: `Audio ${language} đã được tạo thành công.`,
-            }),
-        onErrorToast: (language, message) =>
+
+    // --- Auto-translate handler ---
+    const handleTranslateFromVi = async () => {
+        if (!formData.name?.trim() && !formData.description?.trim()) {
             showToast({
                 variant: 'error',
-                title: `TTS ${language} thất bại`,
-                description: message,
-            }),
-        getMissingPoiMessage: () => 'Vui lòng lưu POI trước khi tạo TTS audio.',
-        getShortDescriptionMessage: (language) =>
-            language === 'VI'
-                ? 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.'
-                : 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.',
-        ensurePoiExists: async () => {
-            if (poiId) {
-                return { poiId };
+                title: 'Thiếu nội dung nguồn',
+                description: 'Vui lòng nhập tên và mô tả tiếng Việt trước khi dịch.',
+            });
+            return;
+        }
+
+        setTranslating(true);
+        try {
+            // Map language code: VI → vi, EN → en
+            const toLang = activeLang.toLowerCase();
+            const textsToTranslate = [formData.name || '', formData.description || ''];
+
+            const result = await translateService.translateBatch(textsToTranslate, 'vi', toLang);
+
+            // Only update EN fields (or whichever target tab is active)
+            if (activeLang === 'EN') {
+                setFormData((prev) => ({
+                    ...prev,
+                    nameEn: result.translations[0] || prev.nameEn,
+                    descriptionEn: result.translations[1] || prev.descriptionEn,
+                }));
             }
 
+            showToast({
+                variant: 'success',
+                title: `Đã dịch sang ${activeLang}`,
+                description: 'Tên và mô tả đã được dịch tự động. Vui lòng kiểm tra lại nội dung.',
+            });
+        } catch (error) {
+            console.error('Translation error:', error);
+            showToast({
+                variant: 'error',
+                title: 'Dịch thất bại',
+                description: 'Không thể dịch tự động. Vui lòng thử lại hoặc nhập thủ công.',
+            });
+        } finally {
+            setTranslating(false);
+        }
+    };
+
+    // --- TTS language options ---
+    const TTS_LANGUAGE_OPTIONS = [
+        { code: 'VI', label: 'Tiếng Việt' },
+        { code: 'EN', label: 'English' },
+        { code: 'JA', label: '日本語 (Japanese)' },
+        { code: 'KO', label: '한국어 (Korean)' },
+        { code: 'ZH-CN', label: '中文简体 (Chinese)' },
+        { code: 'FR', label: 'Français (French)' },
+        { code: 'DE', label: 'Deutsch (German)' },
+        { code: 'ES', label: 'Español (Spanish)' },
+        { code: 'TH', label: 'ไทย (Thai)' },
+        { code: 'RU', label: 'Русский (Russian)' },
+    ];
+
+    // --- Generate TTS with auto-translation ---
+    const handleGenerateTranslatedTts = async () => {
+        const viDescription = formData.description?.trim();
+        if (!viDescription || viDescription.length < 10) {
+            showToast({
+                variant: 'error',
+                title: 'Thiếu mô tả tiếng Việt',
+                description: 'Vui lòng nhập mô tả tiếng Việt (ít nhất 10 ký tự) trước khi tạo audio.',
+            });
+            return;
+        }
+
+        // Ensure POI exists
+        let currentPoiId = poiId;
+        if (!currentPoiId) {
             const { errors, lat, lng } = collectValidationState();
             if (errors.length > 0) {
-                const primaryMessage = errors[0];
-                setError(errors.join(' '));
-                showToast({
-                    variant: 'error',
-                    title: 'Thiếu thông tin',
-                    description: primaryMessage,
-                });
-                return { handled: true };
+                showToast({ variant: 'error', title: 'Thiếu thông tin', description: errors[0] });
+                return;
             }
-
             setEnsuringPoiForTts(true);
             try {
                 const payload = buildPayload(lat, lng, 'DRAFT');
                 const newPoi = await poiService.create(payload);
                 setDraftPoiId(newPoi.id);
-                showToast({
-                    variant: 'success',
-                    title: 'Đã lưu bản nháp',
-                    description: 'POI đã được lưu tạm thời để tạo audio TTS.',
-                });
-                return { poiId: newPoi.id };
+                currentPoiId = newPoi.id;
             } catch (error) {
-                console.error('Failed to auto-save POI for TTS:', error);
-                showToast({
-                    variant: 'error',
-                    title: 'Không thể lưu POI',
-                    description: 'Vui lòng thử lưu POI trước khi tạo audio.',
-                });
-                return { handled: true };
+                console.error('Failed to auto-save POI:', error);
+                showToast({ variant: 'error', title: 'Lỗi', description: 'Không thể lưu POI.' });
+                return;
             } finally {
                 setEnsuringPoiForTts(false);
             }
-        },
-    });
+        }
+
+        setTtsTranslateGenerating(true);
+        try {
+            const result = await poiService.generateTranslatedTts(
+                currentPoiId!,
+                viDescription,
+                ttsTargetLang,
+                'VI',
+            );
+
+            if (refreshMedia) await refreshMedia(currentPoiId);
+
+            const langLabel = TTS_LANGUAGE_OPTIONS.find(l => l.code === ttsTargetLang)?.label || ttsTargetLang;
+            showToast({
+                variant: 'success',
+                title: `Audio ${langLabel} đã tạo!`,
+                description: ttsTargetLang !== 'VI'
+                    ? `Mô tả đã được tự động dịch sang ${langLabel} và tạo audio thành công.`
+                    : 'Audio tiếng Việt đã được tạo thành công.',
+            });
+        } catch (error: any) {
+            console.error('TTS generation error:', error);
+            let message = 'Không thể tạo audio. Vui lòng thử lại.';
+            if (error?.response?.data?.message) {
+                const msg = error.response.data.message;
+                message = Array.isArray(msg) ? msg.join('. ') : String(msg);
+            }
+            showToast({ variant: 'error', title: 'Tạo audio thất bại', description: message });
+        } finally {
+            setTtsTranslateGenerating(false);
+        }
+    };
 
     // Handle File Selection with Previews
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -546,7 +615,6 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const translationField = activeLang === 'VI'
         ? { name: 'name', description: 'description' }
         : { name: 'nameEn', description: 'descriptionEn' };
-    const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);
@@ -636,6 +704,24 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     placeholder={activeLang === 'VI' ? 'ví dụ Chùa Linh Ứng' : 'e.g. Linh Ung Pagoda'}
                                 />
                             </div>
+                            {/* Auto-translate button — show when on non-VI tab */}
+                            {activeLang !== 'VI' && !readOnly && formData.name?.trim() && (
+                                <div className="flex items-center">
+                                    <button
+                                        type="button"
+                                        onClick={handleTranslateFromVi}
+                                        disabled={translating}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {translating ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Languages className="h-3.5 w-3.5" />
+                                        )}
+                                        {translating ? 'Đang dịch...' : `Dịch từ tiếng Việt → ${activeLang}`}
+                                    </button>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}</label>
                                 <textarea
@@ -651,22 +737,40 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 />
                                 <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
                                     <span>{L.ttsDescription}</span>
-                                    {!readOnly && (
+                                </div>
+                                {/* TTS Generation with Language Selection */}
+                                {!readOnly && (
+                                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/50 p-3">
+                                        <span className="text-xs font-semibold text-indigo-700 whitespace-nowrap">🎧 Tạo Audio:</span>
+                                        <select
+                                            value={ttsTargetLang}
+                                            onChange={(e) => setTtsTargetLang(e.target.value)}
+                                            className="rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-xs font-medium text-indigo-800 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-300"
+                                        >
+                                            {TTS_LANGUAGE_OPTIONS.map((lang) => (
+                                                <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                            ))}
+                                        </select>
                                         <button
                                             type="button"
-                                            onClick={() => generateTts(activeLang)}
-                                            disabled={ensuringPoiForTts || ttsGenerating[activeLang] || !activeDescriptionValue?.trim()}
-                                            className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                            onClick={handleGenerateTranslatedTts}
+                                            disabled={ttsTranslateGenerating || ensuringPoiForTts || !formData.description?.trim()}
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            {ensuringPoiForTts || ttsGenerating[activeLang] ? (
+                                            {ttsTranslateGenerating || ensuringPoiForTts ? (
                                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                             ) : (
                                                 <Headphones className="h-3.5 w-3.5" />
                                             )}
-                                            {activeLang === 'VI' ? L.generateVi : L.generateEn}
+                                            {ttsTranslateGenerating ? 'Đang tạo...' : (ttsTargetLang === 'VI' ? 'Tạo Audio' : `Dịch & Tạo Audio`)}
                                         </button>
-                                    )}
-                                </div>
+                                        {ttsTargetLang !== 'VI' && (
+                                            <span className="text-[10px] text-slate-500">
+                                                Mô tả tiếng Việt sẽ tự động dịch sang {TTS_LANGUAGE_OPTIONS.find(l => l.code === ttsTargetLang)?.label || ttsTargetLang}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

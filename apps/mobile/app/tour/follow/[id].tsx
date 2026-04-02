@@ -9,6 +9,7 @@ import AudioPlayer from '../../../components/AudioPlayer';
 import { LocateFixed, XCircle, CheckCircle2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useGlobalAudio } from '../../../context/AudioContext';
 
 const { width } = Dimensions.get('window');
 
@@ -23,9 +24,17 @@ export default function TourFollowScreen() {
     const [triggeredStops, setTriggeredStops] = useState<Set<number>>(new Set());
     const { t } = useTranslation();
     const { lang, getPoiName, getPoiDescription } = useLanguage();
+    const { stopAndClearAudio } = useGlobalAudio();
 
     useEffect(() => {
         fetchTourData();
+
+        // Cleanup audio when exiting navigation screen
+        return () => {
+            setTimeout(() => {
+                stopAndClearAudio();
+            }, 0);
+        };
     }, [id]);
 
     const fetchTourData = async () => {
@@ -182,7 +191,7 @@ export default function TourFollowScreen() {
                             {targetPoi ? (getPoiDescription(targetPoi) || t('common.noDescription')) : ''}
                         </Text>
 
-                        {hasArrived && audioMedia && (
+                        {audioMedia && (
                             <View style={styles.audioWrapper}>
                                 <AudioPlayer audioUrl={audioMedia.url} poiId={targetPoi.id} autoPlay={true} />
                             </View>

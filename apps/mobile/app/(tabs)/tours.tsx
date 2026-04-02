@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { publicService, Tour } from '../../services/publicService';
 import { Map, Clock } from 'lucide-react-native';
@@ -13,9 +13,11 @@ export default function ToursScreen() {
     const [tours, setTours] = useState<Tour[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchTours();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchTours();
+        }, [])
+    );
 
     const fetchTours = async () => {
         try {

@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-04-01T04:36:55.597Z",
+  "exportedAt": "2026-04-02T07:12:39.566Z",
   "users": [
     {
       "id": "cfd2695c-0545-472d-bf01-778cd79ecba8",
@@ -178,6 +178,46 @@
         "createdAt": "2026-04-01T01:38:29.889Z",
         "updatedAt": "2026-04-01T01:38:29.889Z"
       },
+      "touristProfile": null
+    },
+    {
+      "id": "4d0e75bf-0f6c-48c9-b289-271cb9a4f0de",
+      "email": "shop1@gmail.com",
+      "passwordHash": "$2b$12$8yHxzXIkBOuaaXmoTEZav.wGLIK7wUcvOGhzC/Bd6q0Y3We4aegRS",
+      "fullName": "Nguyễn Hoàng Mai",
+      "role": "SHOP_OWNER",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": null,
+      "refreshTokenId": null,
+      "profile": null,
+      "shopOwnerProfile": {
+        "id": "7b5ab04d-eaf0-469d-8ca2-a2a82aafd12e",
+        "userId": "4d0e75bf-0f6c-48c9-b289-271cb9a4f0de",
+        "shopName": "Quán bún đậu nhà lá",
+        "shopAddress": null,
+        "phone": "0862498257",
+        "avatarUrl": null,
+        "openingHours": null,
+        "createdAt": "2026-04-01T13:35:38.383Z",
+        "updatedAt": "2026-04-01T13:35:38.383Z"
+      },
+      "touristProfile": null
+    },
+    {
+      "id": "c45fe9ad-6f8f-4934-ab8b-65c1f0d0b085",
+      "email": "admin3@gmail.com",
+      "passwordHash": "$2b$12$Q1IdRBgvC5OQeUF.YiZ45eFHckPbTUS8bNZR0.NswYxUOaUQb6T0e",
+      "fullName": "Vy nguyen",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$iAe0YY4gvm0732nUsMjRGO4oNkdMdhgmZA36iQIlrLokNG4mcYTc.",
+      "refreshTokenId": "0be012c8-d814-4f39-a39a-948db69e6aff",
+      "profile": null,
+      "shopOwnerProfile": null,
       "touristProfile": null
     }
   ],
@@ -561,6 +601,135 @@
       ]
     },
     {
+      "id": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+      "nameVi": "Test 123",
+      "nameEn": "",
+      "descriptionVi": "[Address: Kí túc xá Trường đại học Sài Gòn, 99, An Dương Vương, Phường Phú Định, Tân Túc, Thành phố Hồ Chí Minh, 71959, Việt Nam]\n\nHà Nội có rất nhiều món ăn ngon được thực khách ưa thích gắn với “bún” như: bún chả, bún cá, bún ốc nguội… Trong số đó các món ăn đó không thể thiếu bún đậu mắm tôm Hà Nội - món ngon làm \"xiêu lòng\" các tín đồ ẩm thực. Không chỉ là một món ăn, bún đậu còn mang đậm nét văn hóa, gắn liền với lối sống và phong cách ẩm thực rất đỗi bình dị của người Việt nói chung, Hà Nội nói riêng.",
+      "descriptionEn": "Hanoi boasts many delicious dishes made with vermicelli noodles that are popular with diners, such as bun cha (vermicelli with grilled pork patties), bun ca (vermicelli with fish), and bun oc cui (vermicelli with cold snails)... Among these, bun dau mam tom (vermicelli with tofu and shrimp paste) is a must-try for food lovers. More than just a dish, bun dau embodies a rich cultural heritage, closely linked to the simple lifestyle and culinary style of Vietnamese people in general, and Hanoians in particular.",
+      "latitude": 10.7132658,
+      "longitude": 106.6193173,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_fe00a25f-8e09-49d8-842b-1083598ab17b.png",
+      "createdById": "c45fe9ad-6f8f-4934-ab8b-65c1f0d0b085",
+      "ownerId": "4d0e75bf-0f6c-48c9-b289-271cb9a4f0de",
+      "media": [
+        {
+          "id": "91af6d79-3072-4586-88c8-482a74d4a88a",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/14e2cc6a-6d85-4b76-910f-aa1ca0c17036.jpg",
+          "thumbnailUrl": null,
+          "originalName": "bun-dau.jpg",
+          "sizeBytes": 260835,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 1
+        },
+        {
+          "id": "97dcf781-bebb-42c2-964c-3f8192862f3d",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_vi_0cee44bc-daef-42c5-9f46-e21fb2a8d38c/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775050382398.mp3",
+          "sizeBytes": 281952,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "8f887657-466c-4861-8b3b-44ce997db329",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_vi_c4147022-2da8-43b8-aa7e-1fdcc3ce2ba7/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775051161918.mp3",
+          "sizeBytes": 281952,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "8921fe8b-491c-4abf-bc34-c98e89f22b31",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_vi_5a3e7b08-616f-4cff-b0bb-968cf2628f17/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775051583358.mp3",
+          "sizeBytes": 408672,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "989ff54c-1a64-4a2a-b3a4-90b8f7626dec",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_en_da925af8-2ffe-4680-9bd7-fdab1c6c4dff/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775051206586.mp3",
+          "sizeBytes": 344736,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "fd189a67-1f31-4b52-8e59-a86134acd708",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_en_560377fb-8e2a-4d43-8d47-814e15035ff3/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775051561855.mp3",
+          "sizeBytes": 406656,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "92aa0c6d-4b5a-44f4-af04-33ae8457dda4",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_en_25ef6d7f-f568-4de5-b64e-a5e2e7a7245f/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775051583173.mp3",
+          "sizeBytes": 406656,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "87824338-4f06-4283-965e-77f4d9878a6b",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/fe00a25f-8e09-49d8-842b-1083598ab17b_vi_93a2501e-2107-4864-8368-0fd7bec4a22b/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775051878911.mp3",
+          "sizeBytes": 281952,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
       "id": "5bfcebad-49b8-48ff-a936-156e59de1a74",
       "nameVi": "Test POI 5",
       "nameEn": "",
@@ -576,18 +745,164 @@
       "ownerId": null,
       "media": [
         {
-          "id": "784e209a-4936-4f11-811e-7b568cea8f9c",
+          "id": "22cefc68-38db-43c6-8d07-73a12b3d3f08",
           "poiId": "5bfcebad-49b8-48ff-a936-156e59de1a74",
           "type": "AUDIO",
           "language": "VI",
-          "url": "/uploads/tts/5bfcebad-49b8-48ff-a936-156e59de1a74_vi_3c3576c4-5034-454a-9945-4e7df27aea86/audio.mp3",
+          "url": "/uploads/tts/5bfcebad-49b8-48ff-a936-156e59de1a74_vi_75594e23-1399-4602-9e43-b81c4543c9a2/audio.mp3",
           "thumbnailUrl": null,
-          "originalName": "tts_vi_1775018193853.mp3",
+          "originalName": "tts_vi_1775051466260.mp3",
           "sizeBytes": 24192,
           "durationSeconds": null,
           "width": null,
           "height": null,
           "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+      "nameVi": "Test 1234",
+      "nameEn": "",
+      "descriptionVi": "[Address: An Dương Vương, Khu phố 28, Phường An Đông, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 72712, Việt Nam]\n\nNhắc đến những món ăn mang đậm hương vị Tết xưa của người Hà Nội, chúng ta không thể không nhắc đến chim câu hầm hạt sen, cốm vốn được nhiều gia đình tại phố cổ xem như món “canh Tết” đặc biệt – nơi kết tinh của sự tinh tế trong lựa chọn nguyên liệu và sự khéo léo trong cách chế biến, góp phần làm nên nét riêng của ẩm thực Hà Nội mỗi độ xuân về.",
+      "descriptionEn": "",
+      "latitude": 10.7571298,
+      "longitude": 106.6717508,
+      "triggerRadius": 15,
+      "category": "STREET_FOOD",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_1bdeaef3-def1-4332-bbed-116a1ecb9b1c.png",
+      "createdById": "c45fe9ad-6f8f-4934-ab8b-65c1f0d0b085",
+      "ownerId": "4d0e75bf-0f6c-48c9-b289-271cb9a4f0de",
+      "media": [
+        {
+          "id": "07255d07-7178-4ea8-af99-d94a0b6eb748",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/1bdeaef3-def1-4332-bbed-116a1ecb9b1c_vi_eadfaea4-cefe-409b-b219-21c647df24e5/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775052113905.mp3",
+          "sizeBytes": 210240,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "3a1c02d9-2ee4-4f62-b017-7c565bd6df5a",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/1bdeaef3-def1-4332-bbed-116a1ecb9b1c_vi_ab372c6a-2f74-43e5-9f4c-34c588eb19ef/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775052114573.mp3",
+          "sizeBytes": 210240,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "6db7a04d-f501-4757-9d89-bde64fe4526e",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/1bdeaef3-def1-4332-bbed-116a1ecb9b1c_en_3bc68671-703b-4e8c-8bab-2573cb395f8d/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775110216953.mp3",
+          "sizeBytes": 302400,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "c8dcbdee-03d3-4a03-acc2-b7f07b5c2147",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/1bdeaef3-def1-4332-bbed-116a1ecb9b1c_en_78a84b10-4a0a-4ba1-9f5d-c1d269a58dbd/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775112072128.mp3",
+          "sizeBytes": 259776,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
+      "nameVi": "Test 12345",
+      "nameEn": "",
+      "descriptionVi": "[Address: An Dương Vương, Khu phố 9, Phường An Lạc, Thành phố Hồ Chí Minh, 73118, Việt Nam]\n\nCà phê là món đồ uống thông dụng và được ưa chuộng trên toàn thế giới. Khác với các loại cà phê hòa tan, cà phê phin được cả Tây và Ta yêu thích, thưởng thức như một thú vui mỗi ngày. Bởi nó lưu giữ hương vị đậm đà, thuần túy đặc trưng của Việt Nam mà không thể tìm thấy ở một đất nước nào khác. Để thưởng thức tách cà phê phin cần phải mất một quá trình pha chế công phu, thế nhưng, đó cũng là một cách giúp chúng ta hưởng thụ cuộc sống một cách chậm rãi. Liệu ta có đang sống quá vội vã, để rồi khi bất giác nhìn lại chợt nhận ra bản thân đã bỏ quên một điều gì đó chăng? Tuần này, nhà UP mời bạn một tách cà phê và cùng chúng mình lắng nghe CHUYỆN ĂN CHUYỆN UỐNG EP3: “Cà phê phin - chuyện sống chậm” để tìm câu trả lời nhé!",
+      "descriptionEn": "",
+      "latitude": 10.722467597005,
+      "longitude": 106.6200496147339,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_2e5bb991-b4d4-451e-9cf5-01f79fef4d18.png",
+      "createdById": "c45fe9ad-6f8f-4934-ab8b-65c1f0d0b085",
+      "ownerId": "1bc8539a-adb3-4a04-a0ce-5c4539ffc95a",
+      "media": [
+        {
+          "id": "755eb549-58fb-48f2-bea2-858ce7fad6d0",
+          "poiId": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/2e5bb991-b4d4-451e-9cf5-01f79fef4d18_vi_8c4e3642-02a0-45d7-8955-238f820ed090/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775113882593.mp3",
+          "sizeBytes": 512640,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "172d12b7-3355-469d-b87d-efaf771506d9",
+          "poiId": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/2e5bb991-b4d4-451e-9cf5-01f79fef4d18_vi_a213d75f-5f21-49d3-bc28-74ffad90a27d/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775113893544.mp3",
+          "sizeBytes": 512640,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "43eb2842-d441-479b-8a4c-cd981399d7ec",
+          "poiId": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/2e5bb991-b4d4-451e-9cf5-01f79fef4d18_en_08d8230c-a4f6-47b7-b3dc-90a09178e150/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775113934993.mp3",
+          "sizeBytes": 519840,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "2be64d24-5a7c-44de-b053-9c1f49e60d19",
+          "poiId": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/bc2ae690-bcfd-42f0-9165-57fcf4a4fa1f.jpeg",
+          "thumbnailUrl": null,
+          "originalName": "ca-phe.jpeg",
+          "sizeBytes": 301431,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 1
         }
       ]
     }
@@ -617,6 +932,34 @@
         {
           "tourId": "ed52bd3f-70b4-47f7-8338-a011f5e475cf",
           "poiId": "cc6977b8-1b9c-442c-92dc-8159a3a717ec",
+          "orderIndex": 2
+        }
+      ]
+    },
+    {
+      "id": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+      "nameVi": "Tour thử 1",
+      "nameEn": "Test tour 1",
+      "descriptionVi": "Tour để thử số 1",
+      "descriptionEn": "Test tour number 1",
+      "thumbnailUrl": null,
+      "estimatedDuration": 60,
+      "status": "DRAFT",
+      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "tourPois": [
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "orderIndex": 0
+        },
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "d684417a-0cac-4e54-8713-9b31b1bbf8b3",
+          "orderIndex": 1
+        },
+        {
+          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
+          "poiId": "f9c813da-bfcf-4505-b0a3-bb471169528f",
           "orderIndex": 2
         }
       ]
@@ -659,35 +1002,40 @@
         },
         {
           "tourId": "68504145-e31c-4058-b337-b8c86556776a",
-          "poiId": "16240dca-f147-4a33-8743-33d626964963",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
           "orderIndex": 5
+        },
+        {
+          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
+          "orderIndex": 6
         }
       ]
     },
     {
-      "id": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
-      "nameVi": "Tour thử 1",
-      "nameEn": "Test tour 1",
-      "descriptionVi": "Tour để thử số 1",
-      "descriptionEn": "Test tour number 1",
+      "id": "4f31c70d-fb70-46e9-a790-7ce3ee232048",
+      "nameVi": "Tour bún đậu mắm tôm",
+      "nameEn": "Bun dau mam tom",
+      "descriptionVi": null,
+      "descriptionEn": null,
       "thumbnailUrl": null,
       "estimatedDuration": 60,
-      "status": "DRAFT",
-      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "status": "ACTIVE",
+      "createdById": "c45fe9ad-6f8f-4934-ab8b-65c1f0d0b085",
       "tourPois": [
         {
-          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
-          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
+          "tourId": "4f31c70d-fb70-46e9-a790-7ce3ee232048",
+          "poiId": "fe00a25f-8e09-49d8-842b-1083598ab17b",
           "orderIndex": 0
         },
         {
-          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
-          "poiId": "d684417a-0cac-4e54-8713-9b31b1bbf8b3",
+          "tourId": "4f31c70d-fb70-46e9-a790-7ce3ee232048",
+          "poiId": "1bdeaef3-def1-4332-bbed-116a1ecb9b1c",
           "orderIndex": 1
         },
         {
-          "tourId": "ed439b59-3184-4b45-b1fc-18ce88ba7d11",
-          "poiId": "f9c813da-bfcf-4505-b0a3-bb471169528f",
+          "tourId": "4f31c70d-fb70-46e9-a790-7ce3ee232048",
+          "poiId": "2e5bb991-b4d4-451e-9cf5-01f79fef4d18",
           "orderIndex": 2
         }
       ]

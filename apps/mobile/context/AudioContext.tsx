@@ -55,7 +55,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 setHasError(true);
             }
         } else {
-            player.pause();
+            try {
+                player.pause();
+            } catch (e) {
+                // Ignore: Player might not be initialized or NativeSharedObjectNotFoundException
+            }
         }
     }, [fullSource]);
 
@@ -94,8 +98,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
 
     const stopAndClearAudio = () => {
-        player.pause();
-        player.seekTo(0);
+        try {
+            player.pause();
+            player.seekTo(0);
+        } catch (e) {
+            // Ignore: Player might not be initialized
+        }
         setCurrentPoiId(null);
         setCurrentAudioUrl(null);
         setHasError(false);

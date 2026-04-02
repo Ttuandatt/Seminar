@@ -16,6 +16,7 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { TtsModule } from './modules/tts/tts.module';
 import { QrModule } from './modules/qr/qr.module';
 import { SeedExportModule } from './modules/seed-export/seed-export.module';
+import { TranslateModule } from './modules/translate/translate.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { SeedExportModule } from './modules/seed-export/seed-export.module';
     ProfileModule,
     TtsModule,
     QrModule,
+    TranslateModule,
   ],
 })
 export class AppModule { }

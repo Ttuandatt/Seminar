@@ -8,7 +8,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { TtsService } from './tts.service';
-import { GenerateTtsDto } from './dto';
+import { GenerateTtsDto, GenerateTranslatedTtsDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { Roles } from '../../common/decorators';
 import { Role } from '@prisma/client';
@@ -27,6 +27,36 @@ export class TtsController {
             dto.text,
             dto.voice,
         );
+    }
+
+    /**
+     * Generate TTS with auto-translation.
+     * User writes Vietnamese text → system translates to target language → generates audio.
+     * POST /tts/generate-translated/:poiId
+     */
+    @Post('generate-translated/:poiId')
+    @Roles(Role.ADMIN, Role.SHOP_OWNER)
+    generateTranslated(
+        @Param('poiId') poiId: string,
+        @Body() dto: GenerateTranslatedTtsDto,
+    ) {
+        return this.ttsService.generateWithTranslation(
+            poiId,
+            dto.targetLanguage,
+            dto.text,
+            dto.sourceLanguage || 'VI',
+            dto.voice,
+        );
+    }
+
+    /**
+     * Get supported TTS languages with voice info.
+     * GET /tts/languages
+     */
+    @Get('languages')
+    @Roles(Role.ADMIN, Role.SHOP_OWNER)
+    getSupportedLanguages() {
+        return this.ttsService.getSupportedTtsLanguages();
     }
 
     @Get('voices')

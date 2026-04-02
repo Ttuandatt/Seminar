@@ -98,7 +98,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setLoading(true);
         setError('');
 
-        if (selectedPois.length < 2 && formData.status === 'PUBLISHED') {
+        if (selectedPois.length < 2 && formData.status === 'ACTIVE') {
             setError('A published tour must have at least 2 POIs.');
             setLoading(false);
             return;
@@ -116,7 +116,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             let tourId = id;
 
             if (isEditMode) {
-                payload.status = formData.status;
+                payload.status = formData.status as TourPayload['status'];
                 await tourService.update(id!, payload);
             } else {
                 const newTour = await tourService.create(payload);
@@ -227,7 +227,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                     <select name="status" value={formData.status} onChange={handleChange} disabled={!isEditMode || readOnly}
                                         className={`w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 ${(!isEditMode || readOnly) ? 'opacity-50' : ''}`}>
                                         <option value="DRAFT">Draft</option>
-                                        <option value="PUBLISHED">Published</option>
+                                        <option value="ACTIVE">Published</option>
                                         <option value="ARCHIVED">Archived</option>
                                     </select>
                                 </div>
