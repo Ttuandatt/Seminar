@@ -72,6 +72,12 @@ The UI should show:
 - a `Request translation` CTA when the selected language has no content
 - a `Pending` badge when a request already exists
 
+Status chip definitions (normative):
+- `Default`: the app/default language configured for this session (not the currently active row marker).
+- `Translated`: the selected language has a localization record with both `name` and `description` displayable.
+- `Missing`: either `name` or `description` is missing for that language.
+- `Pending`: a pending request exists for `poiId + language` in local pending storage.
+
 ### 5.2 Layer 2: Data Hook
 
 Create a mobile-focused hook, `usePoiLocalization(poiId)`, that owns the POI localization resource.
@@ -112,6 +118,10 @@ Open state:
 - each item shows its current status
 - the currently selected language is visually highlighted
 
+Selector visibility rule:
+- show all `enabled` languages, including languages with `Missing` status
+- do not hide missing languages from the selector
+
 ### 6.2 Active Language Priority
 
 When a POI detail screen opens, resolve the initial active language in this order:
@@ -123,6 +133,10 @@ When a POI detail screen opens, resolve the initial active language in this orde
 
 This order is for the initial language choice only. Once a language is chosen, content fallback uses the rule in Section 6.3 and does not walk the initial selection list again.
 
+Guard condition:
+- each candidate language above is only valid if it exists in `enabled` languages
+- if not enabled, skip to the next candidate
+
 ### 6.3 Fallback Behavior
 
 If the selected language has no displayable content:
@@ -130,9 +144,11 @@ If the selected language has no displayable content:
 1. fall back to Vietnamese
 2. if Vietnamese is missing, fall back to English
 
-Always show a fallback note when a fallback is used. Example copy:
+Always show a fallback note when a fallback is used. Use dynamic copy tied to the actual fallback language label.
 
-> Showing Vietnamese - translation not available yet
+Example pattern:
+
+> Showing {fallbackLanguageLabel} - translation not available yet
 
 Do not use nearest-language heuristics or any similarity-based fallback.
 
@@ -146,6 +162,11 @@ If the selected language is missing content, the content area should show:
 If no displayable content exists in any supported fallback language, show a dedicated empty state and keep the `Request translation` CTA visible unless a pending request already exists for that POI + language.
 
 Do not use skeleton UI as the final empty behavior.
+
+Request CTA decision rule (normative):
+- translation exists: do not show CTA
+- translation missing + not pending: show CTA
+- translation missing + pending: disable CTA and show pending badge/note
 
 ### 6.5 Pending Request State
 
@@ -168,6 +189,10 @@ If the screen is rendering cached localization content while background revalida
 The stale message should be lightweight and non-blocking.
 
 Do not add broader cache-retention rules in this spec; keep the freshness signal tied only to whether the current POI localization resource is being shown from cache while a refresh is in progress.
+
+Copy note:
+- strings shown in this spec are behavior examples
+- production implementation should use i18n keys instead of hardcoded literals
 
 ## 7. Data Flow
 
@@ -218,6 +243,11 @@ Recommended key shape:
 Storage payload should be enough to answer:
 - is this language pending for this POI?
 - which languages are pending for this POI?
+
+Minimum payload fields:
+- `poiId`
+- `language`
+- `requestedAt`
 
 ### 8.3 Cache Metadata
 
