@@ -68,9 +68,17 @@ Results:
 - Final `npx tsc --noEmit` completed without reported errors.
 - IDE diagnostics on touched WS4 files: no errors.
 
+Android command-flow attempt:
+- `npm run android` started Expo/Metro successfully.
+- Launch step failed with `No Android connected device found, and no emulators could be started automatically`.
+- `where.exe adb` and `where.exe emulator` both returned not found on PATH.
+
 Not executed in this session:
-- Manual simulator/device behavior checklist.
 - Automated unit tests for resolver/storage (test harness not added in this change set).
+
+Manual checklist status:
+- Blocked by environment (no Android device and no emulator binaries available on PATH).
+- Ready to execute once emulator/device is available.
 
 ## Notes
 
