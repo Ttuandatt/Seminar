@@ -10,6 +10,7 @@ import { touristService } from '../../services/touristService';
 import { getMediaUrl } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
+import { buildGoogleTtsUrl, translateTextRuntime } from '../../services/runtimeLocalizationService';
 
 const { width } = Dimensions.get('window');
 
@@ -24,11 +25,54 @@ export default function PoiDetailScreen() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [translatedName, setTranslatedName] = useState<string | null>(null);
+    const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+
+    const shouldUseRuntimeLocalization = lang !== 'vi' && lang !== 'en';
 
     useEffect(() => {
         fetchData();
         checkAuth();
     }, [id]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const translatePoiContent = async () => {
+            if (!poi || !shouldUseRuntimeLocalization) {
+                setTranslatedName(null);
+                setTranslatedDescription(null);
+                return;
+            }
+
+            const sourceName = poi.nameEn || poi.nameVi || '';
+            const sourceDescription = poi.descriptionEn || poi.descriptionVi || '';
+
+            try {
+                const [nameResult, descriptionResult] = await Promise.all([
+                    translateTextRuntime(sourceName, 'auto', lang),
+                    translateTextRuntime(sourceDescription, 'auto', lang),
+                ]);
+
+                if (!cancelled) {
+                    setTranslatedName(nameResult);
+                    setTranslatedDescription(descriptionResult);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setTranslatedName(null);
+                    setTranslatedDescription(null);
+                }
+                console.warn('Runtime localization failed:', error);
+            }
+        };
+
+        translatePoiContent();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [poi, lang, shouldUseRuntimeLocalization]);
 
     const checkAuth = async () => {
         const token = await AsyncStorage.getItem('accessToken');
@@ -111,8 +155,14 @@ export default function PoiDetailScreen() {
     }
 
     const images = poi.media?.filter(m => m.type === 'IMAGE') || [];
-    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
+    const selectedAudio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
         ?? poi.media?.find(m => m.type === 'AUDIO');
+    const runtimeAudioUrl = shouldUseRuntimeLocalization
+        ? buildGoogleTtsUrl(translatedDescription || getPoiDescription(poi), lang)
+        : null;
+    const displayName = translatedName || getPoiName(poi);
+    const displayDescription = translatedDescription || getPoiDescription(poi);
+    const resolvedAudioUrl = selectedAudio ? getMediaUrl(selectedAudio.url) : runtimeAudioUrl;
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -160,7 +210,7 @@ export default function PoiDetailScreen() {
             <View style={styles.content}>
                 <View style={styles.headerRow}>
                     <Text style={styles.title}>
-                        {getPoiName(poi)}
+                        {displayName}
                     </Text>
                     <View style={styles.actionsRow}>
                         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/language')}>
@@ -178,13 +228,13 @@ export default function PoiDetailScreen() {
                 </Text>
 
                 {/* Audio Player Component */}
-                {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} />}
-                {!audio && <Text style={styles.noAudioText}>{t('poi.noAudio')}</Text>}
+                {resolvedAudioUrl && <AudioPlayer audioUrl={resolvedAudioUrl} poiId={poi.id} />}
+                {!resolvedAudioUrl && <Text style={styles.noAudioText}>{t('poi.noAudio')}</Text>}
 
                 <View style={styles.descriptionCard}>
                     <Text style={styles.descriptionTitle}>{t('poi.about')}</Text>
                     <Text style={styles.description}>
-                        {getPoiDescription(poi)}
+                        {displayDescription}
                     </Text>
                 </View>
             </View>
