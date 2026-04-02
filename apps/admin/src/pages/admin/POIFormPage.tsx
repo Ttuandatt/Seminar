@@ -24,7 +24,8 @@ import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../c
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
-import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
+import usePoiTts from '../../hooks/usePoiTts';
+import { translateService } from '../../services/translate.service';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -113,6 +114,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [qrData, setQrData] = useState<{ qrDataUrl: string; qrCodeUrl: string; qrContent: string } | null>(null);
     const [qrLoading, setQrLoading] = useState(false);
     const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
+    const [translatingEn, setTranslatingEn] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -206,6 +208,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const { generating: ttsGenerating, generateTts } = usePoiTts({
         getPoiId: () => poiId,
         getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
+        getSourceDescriptionFor: (language) => (language === 'EN' ? formData.description : undefined),
         refreshMedia,
         onSuccessToast: (language) =>
             showToast({
@@ -224,6 +227,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             language === 'VI'
                 ? 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.'
                 : 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.',
+        getTranslationFallbackMessage: (language) =>
+            language === 'EN'
+                ? 'Mô tả EN đang trống/ngắn, hệ thống đã dùng mô tả VI để dịch và tạo audio.'
+                : undefined,
         ensurePoiExists: async () => {
             if (poiId) {
                 return { poiId };
@@ -265,6 +272,44 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             }
         },
     });
+
+    const handleAutoTranslateToEnglish = useCallback(async () => {
+        const sourceName = formData.name.trim();
+        const sourceDescription = formData.description.trim();
+
+        if (!sourceName || sourceDescription.length < 10) {
+            showToast({
+                variant: 'error',
+                title: 'Thiếu nội dung tiếng Việt',
+                description: 'Cần tên và mô tả tiếng Việt (ít nhất 10 ký tự) để dịch sang tiếng Anh.',
+            });
+            return;
+        }
+
+        setTranslatingEn(true);
+        try {
+            const result = await translateService.translateBatch([sourceName, sourceDescription], 'vi', 'en');
+            setFormData((prev) => ({
+                ...prev,
+                nameEn: result.translations[0] || prev.nameEn,
+                descriptionEn: result.translations[1] || prev.descriptionEn,
+            }));
+            showToast({
+                variant: 'success',
+                title: 'Đã dịch sang tiếng Anh',
+                description: 'Tên và mô tả EN đã được cập nhật.',
+            });
+        } catch (error) {
+            console.error('Auto-translate EN failed:', error);
+            showToast({
+                variant: 'error',
+                title: 'Dịch tự động thất bại',
+                description: 'Không thể dịch nội dung sang tiếng Anh. Vui lòng thử lại.',
+            });
+        } finally {
+            setTranslatingEn(false);
+        }
+    }, [formData.name, formData.description, showToast]);
 
     // Handle File Selection with Previews
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -606,19 +651,32 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 <MapPin className="h-4 w-4 text-blue-600" />
                                 {L.contentHeading}
                             </h2>
-                            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                                {languageTabs.map((tab) => (
+                            <div className="flex items-center gap-3">
+                                {!readOnly && (
                                     <button
-                                        key={tab.code}
                                         type="button"
-                                        onClick={() => setActiveLang(tab.code)}
-                                        className={`rounded-full px-3 py-1 transition-all ${
-                                            activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                                        }`}
+                                        onClick={handleAutoTranslateToEnglish}
+                                        disabled={translatingEn}
+                                        className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        {tab.label}
+                                        {translatingEn && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                        Auto-translate VI -&gt; EN
                                     </button>
-                                ))}
+                                )}
+                                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
+                                    {languageTabs.map((tab) => (
+                                        <button
+                                            key={tab.code}
+                                            type="button"
+                                            onClick={() => setActiveLang(tab.code)}
+                                            className={`rounded-full px-3 py-1 transition-all ${
+                                                activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 

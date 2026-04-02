@@ -16,6 +16,7 @@ import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
 import { POI_CATEGORY_OPTIONS } from '../../services/poi.service';
 import { shopOwnerPortalService } from '../../services/shopOwnerPortal.service';
+import { translateService } from '../../services/translate.service';
 import { useToast } from '../../components/ui/ToastProvider';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
 import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
@@ -57,6 +58,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
   const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
+  const [translatingEn, setTranslatingEn] = useState(false);
 
   const L = POI_FORM_LABELS[activeLang];
 
@@ -137,6 +139,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const { generating: ttsGenerating, generateTts } = usePoiTts({
     getPoiId: () => poiId,
     getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
+    getSourceDescriptionFor: (language) => (language === 'EN' ? formData.description : undefined),
     refreshMedia,
     onSuccessToast: (language) =>
       showToast({
@@ -155,8 +158,48 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
       language === 'VI'
         ? 'Vietnamese description needs at least 10 characters.'
         : 'English description needs at least 10 characters.',
+    getTranslationFallbackMessage: (language) =>
+      language === 'EN' ? 'English text is missing/short. Used VI text for translation + TTS.' : undefined,
     ensurePoiExists: ensurePoiExistsForTts,
   });
+
+  const handleAutoTranslateToEnglish = useCallback(async () => {
+    const sourceName = formData.name.trim();
+    const sourceDescription = formData.description.trim();
+
+    if (!sourceName || sourceDescription.length < 10) {
+      showToast({
+        variant: 'error',
+        title: 'Missing Vietnamese content',
+        description: 'Need Vietnamese name + description (>=10 chars) before auto-translating.',
+      });
+      return;
+    }
+
+    setTranslatingEn(true);
+    try {
+      const result = await translateService.translateBatch([sourceName, sourceDescription], 'vi', 'en');
+      setFormData((prev) => ({
+        ...prev,
+        nameEn: result.translations[0] || prev.nameEn,
+        descriptionEn: result.translations[1] || prev.descriptionEn,
+      }));
+      showToast({
+        variant: 'success',
+        title: 'Translated to English',
+        description: 'English fields were updated.',
+      });
+    } catch (error) {
+      console.error('Shop owner auto-translate EN failed:', error);
+      showToast({
+        variant: 'error',
+        title: 'Auto-translate failed',
+        description: 'Could not translate to English. Please retry.',
+      });
+    } finally {
+      setTranslatingEn(false);
+    }
+  }, [formData.name, formData.description, showToast]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (readOnly) return;
@@ -342,7 +385,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }
   };
 
-  const ensurePoiExistsForTts = async (): Promise<EnsurePoiResult> => {
+  async function ensurePoiExistsForTts(): Promise<EnsurePoiResult> {
     if (poiId) {
       return { poiId };
     }
@@ -371,7 +414,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     } finally {
       setEnsuringPoiForTts(false);
     }
-  };
+  }
 
   const getMediaUrl = (url: string) => {
     if (url.startsWith('http')) return url;
@@ -421,19 +464,32 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                   <MapPin className="h-4 w-4 text-blue-600" />
                   {L.contentHeading}
                 </h2>
-                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                  {languageTabs.map((tab) => (
+                <div className="flex items-center gap-3">
+                  {!readOnly && (
                     <button
-                      key={tab.code}
                       type="button"
-                      onClick={() => setActiveLang(tab.code)}
-                      className={`rounded-full px-3 py-1 transition-all ${
-                        activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                      }`}
+                      onClick={handleAutoTranslateToEnglish}
+                      disabled={translatingEn}
+                      className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {tab.label}
+                      {translatingEn && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Auto-translate VI -&gt; EN
                     </button>
-                  ))}
+                  )}
+                  <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
+                    {languageTabs.map((tab) => (
+                      <button
+                        key={tab.code}
+                        type="button"
+                        onClick={() => setActiveLang(tab.code)}
+                        className={`rounded-full px-3 py-1 transition-all ${
+                          activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
