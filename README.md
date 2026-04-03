@@ -26,6 +26,89 @@ Seminar/
 | **API Docs** | Swagger (OpenAPI 3.0) |
 | **Database** | Docker (PostgreSQL + Redis) |
 
+---
+
+## 📋 Tóm tắt luồng hoạt động hệ thống
+
+### 🔐 **Admin** (Quản lý toàn hệ thống)
+
+1. **Quản lý POI (Điểm tham quan)**
+   - Tạo POI mới → nhập thông tin cơ bản (tên, mô tả, danh mục, vị trí GPS)
+   - Upload ảnh và file audio cho nhiều ngôn ngữ (VI, EN) hoặc tự động tạo bằng TTS
+   - Chỉnh sửa hoặc xóa POI
+   - Xuất QR code để dán tại điểm tham quan
+   - Xem preview POI trước khi công bố
+
+2. **Quản lý Tour**
+   - Tạo tour mới → chọn nhiều POI, sắp xếp thứ tự
+   - Sửa thông tin tour (tên, mô tả, thời gian)
+   - Xóa tour
+
+3. **Quản lý Shop Owner**
+   - Xem danh sách các cửa hàng / merchant
+   - Tạo, sửa, xóa merchant
+   - Gán POI cho merchant tương ứng
+
+4. **Bản đồ & Thống kê**
+   - Xem tất cả POI trên bản đồ
+   - Xem số lượt xem, tương tác, QR scans cho từng POI
+   - Phân tích dữ liệu theo ngày/tuần/tháng
+
+### 🏪 **Shop Owner** (Chủ cửa hàng)
+
+1. **Quản lý POI của cửa hàng**
+   - Tạo POI mới cho cửa hàng của mình
+   - Upload ảnh + audio (VI/EN) hoặc dùng TTS
+   - Chỉnh sửa POI (chỉ POI của mình)
+   - Xem preview
+
+2. **Bản đồ**
+   - Xem bản đồ chỉ hiển thị POI của cửa hàng mình
+
+3. **Thống kê**
+   - Xem lượt xem, lượt quét QR cho POI của mình
+   - Dashboard hiển thị tóm tắt hoạt động
+
+### 🗺️ **Tourist / Du khách** (Mobile App)
+
+1. **Khám phá POI**
+   - Xem bản đồ GPS hiển thị tất cả POI gần kỳ
+   - Nhấn POI → xem chi tiết: ảnh, mô tả, audio (nếu có)
+   - Chuyển đổi ngôn ngữ VI ↔ EN
+   - Phát audio nếu POI có sẵn
+
+2. **Tham quan theo Tour**
+   - Xem danh sách tour disponible
+   - Chọn tour → xem danh sách POI và route trên bản đồ
+   - Bắt đầu tour → chế độ GPS guided navigation
+
+3. **Quét QR**
+   - Quét QR code tại POI → xác nhận đã tham quan
+   - Lưu lịch sử tham quan
+
+4. **Quản lý cá nhân**
+   - Lưu POI yêu thích ❤️
+   - Xem lịch sử POI đã xem
+   - Chỉnh sửa hồ sơ cá nhân
+   - Chọn ngôn ngữ (VI/EN)
+
+### ✅ **Những tính năng đã hoàn thiện**
+
+- ✅ Backend API (NestJS + Prisma + PostgreSQL)
+- ✅ Admin web dashboard (React + Tailwind)
+- ✅ Mobile app (Expo + React Native)
+- ✅ Xác thực (JWT + role-based access)
+- ✅ Quản lý POI, Tour, Media, QR code
+- ✅ Text-to-Speech tự động cho POI
+- ✅ Localization (VI/EN) cho text + audio
+- ✅ Bản đồ GPS trên web + mobile
+- ✅ Audio player với UI riêng (text ≠ audio fallback)
+- ✅ Quét QR + trigger log
+- ✅ Thống kê lượt xem
+- ✅ Test suite cho mobile resolver + audio logic
+
+---
+
 ## ⚡ Yêu cầu hệ thống
 
 - **Node.js** >= 20 (khuyến nghị v22+)
