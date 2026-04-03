@@ -24,8 +24,9 @@ import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../c
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
-import usePoiTts from '../../hooks/usePoiTts';
+import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
 import { translateService } from '../../services/translate.service';
+import LocalizationPanel, { type LocalizationPanelHandle } from '../../components/localization/LocalizationPanel';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -115,6 +116,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [qrLoading, setQrLoading] = useState(false);
     const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
     const [translatingEn, setTranslatingEn] = useState(false);
+
+    const localizationPanelRef = useRef<LocalizationPanelHandle>(null);
 
     useEffect(() => {
         if (id) {
@@ -545,7 +548,25 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (readOnly) return;
-        handleSave(formData.status);
+        
+        // Flush localization panel before save
+        localizationPanelRef.current?.flush({ reason: 'form-submit' }).then((result) => {
+            if (result === 'clean') {
+                handleSave(formData.status);
+            } else {
+                showToast({
+                    variant: 'error',
+                    title: 'Validation Error',
+                    description: 'Please fix the localization errors before saving.',
+                });
+            }
+        }).catch((error) => {
+            showToast({
+                variant: 'error',
+                title: 'Save Error',
+                description: 'Failed to save localization changes.',
+            });
+        });
     };
 
     if (fetching) {
@@ -1082,6 +1103,19 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             )}
                         </div>
                     </div>
+
+                    {isEditMode && poiId && (
+                        <LocalizationPanel
+                            ref={localizationPanelRef}
+                            poiId={poiId}
+                            baseLanguage="VI"
+                            role="admin"
+                            disabled={readOnly}
+                            onDirtyChange={(dirty) => {
+                                // Could show unsaved indicator here
+                            }}
+                        />
+                    )}
 
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 space-y-2">
                         <p className="font-semibold text-slate-900">Tips</p>
