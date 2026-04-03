@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -12,6 +12,7 @@ import { getMediaUrl } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { organicMapStyle } from '../../utils/mapStyle';
 import { useLanguage } from '../../context/LanguageContext';
+import { resolveExactAudioTrack } from '../../utils/audioMedia';
 
 const { width } = Dimensions.get('window');
 const VINH_KHANH_REGION = {
@@ -22,6 +23,24 @@ const VINH_KHANH_REGION = {
 };
 
 type NearbyPoi = Poi & { distanceM: number };
+
+const buildNearbyQueue = (pois: Poi[], location: Location.LocationObject) => {
+    const inRange: NearbyPoi[] = [];
+
+    for (const poi of pois) {
+        const dist = getDistance(
+            { latitude: location.coords.latitude, longitude: location.coords.longitude },
+            { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
+        );
+        const radius = poi.triggerRadius || 50;
+
+        if (dist <= radius) {
+            inRange.push({ ...poi, distanceM: dist });
+        }
+    }
+
+    return inRange.sort((a, b) => a.distanceM - b.distanceM);
+};
 
 export default function MapScreen() {
     const router = useRouter();
@@ -64,30 +83,11 @@ export default function MapScreen() {
                 },
                 (newLocation) => {
                     setLocation(newLocation);
+                    const nextQueue = buildNearbyQueue(pois, newLocation);
+                    setNearbyQueue(nextQueue);
 
-                    if (pois.length > 0) {
-                        const inRange: NearbyPoi[] = [];
-
-                        for (const poi of pois) {
-                            const dist = getDistance(
-                                { latitude: newLocation.coords.latitude, longitude: newLocation.coords.longitude },
-                                { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
-                            );
-                            const radius = poi.triggerRadius || 50;
-
-                            if (dist <= radius) {
-                                inRange.push({ ...poi, distanceM: dist });
-                            }
-                        }
-
-                        // Sort by distance (closest first = highest priority)
-                        inRange.sort((a, b) => a.distanceM - b.distanceM);
-                        setNearbyQueue(inRange);
-
-                        // Clear manual selection if user is in range of POIs
-                        if (inRange.length > 0) {
-                            setManualSelectedPoi(null);
-                        }
+                    if (nextQueue.length > 0) {
+                        setManualSelectedPoi(null);
                     }
                 }
             );
@@ -121,7 +121,7 @@ export default function MapScreen() {
     const goToUserLocation = async () => {
         try {
             let loc = await Location.getLastKnownPositionAsync({});
-            if (!loc) loc = await Location.getCurrentPositionAsync({});
+            loc ??= await Location.getCurrentPositionAsync({});
             if (loc) {
                 setLocation(loc);
                 mapRef.current?.animateToRegion({
@@ -142,8 +142,7 @@ export default function MapScreen() {
 
     // Helper: get audio for a POI in current language
     const getAudioForPoi = (poi: Poi) => {
-        return poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
-            ?? poi.media?.find(m => m.type === 'AUDIO');
+        return resolveExactAudioTrack(poi.media, lang);
     };
 
     const getImageForPoi = (poi: Poi) => {
@@ -155,8 +154,10 @@ export default function MapScreen() {
     };
 
     const hasQueue = nearbyQueue.length > 0;
-    const hasManual = !hasQueue && manualSelectedPoi !== null;
-    const showBottomSheet = hasQueue || hasManual;
+    const manualPoi = hasQueue ? null : manualSelectedPoi;
+    const manualImageMedia = manualPoi ? getImageForPoi(manualPoi) : null;
+    const manualAudioMedia = manualPoi ? getAudioForPoi(manualPoi) : null;
+    const showBottomSheet = hasQueue || manualPoi !== null;
 
     return (
         <View style={styles.container}>
@@ -295,49 +296,42 @@ export default function MapScreen() {
             )}
 
             {/* ===== MANUAL SELECTION (tap marker outside range) ===== */}
-            {hasManual && (() => {
-                const poi = manualSelectedPoi!;
-                const imageMedia = getImageForPoi(poi);
-                const audioMedia = getAudioForPoi(poi);
-                const distanceM = location ? getDistance(
-                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
-                    { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
-                ) : null;
+            {manualPoi && (
+                <View style={styles.bottomSheet}>
+                    <TouchableOpacity style={styles.closeButton} onPress={() => setManualSelectedPoi(null)}>
+                        <Text style={styles.closeButtonText}>✕</Text>
+                    </TouchableOpacity>
 
-                return (
-                    <View style={styles.bottomSheet}>
-                        <TouchableOpacity style={styles.closeButton} onPress={() => setManualSelectedPoi(null)}>
-                            <Text style={styles.closeButtonText}>✕</Text>
-                        </TouchableOpacity>
-
-                        <View style={styles.poiPreviewRow}>
-                            <Image
-                                source={{ uri: imageMedia ? getMediaUrl(imageMedia.url) : 'https://via.placeholder.com/150' }}
-                                style={styles.poiImage}
-                            />
-                            <View style={styles.poiInfo}>
-                                <Text style={styles.poiTitle} numberOfLines={1}>{getPoiName(poi)}</Text>
-                                <Text style={styles.poiType}>
-                                    {t(`categories.${poi.category}`, t('categories.DEFAULT'))}
-                                    {distanceM !== null && ` • ${formatDistance(distanceM)}`}
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.detailButton}
-                                    onPress={() => router.push(`/poi/${poi.id}`)}
-                                >
-                                    <Text style={styles.detailButtonText}>{t('map.viewDetails')}</Text>
-                                </TouchableOpacity>
-                            </View>
+                    <View style={styles.poiPreviewRow}>
+                        <Image
+                            source={{ uri: manualImageMedia ? getMediaUrl(manualImageMedia.url) : 'https://via.placeholder.com/150' }}
+                            style={styles.poiImage}
+                        />
+                        <View style={styles.poiInfo}>
+                            <Text style={styles.poiTitle} numberOfLines={1}>{getPoiName(manualPoi)}</Text>
+                            <Text style={styles.poiType}>
+                                {t(`categories.${manualPoi.category}`, t('categories.DEFAULT'))}
+                                {location && ` • ${formatDistance(getDistance(
+                                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                                    { latitude: Number(manualPoi.latitude), longitude: Number(manualPoi.longitude) }
+                                ))}`}
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.detailButton}
+                                onPress={() => router.push(`/poi/${manualPoi.id}`)}
+                            >
+                                <Text style={styles.detailButtonText}>{t('map.viewDetails')}</Text>
+                            </TouchableOpacity>
                         </View>
-
-                        {audioMedia?.url && (
-                            <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={getMediaUrl(audioMedia.url)} poiId={poi.id} autoPlay={false} />
-                            </View>
-                        )}
                     </View>
-                );
-            })()}
+
+                    {manualAudioMedia?.url && (
+                        <View style={styles.audioWrapper}>
+                            <AudioPlayer audioUrl={getMediaUrl(manualAudioMedia.url)} poiId={manualPoi.id} autoPlay={false} />
+                        </View>
+                    )}
+                </View>
+            )}
         </View>
     );
 }

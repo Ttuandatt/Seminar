@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Headphones, MapPin, Image as ImageIcon } from 'lucide-react';
+import { getLanguageDisplayName } from '../../utils/language-display';
 
 export interface AudioSource {
     url: string;
@@ -62,6 +63,7 @@ const POIPreviewModal = ({
 
     const previewName = activeLang === 'VI' ? poi.nameVi : poi.nameEn || poi.nameVi;
     const previewDescription = activeLang === 'VI' ? poi.descriptionVi : poi.descriptionEn || poi.descriptionVi;
+    const languageLocale = activeLang === 'VI' ? 'vi' : 'en';
 
     const coordinateLabel = useMemo(() => {
         if (typeof latitude !== 'number' || typeof longitude !== 'number') return '';
@@ -111,7 +113,7 @@ const POIPreviewModal = ({
                                         onClick={() => setActiveLang(lang)}
                                         className={`flex-1 rounded-full px-3 py-1 font-semibold transition ${activeLang === lang ? 'bg-white text-slate-900' : 'text-slate-400'}`}
                                     >
-                                        {lang === 'VI' ? 'Tiếng Việt' : 'English'}
+                                        {getLanguageDisplayName(lang, languageLocale)}
                                     </button>
                                 ))}
                             </div>

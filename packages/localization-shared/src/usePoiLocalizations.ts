@@ -7,8 +7,6 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
-  UseQueryResult,
-  UseMutationResult,
 } from '@tanstack/react-query';
 import {
   useState,
@@ -17,15 +15,13 @@ import {
   useRef,
   useMemo,
 } from 'react';
-import {
-  LocalizationClientConfig,
+import type {
   BCP47Language,
   ListLocalizationsResponse,
   SaveLocalizationsRequest,
   PoiLocalization,
   UsePoiLocalizationsState,
   UsePoiLocalizationsOptions,
-  LocalizationActionEvent,
 } from './types';
 import { LocalizationClient, createLocalizationClient } from './client';
 import {
@@ -139,7 +135,7 @@ export function usePoiLocalizations(
         }
 
         const request: SaveLocalizationsRequest = {
-          lastSyncedAt: query.data.meta.lastSyncedAt,
+          lastSyncedAt: query.data.meta?.lastSyncedAt ?? new Date().toISOString(),
           items: [payload.localization],
         };
 
@@ -203,7 +199,7 @@ export function usePoiLocalizations(
           return {
             ...oldData,
             meta: {
-              lastSyncedAt: response.meta.lastSyncedAt,
+              lastSyncedAt: response.meta?.lastSyncedAt ?? new Date().toISOString(),
             },
             items: oldData.items.map((item) =>
               item.language === payload.language ? payload.localization : item
@@ -490,7 +486,7 @@ export function usePoiLocalizations(
           startedAt: new Date().toISOString(),
         }
       : null,
-    lastSyncedAt: query.data?.meta.lastSyncedAt,
+    lastSyncedAt: query.data?.meta?.lastSyncedAt,
     lastFetchedAt: query.dataUpdatedAt
       ? new Date(query.dataUpdatedAt).toISOString()
       : undefined,

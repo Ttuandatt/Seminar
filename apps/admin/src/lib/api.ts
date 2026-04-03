@@ -1,4 +1,5 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
@@ -57,8 +58,8 @@ api.interceptors.response.use(
             const refreshToken = localStorage.getItem('refreshToken');
             if (!refreshToken) {
                 clearAuthState();
-                window.location.href = '/login';
-                return Promise.reject(error);
+                globalThis.location.href = '/login';
+                throw error;
             }
 
             if (isRefreshing) {
@@ -98,14 +99,14 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 notifyRefreshSubscribers(null);
                 clearAuthState();
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
+                globalThis.location.href = '/login';
+                throw refreshError;
             } finally {
                 isRefreshing = false;
             }
         }
 
-        return Promise.reject(error);
+        throw error;
     },
 );
 

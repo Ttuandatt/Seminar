@@ -20,11 +20,8 @@ import { translateService } from '../../services/translate.service';
 import { useToast } from '../../components/ui/ToastProvider';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
 import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
-
-const languageTabs = [
-  { code: 'VI' as const, label: 'Vietnamese' },
-  { code: 'EN' as const, label: 'English' },
-];
+import type { PoiCategory } from '../../services/poi.service';
+import { getLanguageCodeLabel, getLanguageDisplayName, getLanguageOptions, getTtsActionLabel } from '../../utils/language-display';
 
 interface MediaResource {
   id: string;
@@ -35,8 +32,10 @@ interface MediaResource {
   orderIndex?: number | null;
 }
 
-const isActiveMedia = (media?: MediaResource | null) =>
-  Boolean(media) && (media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0);
+const isActiveMedia = (media?: MediaResource | null) => {
+  if (!media) return false;
+  return media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0;
+};
 
 const sanitizeMediaList = (media?: MediaResource[] | null) => {
   if (!Array.isArray(media)) return [];
@@ -50,8 +49,8 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const poiId = id ?? draftPoiId ?? undefined;
   const isEditMode = !!poiId;
   const { showToast } = useToast();
-  const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
-  const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
+  const defaultCategory: PoiCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
+  const [activeLang, setActiveLang] = useState<string>('VI');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
@@ -60,9 +59,21 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
   const [translatingEn, setTranslatingEn] = useState(false);
 
-  const L = POI_FORM_LABELS[activeLang];
+  const L = POI_FORM_LABELS[activeLang as keyof typeof POI_FORM_LABELS] ?? POI_FORM_LABELS.EN;
+  const uiLocale = activeLang === 'VI' ? 'vi' : 'en';
+  const languageOptions = getLanguageOptions(uiLocale);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    nameEn: string;
+    description: string;
+    descriptionEn: string;
+    category: PoiCategory;
+    address: string;
+    latitude: string;
+    longitude: string;
+    triggerRadius: number;
+  }>({
     name: '',
     nameEn: '',
     description: '',
@@ -94,7 +105,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
           nameEn: (poi.nameEn as string) || '',
           description: (poi.descriptionVi as string) || '',
           descriptionEn: (poi.descriptionEn as string) || '',
-          category: (poi.category as string) || defaultCategory,
+          category: (poi.category as PoiCategory) || defaultCategory,
           address: '',
           latitude: String(poi.latitude ?? ''),
           longitude: String(poi.longitude ?? ''),
@@ -138,28 +149,30 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
   const { generating: ttsGenerating, generateTts } = usePoiTts({
     getPoiId: () => poiId,
-    getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
-    getSourceDescriptionFor: (language) => (language === 'EN' ? formData.description : undefined),
+    getDescriptionFor: (language) => (language === 'EN' ? formData.descriptionEn : formData.description),
+    getSourceDescriptionFor: () => formData.description,
     refreshMedia,
-    onSuccessToast: (language) =>
+    onSuccessToast: (language, message) =>
       showToast({
         variant: 'success',
-        title: `TTS ${language}`,
-        description: `Audio ${language} generated successfully.`,
+        title: `TTS ${getLanguageCodeLabel(language)} đã tạo`,
+        description: message || `Audio ${getLanguageCodeLabel(language)} đã được tạo thành công.`,
       }),
     onErrorToast: (language, message) =>
       showToast({
         variant: 'error',
-        title: `TTS ${language} failed`,
+        title: `TTS ${getLanguageCodeLabel(language)} thất bại`,
         description: message,
       }),
     getMissingPoiMessage: () => 'Save POI first before generating TTS.',
     getShortDescriptionMessage: (language) =>
-      language === 'VI'
-        ? 'Vietnamese description needs at least 10 characters.'
-        : 'English description needs at least 10 characters.',
+      language === 'EN'
+        ? 'English description needs at least 10 characters.'
+        : 'Vietnamese description needs at least 10 characters.',
     getTranslationFallbackMessage: (language) =>
-      language === 'EN' ? 'English text is missing/short. Used VI text for translation + TTS.' : undefined,
+      language === 'EN'
+        ? 'English text is missing/short. Used VI text for translation + TTS.'
+        : 'Hệ thống đã dùng mô tả tiếng Việt để dịch và tạo audio theo ngôn ngữ đã chọn.',
     ensurePoiExists: ensurePoiExistsForTts,
   });
 
@@ -304,10 +317,10 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     triggerRadius: formData.triggerRadius,
   });
 
-  const translationField = activeLang === 'VI'
-    ? { name: 'name', description: 'description' }
-    : { name: 'nameEn', description: 'descriptionEn' };
-  const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
+  const translationField = activeLang === 'EN'
+    ? { name: 'nameEn', description: 'descriptionEn' }
+    : { name: 'name', description: 'description' };
+  const activeDescriptionValue = activeLang === 'EN' ? formData.descriptionEn : formData.description;
 
   const handlePreview = () => {
     if (!formData.name || !formData.description) {
@@ -476,20 +489,21 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                       Auto-translate VI -&gt; EN
                     </button>
                   )}
-                  <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                    {languageTabs.map((tab) => (
-                      <button
-                        key={tab.code}
-                        type="button"
-                        onClick={() => setActiveLang(tab.code)}
-                        className={`rounded-full px-3 py-1 transition-all ${
-                          activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
+                  <label className="sr-only" htmlFor="shop-owner-poi-language-select">
+                    Chọn ngôn ngữ
+                  </label>
+                  <select
+                    id="shop-owner-poi-language-select"
+                    value={activeLang}
+                    onChange={(event) => setActiveLang(event.target.value)}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.label}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
               </div>
 
@@ -538,7 +552,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         ) : (
                           <Headphones className="h-3.5 w-3.5" />
                         )}
-                        {activeLang === 'VI' ? L.generateVi : L.generateEn}
+                        {getTtsActionLabel(activeLang, uiLocale)}
                       </button>
                     )}
                   </div>
@@ -727,7 +741,11 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                       <div key={media.id} className="flex items-center justify-between gap-3 p-3 text-sm">
                         <div>
                           <p className="font-semibold text-slate-900">{media.originalName || `Audio ${media.id.slice(0, 8)}`}</p>
-                          <p className="text-xs text-slate-500">Language: {media.language || 'N/A'}</p>
+                          <p className="text-xs text-slate-500">
+                            Language: {getLanguageDisplayName(media.originalName?.match(/^tts_([a-zA-Z-]+)/)?.[1] || media.language || 'N/A', uiLocale)}
+                            {' '}
+                            ({getLanguageCodeLabel(media.originalName?.match(/^tts_([a-zA-Z-]+)/)?.[1] || media.language || 'N/A')})
+                          </p>
                         </div>
                         <audio controls className="h-8">
                           <source src={getMediaUrl(media.url)} />
@@ -743,7 +761,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                       <div key={index} className="flex items-center justify-between gap-3 p-3">
                         <div>
                           <p className="font-semibold text-slate-800">{audio.file.name}</p>
-                          <p className="text-xs text-slate-500">Pending • {audio.language}</p>
+                          <p className="text-xs text-slate-500">Pending • {getLanguageCodeLabel(audio.language)}</p>
                         </div>
                         <button
                           type="button"
@@ -772,7 +790,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                           onChange={(event) => handleAudioSelect(lang, event)}
                         />
                         <PlayCircle className="mb-2 h-6 w-6 text-slate-400" />
-                        {L.uploadAudio} {lang}
+                        {L.uploadAudio} {getLanguageCodeLabel(lang)}
                       </label>
                     ))}
                   </div>

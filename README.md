@@ -26,6 +26,89 @@ Seminar/
 | **API Docs** | Swagger (OpenAPI 3.0) |
 | **Database** | Docker (PostgreSQL + Redis) |
 
+---
+
+## 📋 Tóm tắt luồng hoạt động hệ thống
+
+### 🔐 **Admin** (Quản lý toàn hệ thống)
+
+1. **Quản lý POI (Điểm tham quan)**
+   - Tạo POI mới → nhập thông tin cơ bản (tên, mô tả, danh mục, vị trí GPS)
+   - Upload ảnh và file audio cho nhiều ngôn ngữ (VI, EN) hoặc tự động tạo bằng TTS
+   - Chỉnh sửa hoặc xóa POI
+   - Xuất QR code để dán tại điểm tham quan
+   - Xem preview POI trước khi công bố
+
+2. **Quản lý Tour**
+   - Tạo tour mới → chọn nhiều POI, sắp xếp thứ tự
+   - Sửa thông tin tour (tên, mô tả, thời gian)
+   - Xóa tour
+
+3. **Quản lý Shop Owner**
+   - Xem danh sách các cửa hàng / merchant
+   - Tạo, sửa, xóa merchant
+   - Gán POI cho merchant tương ứng
+
+4. **Bản đồ & Thống kê**
+   - Xem tất cả POI trên bản đồ
+   - Xem số lượt xem, tương tác, QR scans cho từng POI
+   - Phân tích dữ liệu theo ngày/tuần/tháng
+
+### 🏪 **Shop Owner** (Chủ cửa hàng)
+
+1. **Quản lý POI của cửa hàng**
+   - Tạo POI mới cho cửa hàng của mình
+   - Upload ảnh + audio (VI/EN) hoặc dùng TTS
+   - Chỉnh sửa POI (chỉ POI của mình)
+   - Xem preview
+
+2. **Bản đồ**
+   - Xem bản đồ chỉ hiển thị POI của cửa hàng mình
+
+3. **Thống kê**
+   - Xem lượt xem, lượt quét QR cho POI của mình
+   - Dashboard hiển thị tóm tắt hoạt động
+
+### 🗺️ **Tourist / Du khách** (Mobile App)
+
+1. **Khám phá POI**
+   - Xem bản đồ GPS hiển thị tất cả POI gần kỳ
+   - Nhấn POI → xem chi tiết: ảnh, mô tả, audio (nếu có)
+   - Chuyển đổi ngôn ngữ VI ↔ EN
+   - Phát audio nếu POI có sẵn
+
+2. **Tham quan theo Tour**
+   - Xem danh sách tour disponible
+   - Chọn tour → xem danh sách POI và route trên bản đồ
+   - Bắt đầu tour → chế độ GPS guided navigation
+
+3. **Quét QR**
+   - Quét QR code tại POI → xác nhận đã tham quan
+   - Lưu lịch sử tham quan
+
+4. **Quản lý cá nhân**
+   - Lưu POI yêu thích ❤️
+   - Xem lịch sử POI đã xem
+   - Chỉnh sửa hồ sơ cá nhân
+   - Chọn ngôn ngữ (VI/EN)
+
+### ✅ **Những tính năng đã hoàn thiện**
+
+- ✅ Backend API (NestJS + Prisma + PostgreSQL)
+- ✅ Admin web dashboard (React + Tailwind)
+- ✅ Mobile app (Expo + React Native)
+- ✅ Xác thực (JWT + role-based access)
+- ✅ Quản lý POI, Tour, Media, QR code
+- ✅ Text-to-Speech tự động cho POI
+- ✅ Localization (VI/EN) cho text + audio
+- ✅ Bản đồ GPS trên web + mobile
+- ✅ Audio player với UI riêng (text ≠ audio fallback)
+- ✅ Quét QR + trigger log
+- ✅ Thống kê lượt xem
+- ✅ Test suite cho mobile resolver + audio logic
+
+---
+
 ## ⚡ Yêu cầu hệ thống
 
 - **Node.js** >= 20 (khuyến nghị v22+)
@@ -35,162 +118,154 @@ Seminar/
 
 ---
 
-## 🚀 Hướng dẫn Setup từ đầu
+## 🚀 Hướng dẫn chạy nhanh cho team dev (Web + Mobile)
 
-### Bước 1: Clone & Cài đặt
+Mục tiêu của phần này là để team clone repo xong có thể chạy được ngay:
+- Backend API
+- Web app (Admin/Shop Owner)
+- Mobile app (Expo)
+
+### 1) Chuẩn bị môi trường
 
 ```bash
 git clone <repo-url>
 cd Seminar
 ```
 
-### Bước 2: Khởi động Database (Docker)
+Yêu cầu:
+- Node.js 20+
+- npm 10+
+- Docker Desktop
+- Expo Go trên điện thoại (nếu test mobile bằng thiết bị thật)
+
+### 2) Chạy API + Database (Terminal 1)
 
 ```bash
 cd apps/api
 docker-compose up -d
 ```
 
-Lệnh này sẽ tạo 2 containers:
-- **gpstours-db** — PostgreSQL 15 (port `5432`)
-- **gpstours-cache** — Redis 7 (port `6379`)
-
-> **Kiểm tra**: `docker ps` → thấy 2 containers đang chạy.
-
-### Bước 3: Cấu hình Backend
+Tạo file môi trường cho API:
 
 ```bash
-# Vẫn đang ở apps/api
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+```bash
+# macOS/Linux
 cp .env.example .env
 ```
 
-Mở file `.env` và cập nhật nếu cần (mặc định đã hoạt động với Docker ở trên, không cần sửa gì):
-
-```env
-# Database (khớp với docker-compose.yml: user=postgres, password=123, db=seminar_gpstour)
-DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=public"
-
-# JWT
-JWT_SECRET="change-me-in-production"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_SECRET="change-me-in-production"
-JWT_REFRESH_EXPIRES_IN="7d"
-
-# Server
-PORT=3000
-NODE_ENV=development
-
-# Upload
-UPLOAD_DIR="./uploads"
-MAX_IMAGE_SIZE=5242880
-MAX_AUDIO_SIZE=52428800
-```
-
-**Cũng cần tạo file `.env` ở thư mục gốc** (`Seminar/.env`) chứa `DATABASE_URL`:
+Đảm bảo file `.env` ở thư mục gốc dự án có `DATABASE_URL`:
 
 ```env
 DATABASE_URL="postgresql://postgres:123@localhost:5432/seminar_gpstour?schema=public"
 ```
 
-### Bước 4: Cài dependencies & Khởi tạo Database
+Cài dependencies và setup DB:
 
 ```bash
-# Ở apps/api
 npm install
-
-# Generate Prisma Client (Chạy trước để tránh lỗi EPERM nếu Server đang bật)
 npx prisma generate
-
-# Tạo bảng trong database
-npx prisma migrate dev
-
-# Seed data mẫu (POIs, Tours, tài khoản test)
-npm run db:seed
+npm run db:setup
 ```
 
-> Seed sẽ tạo sẵn data mẫu gồm 5 POIs (khu Vĩnh Khánh), 1 Tour, và 3 tài khoản test:
->
-> | Vai trò | Email | Mật khẩu |
-> |---------|-------|-----------|
-> | Admin | `admin@gpstours.vn` | `admin123` |
-> | Shop Owner | `bunmam@gpstours.vn` | `shop123` |
-> | Tourist | `tourist@example.com` | `tourist123` |
->
-> Nếu muốn **reset toàn bộ database** và seed lại: `npm run db:reset` (sẽ xóa hết data rồi chạy migrate + seed lại).
-
-### Bước 5: Chạy Backend
+Chạy API dev mode:
 
 ```bash
-# Vẫn ở apps/api — development mode (auto-reload khi sửa code)
 npm run start:dev
 ```
 
-> **Giữ terminal này mở** — backend phải chạy liên tục.
->
-> - **API**: http://localhost:3000/api/v1
-> - **Swagger Docs** (test API trực tiếp trên trình duyệt): http://localhost:3000/api/docs
+API chạy tại:
+- http://localhost:3000/api/v1
+- http://localhost:3000/api/docs
 
-### Bước 6: Cài đặt & Chạy Admin / Shop Owner Dashboard
+### 3) Chạy web app (Admin/Shop Owner) (Terminal 2)
 
 ```bash
-# Mở terminal mới
 cd apps/admin
 npm install
 npm run dev
 ```
 
-> **Giữ terminal này mở**.
->
-> **Dashboard chạy tại**: http://localhost:5173
->
-> Đây là giao diện dùng chung cho cả **Admin** (quản lý toàn hệ thống) và **Shop Owner** (quản lý cửa hàng & POI của mình).
-> Đăng nhập bằng tài khoản tương ứng — hệ thống tự điều hướng theo role.
+Web app chạy tại:
+- http://localhost:5173
 
-### Bước 7: Cài đặt & Chạy Tourist Mobile App
-
-> **Yêu cầu trước**: Cài **Expo Go** trên điện thoại Android/iOS:
-> - Android: [Play Store — Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent)
-> - iOS: [App Store — Expo Go](https://apps.apple.com/app/expo-go/id982107779)
->
-> Điện thoại và máy tính phải **cùng mạng Wi-Fi**.
+### 4) Chạy mobile app (Expo) (Terminal 3)
 
 ```bash
-# Mở terminal mới
 cd apps/mobile
+npm install
+```
 
-# Bắt buộc thêm --legacy-peer-deps để tránh lỗi xung đột phiên bản thư viện
+Nếu cài dependency bị lỗi peer deps, chạy lại:
+
+```bash
 npm install --legacy-peer-deps
 ```
 
-**Bước 1 — Lấy LAN IP**: chạy thử Expo để terminal tự hiện IP:
+Tạo file `apps/mobile/.env`:
 
-```bash
-npx expo start
+```env
+EXPO_PUBLIC_API_URL=http://<LAN_IP_CUA_BAN>:3000
 ```
 
-Terminal sẽ hiện dòng:
-```
-Metro waiting on exp://192.168.1.6:8081
-                        ^^^^^^^^^^^
-                        Đây là LAN IP của bạn
-```
-
-Nhấn `Ctrl+C` để tắt, rồi **tạo file `apps/mobile/.env`** với IP vừa lấy:
+Ví dụ:
 
 ```env
 EXPO_PUBLIC_API_URL=http://192.168.1.6:3000
 ```
 
-**Bước 2 — Chạy lại với clear cache**:
+Chạy Expo:
 
 ```bash
-npx expo start --clear
+npm run start -- --clear
 ```
 
-> Quét **QR code** hiện trên terminal bằng app **Expo Go**.
-> App tải xong sẽ hiển thị giao diện bản đồ với các POI.
->
-> **Giữ terminal này mở** — tắt terminal sẽ mất kết nối trên điện thoại.
+Lưu ý cho mobile:
+- Điện thoại và máy tính phải cùng mạng Wi-Fi.
+- Quét QR bằng Expo Go.
+- Nếu dùng emulator Android/iOS thì có thể dùng localhost theo cấu hình emulator tương ứng.
+
+### 5) Luồng dev hằng ngày (khuyến nghị)
+
+Mỗi ngày làm việc, chỉ cần mở 3 terminal và chạy:
+
+```bash
+# Terminal 1
+cd apps/api
+npm run start:dev
+```
+
+```bash
+# Terminal 2
+cd apps/admin
+npm run dev
+```
+
+```bash
+# Terminal 3
+cd apps/mobile
+npm run start
+```
+
+> Nếu database chưa chạy: vào `apps/api` và chạy thêm `docker-compose up -d`.
+
+### 6) Tài khoản mẫu sau khi seed
+
+| Vai trò | Email | Mật khẩu |
+|---------|-------|-----------|
+| Admin | `admin@gpstours.vn` | `admin123` |
+| Shop Owner | `bunmam@gpstours.vn` | `shop123` |
+| Tourist | `tourist@example.com` | `tourist123` |
+
+Nếu cần reset sạch DB và seed lại:
+
+```bash
+cd apps/api
+npm run db:reset
+```
 
 ---
 
@@ -399,9 +474,9 @@ Nếu đã chạy `npm run db:seed` ở Bước 4, hệ thống đã có sẵn 3
 
 | Script | Mô tả |
 |--------|--------|
-| `npx expo start` | Chạy dev server (quét QR bằng Expo Go) |
-| `npx expo start --clear` | Chạy + xóa cache bundler (dùng khi có lỗi lạ) |
-| `npm install --legacy-peer-deps` | Cài dependencies (bắt buộc dùng flag này) |
+| `npm run start` | Chạy dev server (quét QR bằng Expo Go) |
+| `npm run start -- --clear` | Chạy + xóa cache bundler (dùng khi có lỗi lạ) |
+| `npm install --legacy-peer-deps` | Dùng khi cài dependencies bị lỗi peer deps |
 
 ---
 
@@ -416,6 +491,6 @@ Nếu đã chạy `npm run db:seed` ở Bước 4, hệ thống đã có sẵn 3
 | `Prisma Client not generated` | Chạy `npx prisma generate` |
 | Mobile: `AxiosError: Network Error` | Đảm bảo điện thoại và laptop cùng mạng Wi-Fi, và `EXPO_PUBLIC_API_URL` trong `apps/mobile/.env` đúng LAN IP |
 | Mobile: POI không hiện trên bản đồ | Kiểm tra POI có status `ACTIVE` không (Prisma Studio hoặc Admin Dashboard) |
-| Mobile: `Cannot find module` | Chạy `npm install --legacy-peer-deps` rồi `npx expo start --clear` |
+| Mobile: `Cannot find module` | Chạy `npm install --legacy-peer-deps` rồi `npm run start -- --clear` |
 | Mobile: `No Android device found` | Dùng Expo Go quét QR thay vì nhấn `a` (không cần emulator) |
 

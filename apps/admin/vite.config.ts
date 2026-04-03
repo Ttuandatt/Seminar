@@ -1,13 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const rootDir = fileURLToPath(new URL('../..', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  cacheDir: 'node_modules/.vite-admin-cache',
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-    clearMocks: true,
+  resolve: {
+    alias: {
+      '@localization-shared': path.resolve(rootDir, 'packages/localization-shared/src/index.ts'),
+    },
   },
+  cacheDir: 'node_modules/.vite-admin-cache',
 })

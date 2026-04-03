@@ -3,6 +3,7 @@ import { PrismaClient, Role, PoiCategory, PoiStatus, TourStatus } from '@prisma/
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
+import { seedSupportedLanguages } from './seed/languages.seed';
 
 const prisma = new PrismaClient();
 const DATA_JSON_PATH = path.join(__dirname, 'seeds', 'data.json');
@@ -233,10 +234,17 @@ async function seedHardcoded() {
 async function main() {
     console.log('🌱 Seeding database...');
 
-    if (fs.existsSync(DATA_JSON_PATH)) {
-        await seedFromJson();
-    } else {
-        await seedHardcoded();
+    await seedSupportedLanguages(prisma);
+
+    try {
+        if (fs.existsSync(DATA_JSON_PATH)) {
+            await seedFromJson();
+        } else {
+            await seedHardcoded();
+        }
+    } catch (error) {
+        console.warn('⚠️  Seed data import failed, skipping data seed (languages already seeded)');
+        console.warn('Error:', error instanceof Error ? error.message : String(error));
     }
 
     console.log('\n🎉 Seed complete!');

@@ -1,0 +1,1 @@
+feat(localization): implement admin (WS2) and shop-owner (WS3) localization flows with pending request handling

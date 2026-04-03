@@ -2,7 +2,21 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n, { LANGUAGE_KEY } from '../i18n';
 
-type Lang = 'vi' | 'en';
+const SUPPORTED_CONTENT_LANGUAGES = [
+    'vi',
+    'en',
+    'ja',
+    'ko',
+    'zh-cn',
+    'zh-tw',
+    'fr',
+    'de',
+    'es',
+    'th',
+    'ru',
+] as const;
+
+type Lang = (typeof SUPPORTED_CONTENT_LANGUAGES)[number];
 
 interface LanguageContextType {
     lang: Lang;
@@ -28,8 +42,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const loadLang = async () => {
             const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
-            if (saved === 'en' || saved === 'vi') {
-                setLang(saved);
+            if (saved && SUPPORTED_CONTENT_LANGUAGES.includes(saved as Lang)) {
+                setLang(saved as Lang);
             }
         };
         loadLang();
@@ -40,23 +54,30 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         await AsyncStorage.setItem(LANGUAGE_KEY, newLang);
         // Also sync the old key for backward compat
         await AsyncStorage.setItem('appLanguage', newLang);
-        await i18n.changeLanguage(newLang);
+
+        // UI copy currently has vi/en resources. Other content languages use EN UI fallback.
+        const uiLanguage = newLang === 'vi' ? 'vi' : 'en';
+        await i18n.changeLanguage(uiLanguage);
     }, []);
 
     const getPoiName = useCallback((poi: { nameVi: string; nameEn?: string | null }) => {
-        return lang === 'en' ? (poi.nameEn || poi.nameVi) : poi.nameVi;
+        if (lang === 'vi') return poi.nameVi;
+        return poi.nameEn || poi.nameVi;
     }, [lang]);
 
     const getPoiDescription = useCallback((poi: { descriptionVi?: string | null; descriptionEn?: string | null }) => {
-        return lang === 'en' ? (poi.descriptionEn || poi.descriptionVi || '') : (poi.descriptionVi || '');
+        if (lang === 'vi') return poi.descriptionVi || '';
+        return poi.descriptionEn || poi.descriptionVi || '';
     }, [lang]);
 
     const getTourName = useCallback((tour: { nameVi: string; nameEn?: string | null }) => {
-        return lang === 'en' ? (tour.nameEn || tour.nameVi) : tour.nameVi;
+        if (lang === 'vi') return tour.nameVi;
+        return tour.nameEn || tour.nameVi;
     }, [lang]);
 
     const getTourDescription = useCallback((tour: { descriptionVi?: string | null; descriptionEn?: string | null }) => {
-        return lang === 'en' ? (tour.descriptionEn || tour.descriptionVi || '') : (tour.descriptionVi || '');
+        if (lang === 'vi') return tour.descriptionVi || '';
+        return tour.descriptionEn || tour.descriptionVi || '';
     }, [lang]);
 
     return (

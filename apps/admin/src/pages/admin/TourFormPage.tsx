@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Map, Loader2, AlertCircle, Plus, Trash2, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
-import { tourService, type Tour, type TourPayload } from '../../services/tour.service';
+import { tourService, type Tour, type TourPayload, type TourStatus } from '../../services/tour.service';
 import { poiService, type POI } from '../../services/poi.service';
 
 const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
@@ -14,7 +14,14 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [error, setError] = useState('');
 
     // Form Data
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        name: string;
+        nameEn: string;
+        description: string;
+        descriptionEn: string;
+        estimatedDuration: number;
+        status: TourStatus;
+    }>({
         name: '',
         nameEn: '',
         description: '',
@@ -139,7 +146,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
                     : undefined;
             const msg = message || 'Failed to save Tour.';
-            setError(Array.isArray(msg) ? msg.join(', ') : msg);
+            setError(typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join(', ') : 'Failed to save Tour.');
         } finally {
             setLoading(false);
         }

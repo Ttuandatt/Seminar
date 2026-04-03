@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -9,6 +9,9 @@ import AudioPlayer from '../../../components/AudioPlayer';
 import { LocateFixed, XCircle, CheckCircle2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../../context/LanguageContext';
+import { resolveExactAudioTrack } from '../../../utils/audioMedia';
+import { getMediaUrl } from '../../../services/api';
+import { getMissingAudioNote } from '../../../services/localizationCopy';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +38,22 @@ export default function TourFollowScreen() {
         }
     };
 
+    const handleLocationUpdate = useCallback((loc: Location.LocationObject) => {
+        setLocation(loc);
+
+        if (!tour?.tourPois || currentStep >= tour.tourPois.length) return;
+
+        const targetPoi = tour.tourPois[currentStep].poi;
+        const dist = getDistance(
+            { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
+            { latitude: Number(targetPoi.latitude), longitude: Number(targetPoi.longitude) }
+        );
+
+        if (dist <= (targetPoi.triggerRadius || 50) && !triggeredStops.has(currentStep)) {
+            setTriggeredStops((prev) => new Set(prev).add(currentStep));
+        }
+    }, [currentStep, tour, triggeredStops]);
+
     useEffect(() => {
         let locationSub: Location.LocationSubscription | null = null;
 
@@ -51,32 +70,14 @@ export default function TourFollowScreen() {
                     timeInterval: 2000,
                     distanceInterval: 5,
                 },
-                (loc) => {
-                    setLocation(loc);
-
-                    if (tour && tour.tourPois && currentStep < tour.tourPois.length) {
-                        const targetPoi = tour.tourPois[currentStep].poi;
-                        const dist = getDistance(
-                            { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
-                            { latitude: Number(targetPoi.latitude), longitude: Number(targetPoi.longitude) }
-                        );
-
-                        if (dist <= (targetPoi.triggerRadius || 50)) {
-                            // Arrived at current target!
-                            if (!triggeredStops.has(currentStep)) {
-                                setTriggeredStops(prev => new Set(prev).add(currentStep));
-                                // Auto advance to next step after a delay, or user can manual next
-                            }
-                        }
-                    }
-                }
+                handleLocationUpdate
             );
         })();
 
         return () => {
             if (locationSub) locationSub.remove();
         };
-    }, [tour, currentStep]);
+    }, [tour, currentStep, handleLocationUpdate]);
 
     const goToUserLocation = async () => {
         if (location) {
@@ -99,20 +100,24 @@ export default function TourFollowScreen() {
         }
     };
 
-    if (!tour || !tour.tourPois) return null;
+    if (!tour?.tourPois?.length) return null;
 
-    const coordinates = tour.tourPois.map(tp => ({
+    const currentTourPois = tour.tourPois;
+
+    const coordinates = currentTourPois.map(tp => ({
         latitude: Number(tp.poi.latitude),
         longitude: Number(tp.poi.longitude),
     }));
 
     // Target POI information
-    const isFinished = currentStep >= tour.tourPois.length;
-    const targetPoi = isFinished ? null : tour.tourPois[currentStep].poi;
+    const isFinished = currentStep >= currentTourPois.length;
+    const targetPoi = isFinished ? null : currentTourPois[currentStep].poi;
     const hasArrived = triggeredStops.has(currentStep);
 
     // Get Audio conditionally
-    const audioMedia = targetPoi?.media?.find((m: any) => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'));
+    const audioMedia = resolveExactAudioTrack(targetPoi?.media, lang);
+    const audioUrl = audioMedia?.url ? getMediaUrl(audioMedia.url) : null;
+    const audioMissingNote = targetPoi ? getMissingAudioNote(lang) : '';
 
     return (
         <View style={styles.container}>
@@ -134,15 +139,21 @@ export default function TourFollowScreen() {
                     strokeWidth={5}
                 />
 
-                {tour.tourPois.map((tp, index) => {
+                {currentTourPois.map((tp, index) => {
                     const isPassed = index < currentStep;
                     const isCurrent = index === currentStep;
+                    let markerColor = 'gray';
+                    if (isPassed) {
+                        markerColor = 'green';
+                    } else if (isCurrent) {
+                        markerColor = 'blue';
+                    }
                     return (
                         <Marker
                             key={tp.id}
                             coordinate={{ latitude: Number(tp.poi.latitude), longitude: Number(tp.poi.longitude) }}
                             title={`${index + 1}. ${getPoiName(tp.poi)}`}
-                            pinColor={isPassed ? 'green' : isCurrent ? 'blue' : 'gray'}
+                            pinColor={markerColor}
                         />
                     );
                 })}
@@ -182,10 +193,14 @@ export default function TourFollowScreen() {
                             {targetPoi ? (getPoiDescription(targetPoi) || t('common.noDescription')) : ''}
                         </Text>
 
-                        {hasArrived && audioMedia && (
+                        {hasArrived && audioUrl && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioMedia.url} poiId={targetPoi.id} autoPlay={true} />
+                                <AudioPlayer audioUrl={audioUrl} poiId={targetPoi.id} autoPlay={true} />
                             </View>
+                        )}
+
+                        {hasArrived && !audioUrl && (
+                            <Text style={styles.audioMissingText}>{audioMissingNote}</Text>
                         )}
 
                         <View style={styles.navButtons}>
@@ -195,7 +210,7 @@ export default function TourFollowScreen() {
                                 disabled={!hasArrived}
                             >
                                 <Text style={styles.nextButtonText}>
-                                    {currentStep === tour.tourPois!.length - 1 ? t('tourFollow.endTour') : t('tourFollow.nextStop')}
+                                    {currentStep === currentTourPois.length - 1 ? t('tourFollow.endTour') : t('tourFollow.nextStop')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -296,6 +311,13 @@ const styles = StyleSheet.create({
     },
     audioWrapper: {
         marginBottom: 16,
+    },
+    audioMissingText: {
+        marginBottom: 16,
+        fontSize: 13,
+        lineHeight: 18,
+        color: '#b45309',
+        fontStyle: 'italic',
     },
     navButtons: {
         flexDirection: 'row',
