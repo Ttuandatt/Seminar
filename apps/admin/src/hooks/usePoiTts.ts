@@ -1,8 +1,6 @@
 import { useCallback, useState } from 'react';
 import { poiService } from '../services/poi.service';
 
-type SupportedLanguage = 'VI' | 'EN';
-
 export interface EnsurePoiResult {
     poiId?: string | null;
     handled?: boolean;
@@ -10,17 +8,158 @@ export interface EnsurePoiResult {
 
 export interface UsePoiTtsParams {
     getPoiId: () => string | undefined | null;
-    getDescriptionFor: (language: SupportedLanguage) => string | undefined | null;
-    getSourceDescriptionFor?: (language: SupportedLanguage) => string | undefined | null;
+    getDescriptionFor: (language: string) => string | undefined | null;
+    getSourceDescriptionFor?: (language: string) => string | undefined | null;
     refreshMedia?: (poiId?: string) => Promise<void>;
-    onSuccessToast: (language: SupportedLanguage) => void;
-    onErrorToast: (language: SupportedLanguage, message: string) => void;
-    getMissingPoiMessage?: (language: SupportedLanguage) => string;
-    getShortDescriptionMessage?: (language: SupportedLanguage) => string;
-    getTranslationFallbackMessage?: (language: SupportedLanguage) => string;
-    ensurePoiExists?: (language: SupportedLanguage) => Promise<EnsurePoiResult | string | void | undefined>;
-    beforeGenerate?: (language: SupportedLanguage, poiId: string) => Promise<void> | void;
-    afterGenerate?: (language: SupportedLanguage, poiId: string) => Promise<void> | void;
+    onSuccessToast: (language: string) => void;
+    onErrorToast: (language: string, message: string) => void;
+    getMissingPoiMessage?: (language: string) => string;
+    getShortDescriptionMessage?: (language: string) => string;
+    getTranslationFallbackMessage?: (language: string) => string;
+    ensurePoiExists?: (language: string) => Promise<EnsurePoiResult | string | void | undefined>;
+    beforeGenerate?: (language: string, poiId: string) => Promise<void> | void;
+    afterGenerate?: (language: string, poiId: string) => Promise<void> | void;
+}
+
+function normalizeLanguage(language: string) {
+    return language.trim().toUpperCase();
+}
+
+function isDirectLanguage(language: string) {
+    return language === 'VI' || language === 'EN';
+}
+
+async function refreshGeneratedMedia(refreshMedia: UsePoiTtsParams['refreshMedia'], poiId: string) {
+    if (refreshMedia) {
+        await refreshMedia(poiId);
+    }
+}
+
+async function runAfterGenerate(
+    afterGenerate: UsePoiTtsParams['afterGenerate'],
+    onSuccessToast: UsePoiTtsParams['onSuccessToast'],
+    language: string,
+    poiId: string,
+) {
+    try {
+        await afterGenerate?.(language, poiId);
+    } catch (error) {
+        console.error('afterGenerate error:', error);
+    }
+
+    onSuccessToast(language);
+}
+
+function extractErrorMessage(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+        const response = (error as { response?: { data?: { message?: unknown } } }).response;
+        const message = response?.data?.message;
+
+        if (message) {
+            if (Array.isArray(message)) {
+                return message.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))).join('. ');
+            }
+
+            return typeof message === 'string' ? message : JSON.stringify(message);
+        }
+    }
+
+    return 'Không thể tạo audio. Vui lòng thử lại.';
+}
+
+async function resolvePoiId(
+    getPoiId: UsePoiTtsParams['getPoiId'],
+    ensurePoiExists: UsePoiTtsParams['ensurePoiExists'],
+    language: string,
+): Promise<{ poiId?: string; missingHandled: boolean }> {
+    let poiId = getPoiId() ?? undefined;
+    let missingHandled = false;
+
+    if (!poiId && ensurePoiExists) {
+        try {
+            const ensured = await ensurePoiExists(language);
+            if (typeof ensured === 'string') {
+                poiId = ensured;
+            } else if (ensured && typeof ensured === 'object') {
+                if (ensured.poiId) {
+                    poiId = ensured.poiId || undefined;
+                }
+                missingHandled = Boolean(ensured.handled);
+            }
+        } catch (error) {
+            console.error('ensurePoiExists error:', error);
+            missingHandled = true;
+        }
+    }
+
+    return { poiId, missingHandled };
+}
+
+async function generateForLanguage(args: {
+    poiId: string;
+    language: string;
+    text: string;
+    sourceText: string;
+    refreshMedia?: UsePoiTtsParams['refreshMedia'];
+    onSuccessToast: UsePoiTtsParams['onSuccessToast'];
+    onErrorToast: UsePoiTtsParams['onErrorToast'];
+    getShortDescriptionMessage?: UsePoiTtsParams['getShortDescriptionMessage'];
+    getTranslationFallbackMessage?: UsePoiTtsParams['getTranslationFallbackMessage'];
+    afterGenerate?: UsePoiTtsParams['afterGenerate'];
+}) {
+    const {
+        poiId,
+        language,
+        text,
+        sourceText,
+        refreshMedia,
+        onSuccessToast,
+        onErrorToast,
+        getShortDescriptionMessage,
+        getTranslationFallbackMessage,
+        afterGenerate,
+    } = args;
+
+    const normalizedLanguage = normalizeLanguage(language);
+
+    if (!isDirectLanguage(normalizedLanguage)) {
+        const sourceTextToUse = sourceText || text;
+        if (sourceTextToUse.length < 10) {
+            onErrorToast(language, getShortDescriptionMessage?.(language) || 'Description must contain at least 10 characters.');
+            return;
+        }
+
+        await poiService.generateTranslatedTts(poiId, sourceTextToUse, normalizedLanguage, 'VI');
+        await refreshGeneratedMedia(refreshMedia, poiId);
+
+        const fallbackMessage = getTranslationFallbackMessage?.(language);
+        if (fallbackMessage) {
+            onErrorToast(language, fallbackMessage);
+        }
+
+        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId);
+        return;
+    }
+
+    if (normalizedLanguage === 'EN' && text.length < 10 && sourceText.length >= 10) {
+        await poiService.generateTranslatedTts(poiId, sourceText, normalizedLanguage, 'VI');
+        await refreshGeneratedMedia(refreshMedia, poiId);
+        const fallbackMessage = getTranslationFallbackMessage?.(language);
+        if (fallbackMessage) {
+            onErrorToast(language, fallbackMessage);
+        }
+        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId);
+        return;
+    }
+
+    if (text.length < 10) {
+        onErrorToast(language, getShortDescriptionMessage?.(language) || 'Description must contain at least 10 characters.');
+        return;
+    }
+
+    await poiService.generateTts(poiId, text, normalizedLanguage);
+    await refreshGeneratedMedia(refreshMedia, poiId);
+    await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId);
 }
 
 export const usePoiTts = ({
@@ -37,38 +176,19 @@ export const usePoiTts = ({
     beforeGenerate,
     afterGenerate,
 }: UsePoiTtsParams) => {
-    const [generating, setGenerating] = useState<Partial<Record<SupportedLanguage, boolean>>>({});
+    const [generating, setGenerating] = useState<Partial<Record<string, boolean>>>({});
 
-    const toggleGenerating = useCallback((language: SupportedLanguage, value: boolean) => {
+    const toggleGenerating = useCallback((language: string, value: boolean) => {
         setGenerating((prev) => ({ ...prev, [language]: value }));
     }, []);
 
     const generateTts = useCallback(
-        async (language: SupportedLanguage) => {
-            let poiId = getPoiId() ?? undefined;
-            let missingHandled = false;
-
-            if (!poiId && ensurePoiExists) {
-                try {
-                    const ensured = await ensurePoiExists(language);
-                    if (typeof ensured === 'string') {
-                        poiId = ensured;
-                    } else if (ensured && typeof ensured === 'object') {
-                        if (ensured.poiId) {
-                            poiId = ensured.poiId || undefined;
-                        }
-                        missingHandled = Boolean(ensured.handled);
-                    }
-                } catch (error) {
-                    console.error('ensurePoiExists error:', error);
-                    missingHandled = true;
-                }
-            }
+        async (language: string) => {
+            const { poiId, missingHandled } = await resolvePoiId(getPoiId, ensurePoiExists, language);
 
             if (!poiId) {
                 if (!missingHandled) {
-                    const message = getMissingPoiMessage?.(language) || 'POI needs to be saved before generating TTS.';
-                    onErrorToast(language, message);
+                    onErrorToast(language, getMissingPoiMessage?.(language) || 'POI needs to be saved before generating TTS.');
                 }
                 return;
             }
@@ -79,84 +199,43 @@ export const usePoiTts = ({
                 console.error('beforeGenerate error:', error);
             }
 
-            const text = (getDescriptionFor(language) || '').trim();
-            if (text.length < 10) {
-                const sourceText = (getSourceDescriptionFor?.(language) || '').trim();
-                const canFallbackTranslate = language !== 'VI' && sourceText.length >= 10;
-
-                if (canFallbackTranslate) {
-                    toggleGenerating(language, true);
-                    try {
-                        await poiService.generateTranslatedTts(poiId, sourceText, language, 'VI');
-                        if (refreshMedia) {
-                            await refreshMedia(poiId);
-                        }
-                        try {
-                            await afterGenerate?.(language, poiId);
-                        } catch (error) {
-                            console.error('afterGenerate error:', error);
-                        }
-                        const fallbackMessage = getTranslationFallbackMessage?.(language);
-                        if (fallbackMessage) {
-                            onErrorToast(language, fallbackMessage);
-                        }
-                        onSuccessToast(language);
-                        return;
-                    } catch (error) {
-                        console.error('POI translated TTS generation error:', error);
-                    } finally {
-                        toggleGenerating(language, false);
-                    }
-                }
-
-                const message = getShortDescriptionMessage?.(language) || 'Description must contain at least 10 characters.';
-                onErrorToast(language, message);
-                return;
-            }
-
             toggleGenerating(language, true);
             try {
-                await poiService.generateTts(poiId, text, language);
-                if (refreshMedia) {
-                    await refreshMedia(poiId);
-                }
-                try {
-                    await afterGenerate?.(language, poiId);
-                } catch (error) {
-                    console.error('afterGenerate error:', error);
-                }
-                onSuccessToast(language);
+                const text = (getDescriptionFor(language) || '').trim();
+                const sourceText = (getSourceDescriptionFor?.(language) || '').trim();
+                await generateForLanguage({
+                    poiId,
+                    language,
+                    text,
+                    sourceText,
+                    refreshMedia,
+                    onSuccessToast,
+                    onErrorToast,
+                    getShortDescriptionMessage,
+                    getTranslationFallbackMessage,
+                    afterGenerate,
+                });
             } catch (error) {
                 console.error('POI TTS generation error:', error);
-                let message = 'Không thể tạo audio. Vui lòng thử lại.';
-                if (typeof error === 'object' && error !== null && 'response' in error) {
-                    const response = (error as { response?: { data?: { message?: unknown } } }).response;
-                    if (response?.data?.message) {
-                        const { message: responseMessage } = response.data;
-                        message = Array.isArray(responseMessage)
-                            ? responseMessage.join('. ')
-                            : String(responseMessage);
-                    }
-                }
-                onErrorToast(language, message);
+                onErrorToast(language, extractErrorMessage(error));
             } finally {
                 toggleGenerating(language, false);
             }
         },
         [
-            getPoiId,
+            afterGenerate,
+            beforeGenerate,
+            ensurePoiExists,
             getDescriptionFor,
-            getSourceDescriptionFor,
             getMissingPoiMessage,
+            getPoiId,
             getShortDescriptionMessage,
+            getSourceDescriptionFor,
             getTranslationFallbackMessage,
             onErrorToast,
             onSuccessToast,
             refreshMedia,
             toggleGenerating,
-            ensurePoiExists,
-            beforeGenerate,
-            afterGenerate,
         ],
     );
 

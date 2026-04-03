@@ -236,10 +236,15 @@ async function main() {
 
     await seedSupportedLanguages(prisma);
 
-    if (fs.existsSync(DATA_JSON_PATH)) {
-        await seedFromJson();
-    } else {
-        await seedHardcoded();
+    try {
+        if (fs.existsSync(DATA_JSON_PATH)) {
+            await seedFromJson();
+        } else {
+            await seedHardcoded();
+        }
+    } catch (error) {
+        console.warn('⚠️  Seed data import failed, skipping data seed (languages already seeded)');
+        console.warn('Error:', error instanceof Error ? error.message : String(error));
     }
 
     console.log('\n🎉 Seed complete!');

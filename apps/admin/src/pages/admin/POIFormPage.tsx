@@ -24,15 +24,24 @@ import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../c
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
-import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
+import usePoiTts from '../../hooks/usePoiTts';
 import { translateService } from '../../services/translate.service';
 import LocalizationPanel, { type LocalizationPanelHandle } from '../../components/localization/LocalizationPanel';
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
 const languageTabs = [
-    { code: 'VI' as const, label: 'Vietnamese' },
-    { code: 'EN' as const, label: 'English' },
+    { code: 'VI', label: 'Vietnamese' },
+    { code: 'EN', label: 'English' },
+    { code: 'JA', label: 'Japanese' },
+    { code: 'KO', label: 'Korean' },
+    { code: 'ZH-CN', label: 'Chinese (Simplified)' },
+    { code: 'ZH-TW', label: 'Chinese (Traditional)' },
+    { code: 'FR', label: 'French' },
+    { code: 'DE', label: 'German' },
+    { code: 'ES', label: 'Spanish' },
+    { code: 'TH', label: 'Thai' },
+    { code: 'RU', label: 'Russian' },
 ];
 
 type MediaResource = POIMedia & {
@@ -77,8 +86,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
-    const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
-    const L = POI_FORM_LABELS[activeLang];
+    const [activeLang, setActiveLang] = useState<string>('VI');
+    const L = POI_FORM_LABELS[activeLang as keyof typeof POI_FORM_LABELS] ?? POI_FORM_LABELS.EN;
     const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
 
     const [formData, setFormData] = useState({
@@ -210,8 +219,8 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
     const { generating: ttsGenerating, generateTts } = usePoiTts({
         getPoiId: () => poiId,
-        getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
-        getSourceDescriptionFor: (language) => (language === 'EN' ? formData.description : undefined),
+        getDescriptionFor: (language) => (language === 'EN' ? formData.descriptionEn : formData.description),
+        getSourceDescriptionFor: () => formData.description,
         refreshMedia,
         onSuccessToast: (language) =>
             showToast({
@@ -227,13 +236,13 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             }),
         getMissingPoiMessage: () => 'Vui lòng lưu POI trước khi tạo TTS audio.',
         getShortDescriptionMessage: (language) =>
-            language === 'VI'
-                ? 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.'
-                : 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.',
+            language === 'EN'
+                ? 'Mô tả tiếng Anh cần ít nhất 10 ký tự để tạo audio.'
+                : 'Mô tả tiếng Việt cần ít nhất 10 ký tự để tạo audio.',
         getTranslationFallbackMessage: (language) =>
             language === 'EN'
                 ? 'Mô tả EN đang trống/ngắn, hệ thống đã dùng mô tả VI để dịch và tạo audio.'
-                : undefined,
+                : 'Hệ thống đã dùng mô tả tiếng Việt để dịch và tạo audio theo ngôn ngữ đã chọn.',
         ensurePoiExists: async () => {
             if (poiId) {
                 return { poiId };
@@ -609,10 +618,10 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         };
     })();
 
-    const translationField = activeLang === 'VI'
-        ? { name: 'name', description: 'description' }
-        : { name: 'nameEn', description: 'descriptionEn' };
-    const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
+    const translationField = activeLang === 'EN'
+        ? { name: 'nameEn', description: 'descriptionEn' }
+        : { name: 'name', description: 'description' };
+    const activeDescriptionValue = activeLang === 'EN' ? formData.descriptionEn : formData.description;
 
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);

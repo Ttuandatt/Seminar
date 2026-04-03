@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Headphones,
   PlayCircle,
+  Languages,
 } from 'lucide-react';
 import MapPicker from '../../components/forms/MapPicker';
 import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../components/preview/POIPreviewModal';
@@ -22,17 +23,8 @@ import { POI_FORM_LABELS } from '../../constants/form-labels';
 import usePoiTts, { type EnsurePoiResult } from '../../hooks/usePoiTts';
 
 const languageTabs = [
-  { code: 'VI', label: 'Vietnamese' },
-  { code: 'EN', label: 'English' },
-  { code: 'JA', label: 'Japanese' },
-  { code: 'KO', label: 'Korean' },
-  { code: 'ZH-CN', label: 'Chinese (Simplified)' },
-  { code: 'ZH-TW', label: 'Chinese (Traditional)' },
-  { code: 'FR', label: 'French' },
-  { code: 'DE', label: 'German' },
-  { code: 'ES', label: 'Spanish' },
-  { code: 'TH', label: 'Thai' },
-  { code: 'RU', label: 'Russian' },
+  { code: 'VI' as const, label: 'Vietnamese' },
+  { code: 'EN' as const, label: 'English' },
 ];
 
 interface MediaResource {
@@ -60,16 +52,16 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
   const isEditMode = !!poiId;
   const { showToast } = useToast();
   const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
-  const [activeLang, setActiveLang] = useState<string>('VI');
+  const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pendingAudioPreviews, setPendingAudioPreviews] = useState<PreviewAudioSource[]>([]);
   const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
-  const [translatingEn, setTranslatingEn] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
-  const L = POI_FORM_LABELS[activeLang as keyof typeof POI_FORM_LABELS] ?? POI_FORM_LABELS.EN;
+  const L = POI_FORM_LABELS[activeLang];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -147,8 +139,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
   const { generating: ttsGenerating, generateTts } = usePoiTts({
     getPoiId: () => poiId,
-    getDescriptionFor: (language) => (language === 'EN' ? formData.descriptionEn : formData.description),
-    getSourceDescriptionFor: () => formData.description,
+    getDescriptionFor: (language) => (language === 'VI' ? formData.description : formData.descriptionEn),
     refreshMedia,
     onSuccessToast: (language) =>
       showToast({
@@ -164,53 +155,11 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
       }),
     getMissingPoiMessage: () => 'Save POI first before generating TTS.',
     getShortDescriptionMessage: (language) =>
-      language === 'EN'
-        ? 'English description needs at least 10 characters.'
-        : 'Vietnamese description needs at least 10 characters.',
-    getTranslationFallbackMessage: (language) =>
-      language === 'EN'
-        ? 'English text is missing/short. Used VI text for translation + TTS.'
-        : 'Used VI text for translation + TTS in the selected language.',
+      language === 'VI'
+        ? 'Vietnamese description needs at least 10 characters.'
+        : 'English description needs at least 10 characters.',
     ensurePoiExists: ensurePoiExistsForTts,
   });
-
-  const handleAutoTranslateToEnglish = useCallback(async () => {
-    const sourceName = formData.name.trim();
-    const sourceDescription = formData.description.trim();
-
-    if (!sourceName || sourceDescription.length < 10) {
-      showToast({
-        variant: 'error',
-        title: 'Missing Vietnamese content',
-        description: 'Need Vietnamese name + description (>=10 chars) before auto-translating.',
-      });
-      return;
-    }
-
-    setTranslatingEn(true);
-    try {
-      const result = await translateService.translateBatch([sourceName, sourceDescription], 'vi', 'en');
-      setFormData((prev) => ({
-        ...prev,
-        nameEn: result.translations[0] || prev.nameEn,
-        descriptionEn: result.translations[1] || prev.descriptionEn,
-      }));
-      showToast({
-        variant: 'success',
-        title: 'Translated to English',
-        description: 'English fields were updated.',
-      });
-    } catch (error) {
-      console.error('Shop owner auto-translate EN failed:', error);
-      showToast({
-        variant: 'error',
-        title: 'Auto-translate failed',
-        description: 'Could not translate to English. Please retry.',
-      });
-    } finally {
-      setTranslatingEn(false);
-    }
-  }, [formData.name, formData.description, showToast]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (readOnly) return;
@@ -315,10 +264,10 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     triggerRadius: formData.triggerRadius,
   });
 
-  const translationField = activeLang === 'EN'
-    ? { name: 'nameEn', description: 'descriptionEn' }
-    : { name: 'name', description: 'description' };
-  const activeDescriptionValue = activeLang === 'EN' ? formData.descriptionEn : formData.description;
+  const translationField = activeLang === 'VI'
+    ? { name: 'name', description: 'description' }
+    : { name: 'nameEn', description: 'descriptionEn' };
+  const activeDescriptionValue = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
   const handlePreview = () => {
     if (!formData.name || !formData.description) {
@@ -396,7 +345,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }
   };
 
-  async function ensurePoiExistsForTts(): Promise<EnsurePoiResult> {
+  const ensurePoiExistsForTts = async (): Promise<EnsurePoiResult> => {
     if (poiId) {
       return { poiId };
     }
@@ -425,7 +374,7 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     } finally {
       setEnsuringPoiForTts(false);
     }
-  }
+  };
 
   const getMediaUrl = (url: string) => {
     if (url.startsWith('http')) return url;
@@ -475,32 +424,19 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                   <MapPin className="h-4 w-4 text-blue-600" />
                   {L.contentHeading}
                 </h2>
-                <div className="flex items-center gap-3">
-                  {!readOnly && (
+                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
+                  {languageTabs.map((tab) => (
                     <button
+                      key={tab.code}
                       type="button"
-                      onClick={handleAutoTranslateToEnglish}
-                      disabled={translatingEn}
-                      className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => setActiveLang(tab.code)}
+                      className={`rounded-full px-3 py-1 transition-all ${
+                        activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
+                      }`}
                     >
-                      {translatingEn && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      Auto-translate VI -&gt; EN
+                      {tab.label}
                     </button>
-                  )}
-                  <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                    {languageTabs.map((tab) => (
-                      <button
-                        key={tab.code}
-                        type="button"
-                        onClick={() => setActiveLang(tab.code)}
-                        className={`rounded-full px-3 py-1 transition-all ${
-                          activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -520,6 +456,43 @@ const ShopOwnerPOIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     placeholder={activeLang === 'VI' ? L.namePlaceholder : L.nameEnPlaceholder}
                   />
                 </div>
+                {/* Auto-translate button — show when on non-VI tab */}
+                {activeLang !== 'VI' && !readOnly && formData.name?.trim() && (
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!formData.name?.trim() && !formData.description?.trim()) {
+                          showToast({ variant: 'error', title: 'Missing source', description: 'Please enter Vietnamese name and description first.' });
+                          return;
+                        }
+                        setTranslating(true);
+                        try {
+                          const toLang = activeLang.toLowerCase();
+                          const result = await translateService.translateBatch([formData.name || '', formData.description || ''], 'vi', toLang);
+                          if (activeLang === 'EN') {
+                            setFormData((prev) => ({ ...prev, nameEn: result.translations[0] || prev.nameEn, descriptionEn: result.translations[1] || prev.descriptionEn }));
+                          }
+                          showToast({ variant: 'success', title: `Translated to ${activeLang}`, description: 'Name and description have been auto-translated. Please review.' });
+                        } catch (error) {
+                          console.error('Translation error:', error);
+                          showToast({ variant: 'error', title: 'Translation failed', description: 'Could not auto-translate. Please try again or enter manually.' });
+                        } finally {
+                          setTranslating(false);
+                        }
+                      }}
+                      disabled={translating}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {translating ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Languages className="h-3.5 w-3.5" />
+                      )}
+                      {translating ? 'Translating...' : `Translate from Vietnamese → ${activeLang}`}
+                    </button>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     {L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}

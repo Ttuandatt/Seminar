@@ -1,8 +1,6 @@
 // ConflictModal.tsx
-import React from 'react';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
-import { LocalizationDiff } from '@localization-shared';
-import styles from './LocalizationPanel.module.css';
+import type { LocalizationDiff } from '@localization-shared';
 
 export interface ConflictModalProps {
   diffs: LocalizationDiff[];

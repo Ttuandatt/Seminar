@@ -1,7 +1,7 @@
 // LocalizationPanelAccordion.tsx
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown, Loader2, Trash2 } from 'lucide-react';
-import { PoiLocalization, BCP47Language, SupportedLanguage } from '@localization-shared';
+import type { PoiLocalization, BCP47Language, SupportedLanguage } from '@localization-shared';
 import { localizationAnalytics } from '../../services/localization-analytics';
 import styles from './LocalizationPanel.module.css';
 

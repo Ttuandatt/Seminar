@@ -1,7 +1,7 @@
 // useSupportedLanguages.ts
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { SupportedLanguage } from '@localization-shared';
+import type { SupportedLanguage } from '@localization-shared';
 
 export type UserRole = 'admin' | 'shopOwner';
 

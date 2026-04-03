@@ -1,5 +1,5 @@
 // LocalizationPanel.types.ts
-import { BCP47Language, PoiLocalization, SupportedLanguage } from '@localization-shared';
+import type { BCP47Language, PoiLocalization, SupportedLanguage } from '@localization-shared';
 
 export type UserRole = 'admin' | 'shopOwner';
 

@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-04-01T04:36:55.597Z",
+  "exportedAt": "2026-04-03T02:58:35.868Z",
   "users": [
     {
       "id": "cfd2695c-0545-472d-bf01-778cd79ecba8",
@@ -36,21 +36,6 @@
       "touristProfile": null
     },
     {
-      "id": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
-      "email": "admin1@gmail.com",
-      "passwordHash": "$2b$12$e3pRQ3ut5T7wSBW3OvzT1OIinkIyGjn/I2p3WTomIGoisFwmo5Bau",
-      "fullName": "Daniel Phan",
-      "role": "ADMIN",
-      "status": "ACTIVE",
-      "failedLoginCount": 0,
-      "lockedUntil": null,
-      "refreshToken": "$2b$10$fVq7r9gsdkHLChMjZWG6s.mje8c8HJ5RRk7tIaJRpYeNKILR9r7jW",
-      "refreshTokenId": "08b03786-9ac7-4c5b-8a9a-015ae93c3328",
-      "profile": null,
-      "shopOwnerProfile": null,
-      "touristProfile": null
-    },
-    {
       "id": "5f6a0fa0-4a54-4793-b437-69e79f2e1aeb",
       "email": "tourist@example.com",
       "passwordHash": "$2b$12$CB94dRYc2WTwN3WlJuy3RuqJ/zJyUd34EWd5jhTJvU0.T9u8ZDFR.",
@@ -61,21 +46,6 @@
       "lockedUntil": null,
       "refreshToken": null,
       "refreshTokenId": null,
-      "profile": null,
-      "shopOwnerProfile": null,
-      "touristProfile": null
-    },
-    {
-      "id": "9d0aab88-ce84-49c3-b40b-a0ac2b66c877",
-      "email": "admin2@gmail.com",
-      "passwordHash": "$2b$12$XG7mq3rKe4qmUxpNe4SuduJ4jDrDavnFVKcfCVX6wKqo9IfZgI5Pa",
-      "fullName": "admin2",
-      "role": "ADMIN",
-      "status": "ACTIVE",
-      "failedLoginCount": 0,
-      "lockedUntil": null,
-      "refreshToken": "$2b$10$L1s0Kn0Nx2dkvYtMMi9RI.N5q6Eu9.7iLC7LIqKorD7.fc9WGjP42",
-      "refreshTokenId": "719727af-64ae-47f9-b99e-254198c2cb46",
       "profile": null,
       "shopOwnerProfile": null,
       "touristProfile": null
@@ -100,8 +70,8 @@
         "phone": "0901234567",
         "avatarUrl": null,
         "openingHours": null,
-        "createdAt": "2026-03-24T10:18:08.019Z",
-        "updatedAt": "2026-03-24T10:18:08.019Z"
+        "createdAt": "2026-04-01T11:31:18.342Z",
+        "updatedAt": "2026-04-01T11:31:18.342Z"
       },
       "touristProfile": null
     },
@@ -125,8 +95,8 @@
         "phone": "0987654321",
         "avatarUrl": null,
         "openingHours": null,
-        "createdAt": "2026-03-24T10:18:08.019Z",
-        "updatedAt": "2026-03-24T10:18:08.019Z"
+        "createdAt": "2026-04-01T11:31:18.347Z",
+        "updatedAt": "2026-04-01T11:31:18.347Z"
       },
       "touristProfile": null
     },
@@ -150,8 +120,8 @@
         "phone": "0987654321",
         "avatarUrl": null,
         "openingHours": null,
-        "createdAt": "2026-03-24T10:18:08.019Z",
-        "updatedAt": "2026-03-24T10:18:08.019Z"
+        "createdAt": "2026-04-01T11:31:18.350Z",
+        "updatedAt": "2026-04-01T11:31:18.350Z"
       },
       "touristProfile": null
     },
@@ -164,8 +134,8 @@
       "status": "ACTIVE",
       "failedLoginCount": 0,
       "lockedUntil": null,
-      "refreshToken": null,
-      "refreshTokenId": null,
+      "refreshToken": "$2b$10$Wb9vNPb0sLlRXxDkF2STl.qpOg.P9eNpUocwKyPWLvCmWO2gzkN9C",
+      "refreshTokenId": "61a79c97-ec19-4f1b-b7e3-eade5f4fd450",
       "profile": null,
       "shopOwnerProfile": {
         "id": "2a766b6d-cbe3-4909-847d-9fbb88d4ad49",
@@ -175,9 +145,91 @@
         "phone": "0987654321",
         "avatarUrl": null,
         "openingHours": null,
-        "createdAt": "2026-04-01T01:38:29.889Z",
-        "updatedAt": "2026-04-01T01:38:29.889Z"
+        "createdAt": "2026-04-01T11:31:18.354Z",
+        "updatedAt": "2026-04-01T11:31:18.354Z"
       },
+      "touristProfile": null
+    },
+    {
+      "id": "ec7f86fb-4a18-4660-bba7-112dda6e0802",
+      "email": "tourist999@gmail.com",
+      "passwordHash": "$2b$12$3sAZq/M.KSwUUT.dCtDlF.HeFsgO5LNXJb.5No7YECE/G95Yg7A9.",
+      "fullName": "tourist999",
+      "role": "TOURIST",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$s06PtLvN0uTQIddqENLxtu8hToxjrQwg6WKtdXeT8ZTMBXiRSGHce",
+      "refreshTokenId": "f33cbb77-4d5f-434b-a163-0990d41691ce",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": {
+        "id": "35281ca0-5bbf-412f-b75d-9aad917d7320",
+        "userId": "ec7f86fb-4a18-4660-bba7-112dda6e0802",
+        "displayName": "tourist999",
+        "languagePref": "VI",
+        "autoPlayAudio": true,
+        "pushEnabled": false,
+        "pushToken": null,
+        "deviceId": null,
+        "createdAt": "2026-04-02T09:24:50.604Z",
+        "updatedAt": "2026-04-02T09:24:50.604Z"
+      }
+    },
+    {
+      "id": "0bb2748b-757d-4b5e-9f06-a0807427bc29",
+      "email": "tourist888@gmail.com",
+      "passwordHash": "$2b$12$2Px8wxftGDgJRT0KeFxcG.eIM7wtu1dWr5PPWwiSFuIP5561Ry9kK",
+      "fullName": "tourist888",
+      "role": "TOURIST",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$xxNdHVydVR/Gctgc/APyUuseeZ6UYDNIP23Z.sPQrVz.ZI43Lvxlm",
+      "refreshTokenId": "7b92e8ec-cfc6-45be-95ab-c3789198ccbb",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": {
+        "id": "c9a50c66-4705-49a1-b12f-07aebfed8154",
+        "userId": "0bb2748b-757d-4b5e-9f06-a0807427bc29",
+        "displayName": "tourist888",
+        "languagePref": "VI",
+        "autoPlayAudio": true,
+        "pushEnabled": false,
+        "pushToken": null,
+        "deviceId": null,
+        "createdAt": "2026-04-02T15:14:47.220Z",
+        "updatedAt": "2026-04-02T15:14:47.220Z"
+      }
+    },
+    {
+      "id": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "email": "admin1@gmail.com",
+      "passwordHash": "$2b$12$e3pRQ3ut5T7wSBW3OvzT1OIinkIyGjn/I2p3WTomIGoisFwmo5Bau",
+      "fullName": "Daniel Phan",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$99bOX7A8di3hN/.cKJkG7evUtZTSOKCyFfL79zhtTA0KA3zzuR/mm",
+      "refreshTokenId": "cce02a74-00e1-460b-9aa6-a4b96b9ba129",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "9d0aab88-ce84-49c3-b40b-a0ac2b66c877",
+      "email": "admin2@gmail.com",
+      "passwordHash": "$2b$12$XG7mq3rKe4qmUxpNe4SuduJ4jDrDavnFVKcfCVX6wKqo9IfZgI5Pa",
+      "fullName": "admin2",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$l5YajfoPffE/Z444RdkLlukWHRUgIluZELnXYAlChu9VWgQxeL5t6",
+      "refreshTokenId": "080b1d58-7d17-4209-8efc-eab108e77387",
+      "profile": null,
+      "shopOwnerProfile": null,
       "touristProfile": null
     }
   ],
@@ -279,7 +331,7 @@
           "id": "60f1c823-7a45-4474-ace5-46bb1d34e79f",
           "poiId": "d3047230-e354-4d6c-88f4-ef7073dfbc04",
           "type": "AUDIO",
-          "language": "EN",
+          "language": "ALL",
           "url": "/uploads/65c46c1c-3c3f-4b96-b4c4-91b1b38abea3.flac",
           "thumbnailUrl": null,
           "originalName": "test_audio_1.flac",
@@ -324,7 +376,7 @@
           "id": "efee2a40-0851-49a7-b476-decb5676cbff",
           "poiId": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
           "type": "AUDIO",
-          "language": "VI",
+          "language": "ALL",
           "url": "/uploads/tts/26c13338-0cd6-4e38-b8cb-ac8c8e656c62_vi_13899ad3-c129-43b5-a0f7-dde4bad57dba/audio.mp3",
           "thumbnailUrl": null,
           "originalName": "tts_vi_1774109129089.mp3",
@@ -333,20 +385,6 @@
           "width": null,
           "height": null,
           "orderIndex": -1
-        },
-        {
-          "id": "461abd5e-1d2e-40e3-a026-83d766bafe58",
-          "poiId": "26c13338-0cd6-4e38-b8cb-ac8c8e656c62",
-          "type": "AUDIO",
-          "language": "VI",
-          "url": "/uploads/tts/26c13338-0cd6-4e38-b8cb-ac8c8e656c62_vi_587acb13-30fc-4508-b54b-b9d230f8eee4/audio.mp3",
-          "thumbnailUrl": null,
-          "originalName": "tts_vi_1774110326334.mp3",
-          "sizeBytes": 435168,
-          "durationSeconds": null,
-          "width": null,
-          "height": null,
-          "orderIndex": 0
         }
       ]
     },
@@ -399,7 +437,7 @@
           "id": "3a069a36-135c-46c0-a17d-b9afb8263451",
           "poiId": "cb4e22da-23ea-469e-9882-df21f57bf428",
           "type": "AUDIO",
-          "language": "EN",
+          "language": "ALL",
           "url": "/uploads/0a23b325-13a2-4144-ac78-3b97397cda0c.flac",
           "thumbnailUrl": null,
           "originalName": "test_audio_1.flac",
@@ -444,7 +482,7 @@
           "id": "43c9cc22-61b8-4254-a092-9d97ebf2df5d",
           "poiId": "5f4fcadf-fa7b-4d76-ac37-201df3183112",
           "type": "AUDIO",
-          "language": "EN",
+          "language": "ALL",
           "url": "/uploads/8340d57f-088c-48f4-b98c-ec754837ebc5.flac",
           "thumbnailUrl": null,
           "originalName": "test_audio_1.flac",
@@ -475,7 +513,7 @@
           "id": "23a4631a-06a0-412b-a542-ff9aa19835b3",
           "poiId": "bce7144f-7115-46c2-9a26-33052a110726",
           "type": "AUDIO",
-          "language": "VI",
+          "language": "ALL",
           "url": "/uploads/tts/bce7144f-7115-46c2-9a26-33052a110726_vi_77d41abb-ac14-4778-80dc-9d1c81b623ac/audio.mp3",
           "thumbnailUrl": null,
           "originalName": "tts_vi_1774185461791.mp3",
@@ -520,7 +558,7 @@
           "id": "37fee2fd-c041-45b4-af11-44fa6c98d835",
           "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
           "type": "AUDIO",
-          "language": "VI",
+          "language": "ALL",
           "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_2ccd405f-fec2-4956-a924-3ece40ae2298/audio.mp3",
           "thumbnailUrl": null,
           "originalName": "tts_vi_1774969949188.mp3",
@@ -529,34 +567,6 @@
           "width": null,
           "height": null,
           "orderIndex": -1
-        },
-        {
-          "id": "b6ca7a7e-72cd-484e-8611-ae766e52f516",
-          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
-          "type": "AUDIO",
-          "language": "VI",
-          "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_195b410e-5e79-42fe-9b26-1bc1f3db3c91/audio.mp3",
-          "thumbnailUrl": null,
-          "originalName": "tts_vi_1775006618963.mp3",
-          "sizeBytes": 24192,
-          "durationSeconds": null,
-          "width": null,
-          "height": null,
-          "orderIndex": -1
-        },
-        {
-          "id": "cb9ad517-829e-4716-810f-bb2d439aad62",
-          "poiId": "4b667901-8495-4f0d-95a1-586a316367e1",
-          "type": "AUDIO",
-          "language": "VI",
-          "url": "/uploads/tts/4b667901-8495-4f0d-95a1-586a316367e1_vi_5d5ea20d-cea5-44ce-8ad0-33812be4199d/audio.mp3",
-          "thumbnailUrl": null,
-          "originalName": "tts_vi_1775006629986.mp3",
-          "sizeBytes": 24192,
-          "durationSeconds": null,
-          "width": null,
-          "height": null,
-          "orderIndex": 0
         }
       ]
     },
@@ -579,7 +589,7 @@
           "id": "784e209a-4936-4f11-811e-7b568cea8f9c",
           "poiId": "5bfcebad-49b8-48ff-a936-156e59de1a74",
           "type": "AUDIO",
-          "language": "VI",
+          "language": "ALL",
           "url": "/uploads/tts/5bfcebad-49b8-48ff-a936-156e59de1a74_vi_3c3576c4-5034-454a-9945-4e7df27aea86/audio.mp3",
           "thumbnailUrl": null,
           "originalName": "tts_vi_1775018193853.mp3",
@@ -590,6 +600,157 @@
           "orderIndex": 0
         }
       ]
+    },
+    {
+      "id": "ab883e21-0818-4301-a2cd-c2db6f4def1a",
+      "nameVi": "Test POI 6",
+      "nameEn": "Test POIs 6",
+      "descriptionVi": "[Address: Đường Kênh 19/5, Khu phố 12, Phường Tân Sơn Nhì, Ho Chi Minh City, 72008, Vietnam]\n\nPOI Test số 6",
+      "descriptionEn": "POI Test number 6",
+      "latitude": 10.8040274,
+      "longitude": 106.6107969,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_ab883e21-0818-4301-a2cd-c2db6f4def1a.png",
+      "createdById": "656dcdd4-9d56-4f25-94b1-5924c9430cab",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "0845f22b-51e1-4619-ae7e-1bafba1b4521",
+          "poiId": "ab883e21-0818-4301-a2cd-c2db6f4def1a",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/ab883e21-0818-4301-a2cd-c2db6f4def1a_vi_acb01685-04f8-4615-a4a5-9f2eeb38a544/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775121183033.mp3",
+          "sizeBytes": 24768,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "6b03a6cb-7108-45b7-bf24-8e1899b776a9",
+          "poiId": "ab883e21-0818-4301-a2cd-c2db6f4def1a",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/ab883e21-0818-4301-a2cd-c2db6f4def1a_vi_d800a9dd-3e30-4ca4-862b-eb98e753e15c/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775121209776.mp3",
+          "sizeBytes": 24768,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "df791a0b-87be-4f1b-b8dd-20413843a71b",
+          "poiId": "ab883e21-0818-4301-a2cd-c2db6f4def1a",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/84a56a7c-9d2e-4710-b894-5e9217e46268.jpg",
+          "thumbnailUrl": null,
+          "originalName": "global water use.jpg",
+          "sizeBytes": 38535,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 1
+        }
+      ]
+    },
+    {
+      "id": "e84a5602-5815-445b-a361-05ad38bec4f8",
+      "nameVi": "Test POI 7",
+      "nameEn": null,
+      "descriptionVi": "POI số 7 để test",
+      "descriptionEn": null,
+      "latitude": 10.7599637,
+      "longitude": 106.682674,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "DRAFT",
+      "qrCodeUrl": "/uploads/qr/poi_e84a5602-5815-445b-a361-05ad38bec4f8.png",
+      "createdById": "35d94b49-7044-404c-8c56-0449b97316cc",
+      "ownerId": "35d94b49-7044-404c-8c56-0449b97316cc",
+      "media": [
+        {
+          "id": "67b4d50d-4a01-44e2-8789-021f1d9706bf",
+          "poiId": "e84a5602-5815-445b-a361-05ad38bec4f8",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/e84a5602-5815-445b-a361-05ad38bec4f8_vi_3be0548e-a1aa-44ba-a814-f0d67c1eefd7/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775121316485.mp3",
+          "sizeBytes": 26496,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "3ca7d35e-2e35-4443-8452-a438f4be0ec6",
+      "nameVi": "POI Tây ban nha",
+      "nameEn": "",
+      "descriptionVi": "[Address: Đường Kênh 19/5, Khu phố 33, Phường Tây Thạnh, Thuận An, Ho Chi Minh City, 72008, Vietnam]\n\nPOI của Tây ban nha",
+      "descriptionEn": "",
+      "latitude": 10.8062998,
+      "longitude": 106.61235,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "DRAFT",
+      "qrCodeUrl": "/uploads/qr/poi_3ca7d35e-2e35-4443-8452-a438f4be0ec6.png",
+      "createdById": "9d0aab88-ce84-49c3-b40b-a0ac2b66c877",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "5101da77-1b07-4a53-9a80-86daffea6231",
+          "poiId": "3ca7d35e-2e35-4443-8452-a438f4be0ec6",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/3ca7d35e-2e35-4443-8452-a438f4be0ec6_vi_a4ac12e4-6797-46df-95d4-37d8fe8efab6/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1775185074933.mp3",
+          "sizeBytes": 27648,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "34e0a0bb-d06f-4936-9d76-050ca6201c2b",
+          "poiId": "3ca7d35e-2e35-4443-8452-a438f4be0ec6",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/3ca7d35e-2e35-4443-8452-a438f4be0ec6_en_d92d2cca-f407-4fa7-9673-4ff18fccd8f2/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1775185077749.mp3",
+          "sizeBytes": 26208,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "80028856-96cb-415f-b28e-e3709cadc34d",
+      "nameVi": "POI Tây ban nha",
+      "nameEn": "",
+      "descriptionVi": "[Address: Đường Kênh 19/5, Khu phố 6, Phường Tân Sơn Nhì, Thuận An, Ho Chi Minh City, 72008, Vietnam]\n\nPOI của Tây ban nha",
+      "descriptionEn": "",
+      "latitude": 10.8072118,
+      "longitude": 106.6133224,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "DRAFT",
+      "qrCodeUrl": null,
+      "createdById": "9d0aab88-ce84-49c3-b40b-a0ac2b66c877",
+      "ownerId": null,
+      "media": []
     }
   ],
   "tours": [
@@ -656,11 +817,6 @@
           "tourId": "68504145-e31c-4058-b337-b8c86556776a",
           "poiId": "f9c813da-bfcf-4505-b0a3-bb471169528f",
           "orderIndex": 4
-        },
-        {
-          "tourId": "68504145-e31c-4058-b337-b8c86556776a",
-          "poiId": "16240dca-f147-4a33-8743-33d626964963",
-          "orderIndex": 5
         }
       ]
     },

@@ -44,6 +44,7 @@ export interface POI {
     nameVi: string;
     nameEn?: string;
     descriptionVi?: string;
+    descriptionEn?: string;
     category: PoiCategory;
     status: PoiStatus;
     ownerId?: string | null;
@@ -130,7 +131,7 @@ export const poiService = {
         return response.data;
     },
 
-    generateTts: async (poiId: string, text: string, language: 'VI' | 'EN', voice?: string) => {
+    generateTts: async (poiId: string, text: string, language: string, voice?: string) => {
         const response = await api.post(`/tts/generate/${poiId}`, { text, language, voice });
         return response.data;
     },

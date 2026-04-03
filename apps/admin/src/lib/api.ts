@@ -1,4 +1,5 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 

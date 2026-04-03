@@ -1,8 +1,9 @@
 // LocalizationPanel.tsx
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { BCP47Language, PoiLocalization, usePoiLocalizations } from '@localization-shared';
-import { LocalizationPanelProps, LocalizationPanelHandle, LocalizationPanelState } from './LocalizationPanel.types';
+import type { BCP47Language, PoiLocalization } from '@localization-shared';
+import { usePoiLocalizations } from '@localization-shared';
+import type { LocalizationPanelProps, LocalizationPanelHandle, LocalizationPanelState } from './LocalizationPanel.types';
 import { LocalizationAccordionItem } from './LocalizationPanelAccordion';
 import { useSupportedLanguages } from '../../hooks/useSupportedLanguages';
 import { localizationAnalytics } from '../../services/localization-analytics';
