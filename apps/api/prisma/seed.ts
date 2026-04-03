@@ -3,6 +3,7 @@ import { PrismaClient, Role, PoiCategory, PoiStatus, TourStatus } from '@prisma/
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
+import { seedSupportedLanguages } from './seed/languages.seed';
 
 const prisma = new PrismaClient();
 const DATA_JSON_PATH = path.join(__dirname, 'seeds', 'data.json');
@@ -232,6 +233,8 @@ async function seedHardcoded() {
 
 async function main() {
     console.log('🌱 Seeding database...');
+
+    await seedSupportedLanguages(prisma);
 
     if (fs.existsSync(DATA_JSON_PATH)) {
         await seedFromJson();
