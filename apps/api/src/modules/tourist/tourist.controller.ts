@@ -16,6 +16,8 @@ import { CurrentUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma';
 import { PaginationDto } from '../../common/dto';
 import { IsOptional, IsString, IsBoolean } from 'class-validator';
+import { TouristTourService } from './tourist-tour.service';
+import { CreateTouristTourDto, UpdateTouristTourDto } from './dto/tourist-tour.dto';
 
 class UpdateTouristDto {
     @IsOptional() @IsString() displayName?: string;
@@ -27,7 +29,10 @@ class UpdateTouristDto {
 @Controller('tourist')
 @UseGuards(JwtAuthGuard)
 export class TouristController {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private touristTourService: TouristTourService,
+    ) { }
 
     // ─── Profile ────────────────────────────
     @Get('me')
@@ -142,6 +147,45 @@ export class TouristController {
                 audioPlayed: body.audioPlayed || false,
             },
         });
+    }
+
+    // ─── Custom Tours ─────────────────────
+    @Post('me/tours')
+    async createTour(
+        @CurrentUser('id') userId: string,
+        @Body() dto: CreateTouristTourDto,
+    ) {
+        return this.touristTourService.createTour(userId, dto);
+    }
+
+    @Get('me/tours')
+    async listMyTours(@CurrentUser('id') userId: string) {
+        return this.touristTourService.findAll(userId);
+    }
+
+    @Get('me/tours/:tourId')
+    async getMyTourDetail(
+        @CurrentUser('id') userId: string,
+        @Param('tourId') tourId: string,
+    ) {
+        return this.touristTourService.findOne(userId, tourId);
+    }
+
+    @Patch('me/tours/:tourId')
+    async updateMyTour(
+        @CurrentUser('id') userId: string,
+        @Param('tourId') tourId: string,
+        @Body() dto: UpdateTouristTourDto,
+    ) {
+        return this.touristTourService.update(userId, tourId, dto);
+    }
+
+    @Delete('me/tours/:tourId')
+    async deleteMyTour(
+        @CurrentUser('id') userId: string,
+        @Param('tourId') tourId: string,
+    ) {
+        return this.touristTourService.remove(userId, tourId);
     }
 
     private async getTouristProfile(userId: string) {

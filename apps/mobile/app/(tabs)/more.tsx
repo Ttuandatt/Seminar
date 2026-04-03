@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, Switch, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LogIn, Heart, Settings, Languages, Volume2, QrCode, Database, Info, Pencil } from 'lucide-react-native';
+import { User, LogIn, Heart, Languages, Volume2, QrCode, Database, Info, Pencil } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
@@ -36,19 +36,27 @@ export default function MoreScreen() {
 
     const checkLoginStatus = async () => {
         const token = await AsyncStorage.getItem('accessToken');
-        if (token) {
+        if (!token) {
+            setIsLoggedIn(false);
+            setUserProfile(null);
+            return;
+        }
+
+        try {
+            const profile = await touristService.getProfile();
+            setUserProfile({
+                displayName: profile.displayName || profile.user?.fullName || profile.fullName || 'Tourist User',
+                email: profile.user?.email || profile.email || '-'
+            });
             setIsLoggedIn(true);
-            try {
-                const profile = await touristService.getProfile();
-                setUserProfile({
-                    displayName: profile.displayName || profile.user?.fullName || 'Tourist User',
-                    email: profile.user?.email || 'tourist@gpstours.com'
-                });
-            } catch (error) {
-                console.error('Failed to get profile', error);
-                // If token is invalid/expired, we could log them out here
+        } catch (error: any) {
+            const status = error?.response?.status;
+            console.error('Failed to get profile', error);
+
+            if (status === 401) {
+                await AsyncStorage.removeItem('accessToken');
             }
-        } else {
+
             setIsLoggedIn(false);
             setUserProfile(null);
         }
@@ -115,7 +123,7 @@ export default function MoreScreen() {
                     </View>
                     <View style={styles.profileInfo}>
                         <Text style={styles.profileName}>{userProfile?.displayName || 'Tourist User'}</Text>
-                        <Text style={styles.profileEmail}>{userProfile?.email || 'tourist@gpstours.com'}</Text>
+                        <Text style={styles.profileEmail}>{userProfile?.email || '-'}</Text>
                     </View>
                     <TouchableOpacity style={styles.logoutButton} onPress={async () => {
                         await AsyncStorage.removeItem('accessToken');

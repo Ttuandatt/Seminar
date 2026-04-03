@@ -28,5 +28,27 @@ export const touristService = {
     addHistory: async (viewData: { poiId: string; triggerType?: string; audioPlayed?: boolean }) => {
         const { data } = await api.post('/tourist/me/history', viewData);
         return data;
-    }
+    },
+
+    // Custom Tours
+    getMyTours: async () => {
+        const { data } = await api.get('/tourist/me/tours');
+        return data;
+    },
+    getMyTourDetail: async (id: string) => {
+        const { data } = await api.get(`/tourist/me/tours/${id}`);
+        return data;
+    },
+    createMyTour: async (payload: { name: string; description?: string; poiIds: string[] }) => {
+        const { data } = await api.post('/tourist/me/tours', payload);
+        return data;
+    },
+    updateMyTour: async (id: string, payload: { name?: string; description?: string; poiIds?: string[] }) => {
+        const { data } = await api.patch(`/tourist/me/tours/${id}`, payload);
+        return data;
+    },
+    deleteMyTour: async (id: string) => {
+        const { data } = await api.delete(`/tourist/me/tours/${id}`);
+        return data;
+    },
 };

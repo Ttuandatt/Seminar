@@ -7,7 +7,34 @@
     "retry": "Retry",
     "continue": "Continue",
     "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "login": "Login",
     "noDescription": "No description"
+  },
+  "customTour": {
+    "createTitle": "Create Tour",
+    "editTitle": "Edit Tour",
+    "name": "Tour name",
+    "namePlaceholder": "E.g. My food tour",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Describe your tour...",
+    "selectedStops": "Selected stops",
+    "nearby": "Nearby",
+    "favorites": "Favorites",
+    "noPois": "No places found.",
+    "maxStops": "Maximum stops",
+    "maxStopsMsg": "You can select up to 15 stops.",
+    "minStops": "Not enough stops",
+    "minStopsMsg": "Please select at least 2 stops.",
+    "nameRequired": "Please enter a tour name.",
+    "create": "Create Tour",
+    "save": "Save Changes",
+    "createError": "Could not create tour. Please try again.",
+    "updateError": "Could not update tour. Please try again.",
+    "deleteTitle": "Delete Tour",
+    "deleteConfirm": "Are you sure you want to delete this tour? This cannot be undone."
   },
   "register": {
     "title": "Create Account",
@@ -96,7 +123,12 @@
     "points": "stops",
     "mainPoint": "Main point",
     "nearby": "Nearby",
-    "startTour": "Start Tour"
+    "startTour": "Start Tour",
+    "official": "Official",
+    "myTours": "My Tours",
+    "noCustomTours": "You haven't created any tours yet.",
+    "createFirstTour": "Tap + to create your first custom tour!",
+    "loginToCreate": "Log in to create and manage your own tours."
   },
   "tourFollow": {
     "completed": "Tour Completed!",

@@ -24,7 +24,37 @@ export interface TourPoi {
     tourId: string;
     poiId: string;
     orderIndex: number;
+    titleOverride?: string;
+    descriptionOverride?: string;
+    customIntro?: string;
+    estimatedStayMinutes?: number;
+    transitionNote?: string;
+    isRequired?: boolean;
+    unlockRule?: string;
     poi?: POI;
+}
+
+export interface TourStopPayload {
+    poiId: string;
+    orderIndex?: number;
+    titleOverride?: string;
+    descriptionOverride?: string;
+    customIntro?: string;
+    estimatedStayMinutes?: number;
+    transitionNote?: string;
+    isRequired?: boolean;
+    unlockRule?: string;
+}
+
+export interface TourStopUpdatePayload {
+    orderIndex?: number;
+    titleOverride?: string;
+    descriptionOverride?: string;
+    customIntro?: string;
+    estimatedStayMinutes?: number;
+    transitionNote?: string;
+    isRequired?: boolean;
+    unlockRule?: string;
 }
 
 export interface TourListParams {
@@ -81,5 +111,35 @@ export const tourService = {
 
     setPois: async (id: string, poiIds: string[]) => {
         await api.put(`/tours/${id}/pois`, { poiIds });
+    },
+
+    addStop: async (id: string, payload: TourStopPayload) => {
+        const response = await api.post<Tour>(`/tours/${id}/stops`, payload);
+        return response.data;
+    },
+
+    updateStop: async (id: string, stopId: string, payload: TourStopUpdatePayload) => {
+        const response = await api.patch<Tour>(`/tours/${id}/stops/${stopId}`, payload);
+        return response.data;
+    },
+
+    removeStop: async (id: string, stopId: string) => {
+        const response = await api.delete<Tour>(`/tours/${id}/stops/${stopId}`);
+        return response.data;
+    },
+
+    reorderStops: async (id: string, items: Array<{ id: string; orderIndex: number }>) => {
+        const response = await api.patch<Tour>(`/tours/${id}/stops/reorder`, { items });
+        return response.data;
+    },
+
+    publish: async (id: string) => {
+        const response = await api.patch<Tour>(`/tours/${id}/publish`);
+        return response.data;
+    },
+
+    unpublish: async (id: string) => {
+        const response = await api.patch<Tour>(`/tours/${id}/unpublish`);
+        return response.data;
     }
 };

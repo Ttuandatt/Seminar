@@ -1,31 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { MapPin, Navigation } from 'lucide-react-native';
+import { MapPin, Navigation, Pencil, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
 import { publicService, Tour } from '../../services/publicService';
+import { touristService } from '../../services/touristService';
 
 const { width } = Dimensions.get('window');
 
 export default function TourDetailScreen() {
-    const { id } = useLocalSearchParams();
+    const { id, source } = useLocalSearchParams();
     const router = useRouter();
     const { t } = useTranslation();
     const { getTourName, getTourDescription, getPoiName } = useLanguage();
+    const isCustom = source === 'custom';
 
     const [tour, setTour] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
-    }, [id]);
+    }, [id, source]);
 
     const fetchData = async () => {
         try {
             if (typeof id === 'string') {
-                const data = await publicService.getTourDetail(id);
+                const data = isCustom
+                    ? await touristService.getMyTourDetail(id)
+                    : await publicService.getTourDetail(id);
                 setTour(data);
             }
         } catch (error) {
@@ -33,6 +37,27 @@ export default function TourDetailScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            t('customTour.deleteTitle'),
+            t('customTour.deleteConfirm'),
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('common.delete'), style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await touristService.deleteMyTour(id as string);
+                            router.replace('/(tabs)/tours');
+                        } catch (e) {
+                            console.error('Error deleting tour:', e);
+                        }
+                    },
+                },
+            ],
+        );
     };
 
     if (loading) {
@@ -120,11 +145,25 @@ export default function TourDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* Start Tour Button */}
+            {/* Footer Actions */}
             <View style={styles.footer}>
+                {isCustom && (
+                    <View style={styles.customActions}>
+                        <TouchableOpacity
+                            style={styles.editButton}
+                            onPress={() => router.push(`/tour/edit/${tour.id}`)}
+                        >
+                            <Pencil size={18} color="#3b82f6" />
+                            <Text style={styles.editButtonText}>{t('common.edit')}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                            <Trash2 size={18} color="#ef4444" />
+                        </TouchableOpacity>
+                    </View>
+                )}
                 <TouchableOpacity
                     style={styles.startButton}
-                    onPress={() => router.push(`/tour/follow/${tour.id}`)}
+                    onPress={() => router.push(`/tour/follow/${tour.id}${isCustom ? '?source=custom' : ''}`)}
                 >
                     <Navigation size={20} color="#fff" />
                     <Text style={styles.startButtonText}>{t('tours.startTour')}</Text>
@@ -231,6 +270,36 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#e2e8f0',
         backgroundColor: '#fff',
+    },
+    customActions: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 12,
+    },
+    editButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#3b82f6',
+        gap: 6,
+    },
+    editButtonText: {
+        color: '#3b82f6',
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    deleteButton: {
+        width: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#ef4444',
     },
     startButton: {
         backgroundColor: '#3b82f6',

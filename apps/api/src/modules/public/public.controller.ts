@@ -86,7 +86,7 @@ export class PublicController {
     @Get('tours')
     async findAllTours() {
         return this.prisma.tour.findMany({
-            where: { status: 'ACTIVE', deletedAt: null },
+            where: { status: 'ACTIVE', deletedAt: null, tourType: 'OFFICIAL' },
             include: {
                 _count: { select: { tourPois: true } },
             },
@@ -97,7 +97,7 @@ export class PublicController {
     @Get('tours/:id')
     async findOneTour(@Param('id') id: string) {
         return this.prisma.tour.findFirst({
-            where: { id, status: 'ACTIVE', deletedAt: null },
+            where: { id, status: 'ACTIVE', deletedAt: null, tourType: 'OFFICIAL' },
             include: {
                 tourPois: {
                     include: {

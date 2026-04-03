@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { publicService, Tour } from '../../../services/publicService';
+import { touristService } from '../../../services/touristService';
 import { getDistance } from '../../../utils/distance';
 import AudioPlayer from '../../../components/AudioPlayer';
 import { LocateFixed, XCircle, CheckCircle2 } from 'lucide-react-native';
@@ -16,7 +17,8 @@ import { getMissingAudioNote } from '../../../services/localizationCopy';
 const { width } = Dimensions.get('window');
 
 export default function TourFollowScreen() {
-    const { id } = useLocalSearchParams();
+    const { id, source } = useLocalSearchParams();
+    const isCustom = source === 'custom';
     const router = useRouter();
     const mapRef = useRef<MapView>(null);
 
@@ -33,7 +35,9 @@ export default function TourFollowScreen() {
 
     const fetchTourData = async () => {
         if (typeof id === 'string') {
-            const data = await publicService.getTourDetail(id);
+            const data = isCustom
+                ? await touristService.getMyTourDetail(id)
+                : await publicService.getTourDetail(id);
             setTour(data);
         }
     };

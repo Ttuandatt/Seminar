@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Put,
+    Patch,
     Delete,
     Body,
     Param,
@@ -10,7 +11,15 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ToursService } from './tours.service';
-import { CreateTourDto, UpdateTourDto, SetTourPoisDto, QueryTourDto } from './dto';
+import {
+    CreateTourDto,
+    UpdateTourDto,
+    SetTourPoisDto,
+    QueryTourDto,
+    CreateTourStopDto,
+    UpdateTourStopDto,
+    ReorderTourStopsDto,
+} from './dto';
 import { JwtAuthGuard, RolesGuard } from '../../common/guards';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { Role } from '@prisma/client';
@@ -19,7 +28,7 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 export class ToursController {
-    constructor(private toursService: ToursService) { }
+    constructor(private readonly toursService: ToursService) { }
 
     @Post()
     create(@Body() dto: CreateTourDto, @CurrentUser('id') userId: string) {
@@ -44,6 +53,40 @@ export class ToursController {
     @Put(':id/pois')
     setPois(@Param('id') id: string, @Body() dto: SetTourPoisDto) {
         return this.toursService.setPois(id, dto);
+    }
+
+    @Post(':id/stops')
+    addStop(@Param('id') id: string, @Body() dto: CreateTourStopDto) {
+        return this.toursService.addStop(id, dto);
+    }
+
+    @Patch(':id/stops/reorder')
+    reorderStops(@Param('id') id: string, @Body() dto: ReorderTourStopsDto) {
+        return this.toursService.reorderStops(id, dto);
+    }
+
+    @Patch(':id/stops/:stopId')
+    updateStop(
+        @Param('id') id: string,
+        @Param('stopId') stopId: string,
+        @Body() dto: UpdateTourStopDto,
+    ) {
+        return this.toursService.updateStop(id, stopId, dto);
+    }
+
+    @Delete(':id/stops/:stopId')
+    removeStop(@Param('id') id: string, @Param('stopId') stopId: string) {
+        return this.toursService.removeStop(id, stopId);
+    }
+
+    @Patch(':id/publish')
+    publish(@Param('id') id: string) {
+        return this.toursService.publish(id);
+    }
+
+    @Patch(':id/unpublish')
+    unpublish(@Param('id') id: string) {
+        return this.toursService.unpublish(id);
     }
 
     @Delete(':id')

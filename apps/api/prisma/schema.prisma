@@ -49,6 +49,11 @@ enum TourStatus {
   ARCHIVED
 }
 
+enum TourType {
+  OFFICIAL
+  CUSTOM
+}
+
 enum MediaType {
   IMAGE
   AUDIO
@@ -236,6 +241,7 @@ model Tour {
   thumbnailUrl      String?
   estimatedDuration Int? // minutes
   status            TourStatus @default(DRAFT)
+  tourType          TourType   @default(OFFICIAL)
   createdById       String
   deletedAt         DateTime?
   createdAt         DateTime   @default(now())
@@ -246,6 +252,7 @@ model Tour {
 
   @@index([status, deletedAt])
   @@index([createdById])
+  @@index([tourType, createdById, deletedAt])
   @@map("tours")
 }
 
@@ -254,11 +261,21 @@ model TourPoi {
   tourId     String
   poiId      String
   orderIndex Int
+  titleOverride       String?
+  descriptionOverride String?
+  customIntro         String?
+  estimatedStayMinutes Int?
+  transitionNote      String?
+  isRequired          Boolean  @default(true)
+  unlockRule          String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
   poi  Poi  @relation(fields: [poiId], references: [id])
 
   @@unique([tourId, poiId])
+  @@unique([tourId, orderIndex])
   @@index([tourId])
   @@map("tour_pois")
 }

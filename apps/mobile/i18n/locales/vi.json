@@ -7,7 +7,34 @@
     "retry": "Thử lại",
     "continue": "Tiếp tục",
     "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "login": "Đăng nhập",
     "noDescription": "Không có mô tả"
+  },
+  "customTour": {
+    "createTitle": "Tạo Tour",
+    "editTitle": "Chỉnh sửa Tour",
+    "name": "Tên tour",
+    "namePlaceholder": "VD: Tour ẩm thực của tôi",
+    "description": "Mô tả (tùy chọn)",
+    "descriptionPlaceholder": "Mô tả tour của bạn...",
+    "selectedStops": "Điểm đã chọn",
+    "nearby": "Gần đây",
+    "favorites": "Yêu thích",
+    "noPois": "Không tìm thấy địa điểm.",
+    "maxStops": "Số điểm tối đa",
+    "maxStopsMsg": "Bạn chỉ có thể chọn tối đa 15 điểm.",
+    "minStops": "Chưa đủ điểm",
+    "minStopsMsg": "Vui lòng chọn ít nhất 2 điểm.",
+    "nameRequired": "Vui lòng nhập tên tour.",
+    "create": "Tạo Tour",
+    "save": "Lưu thay đổi",
+    "createError": "Không thể tạo tour. Vui lòng thử lại.",
+    "updateError": "Không thể cập nhật tour. Vui lòng thử lại.",
+    "deleteTitle": "Xóa Tour",
+    "deleteConfirm": "Bạn có chắc muốn xóa tour này? Không thể hoàn tác."
   },
   "register": {
     "title": "Đăng ký tài khoản",
@@ -96,7 +123,12 @@
     "points": "điểm",
     "mainPoint": "Điểm chính",
     "nearby": "Lân cận",
-    "startTour": "Bắt đầu Tour"
+    "startTour": "Bắt đầu Tour",
+    "official": "Chính thức",
+    "myTours": "Tour của tôi",
+    "noCustomTours": "Bạn chưa tạo tour nào.",
+    "createFirstTour": "Nhấn + để tạo tour tùy chỉnh đầu tiên!",
+    "loginToCreate": "Đăng nhập để tạo và quản lý tour riêng của bạn."
   },
   "tourFollow": {
     "completed": "Đã hoàn thành Tour!",
