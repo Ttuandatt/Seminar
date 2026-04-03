@@ -12,7 +12,7 @@ import { getMediaUrl } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { organicMapStyle } from '../../utils/mapStyle';
 import { useLanguage } from '../../context/LanguageContext';
-import { resolveExactAudioTrack } from '../../utils/audioMedia';
+import { resolvePoiAudioState } from '../../services/localizationResolver';
 
 const { width } = Dimensions.get('window');
 const VINH_KHANH_REGION = {
@@ -23,6 +23,11 @@ const VINH_KHANH_REGION = {
 };
 
 type NearbyPoi = Poi & { distanceM: number };
+
+type PoiAudioState = {
+    audioUrl: string | null;
+    hasAnyAudio: boolean;
+};
 
 const buildNearbyQueue = (pois: Poi[], location: Location.LocationObject) => {
     const inRange: NearbyPoi[] = [];
@@ -65,6 +70,25 @@ export default function MapScreen() {
         loadSettings();
     }, []);
 
+    const getPoiDistance = useCallback((poi: Poi, currentLocation: Location.LocationObject) => {
+        return getDistance(
+            { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude },
+            { latitude: Number(poi.latitude), longitude: Number(poi.longitude) }
+        );
+    }, []);
+
+    const getPoiAudioState = useCallback((poi: Poi): PoiAudioState => {
+        const audioState = resolvePoiAudioState(poi, lang);
+        return {
+            audioUrl: audioState.exactAudioUrl || audioState.fallbackOptions[0]?.url || null,
+            hasAnyAudio: Boolean(audioState.exactAudioUrl || audioState.fallbackOptions.length > 0),
+        };
+    }, [lang]);
+
+    const isPoiInRange = useCallback((poi: Poi, currentLocation: Location.LocationObject) => {
+        return getPoiDistance(poi, currentLocation) <= (poi.triggerRadius || 50);
+    }, [getPoiDistance]);
+
     useEffect(() => {
         let locationSubscription: Location.LocationSubscription | null = null;
 
@@ -83,12 +107,6 @@ export default function MapScreen() {
                 },
                 (newLocation) => {
                     setLocation(newLocation);
-                    const nextQueue = buildNearbyQueue(pois, newLocation);
-                    setNearbyQueue(nextQueue);
-
-                    if (nextQueue.length > 0) {
-                        setManualSelectedPoi(null);
-                    }
                 }
             );
         })();
@@ -112,9 +130,14 @@ export default function MapScreen() {
     useEffect(() => { fetchPois(); }, [fetchPois]);
     useFocusEffect(useCallback(() => { fetchPois(); }, [fetchPois]));
 
+    useEffect(() => {
+        if (!location) return;
+
+        const nextQueue = buildNearbyQueue(pois, location);
+        setNearbyQueue(nextQueue);
+    }, [location, pois]);
+
     const handleMarkerPress = (poi: Poi) => {
-        // Always switch to tapped POI — clear queue view and show this POI
-        setNearbyQueue([]);
         setManualSelectedPoi(poi);
     };
 
@@ -140,10 +163,8 @@ export default function MapScreen() {
         setMapType(prev => prev === 'standard' ? 'satellite' : 'standard');
     };
 
-    // Helper: get audio for a POI in current language
-    const getAudioForPoi = (poi: Poi) => {
-        return resolveExactAudioTrack(poi.media, lang);
-    };
+    const getAudioUrlForPoi = (poi: Poi) => getPoiAudioState(poi).audioUrl;
+    const getHasAudioForPoi = (poi: Poi) => getPoiAudioState(poi).hasAnyAudio;
 
     const getImageForPoi = (poi: Poi) => {
         return poi.media?.find(m => m.type === 'IMAGE');
@@ -154,10 +175,13 @@ export default function MapScreen() {
     };
 
     const hasQueue = nearbyQueue.length > 0;
-    const manualPoi = hasQueue ? null : manualSelectedPoi;
+    const manualPoi = manualSelectedPoi;
     const manualImageMedia = manualPoi ? getImageForPoi(manualPoi) : null;
-    const manualAudioMedia = manualPoi ? getAudioForPoi(manualPoi) : null;
+    const manualAudioUrl = manualPoi ? getAudioUrlForPoi(manualPoi) : null;
+    const manualHasAudio = manualPoi ? getHasAudioForPoi(manualPoi) : false;
+    const manualPoiInRange = manualPoi && location ? isPoiInRange(manualPoi, location) : false;
     const showBottomSheet = hasQueue || manualPoi !== null;
+    const showQueueSheet = hasQueue && !manualPoi;
 
     return (
         <View style={styles.container}>
@@ -226,7 +250,7 @@ export default function MapScreen() {
             </View>
 
             {/* ===== AUDIO QUEUE BOTTOM SHEET ===== */}
-            {hasQueue && (
+            {showQueueSheet && (
                 <View style={styles.queueSheet}>
                     <View style={styles.queueHeader}>
                         <View style={styles.queueBadge}>
@@ -247,7 +271,7 @@ export default function MapScreen() {
                     >
                         {nearbyQueue.map((poi, index) => {
                             const imageMedia = getImageForPoi(poi);
-                            const audioMedia = getAudioForPoi(poi);
+                            const audioUrl = getAudioUrlForPoi(poi);
                             const isFirst = index === 0;
 
                             return (
@@ -276,16 +300,16 @@ export default function MapScreen() {
                                     </View>
 
                                     {/* Audio player for every POI in queue */}
-                                    {audioMedia?.url && (
+                                    {audioUrl && (
                                         <View style={styles.queueAudio}>
                                             <AudioPlayer
-                                                audioUrl={getMediaUrl(audioMedia.url)}
+                                                audioUrl={getMediaUrl(audioUrl)}
                                                 poiId={poi.id}
                                                 autoPlay={isFirst && autoPlayEnabled}
                                             />
                                         </View>
                                     )}
-                                    {!audioMedia && (
+                                    {!audioUrl && (
                                         <Text style={styles.noAudioHint}>{t('poi.noAudio')}</Text>
                                     )}
                                 </View>
@@ -325,10 +349,18 @@ export default function MapScreen() {
                         </View>
                     </View>
 
-                    {manualAudioMedia?.url && (
+                    {manualHasAudio && manualAudioUrl && (
                         <View style={styles.audioWrapper}>
-                            <AudioPlayer audioUrl={getMediaUrl(manualAudioMedia.url)} poiId={manualPoi.id} autoPlay={false} />
+                            <AudioPlayer
+                                audioUrl={getMediaUrl(manualAudioUrl)}
+                                poiId={manualPoi.id}
+                                autoPlay={Boolean(manualPoiInRange && autoPlayEnabled)}
+                            />
                         </View>
+                    )}
+
+                    {manualPoiInRange && !manualHasAudio && (
+                        <Text style={styles.noAudioHint}>{t('poi.noAudio')}</Text>
                     )}
                 </View>
             )}
