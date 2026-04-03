@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   MapPin,
@@ -18,7 +18,9 @@ const getInitials = (fullName?: string) => {
   if (!fullName) return 'U';
   const parts = fullName.split(' ').filter(Boolean);
   if (!parts.length) return 'U';
-  const initials = parts.length === 1 ? parts[0][0] : `${parts[0][0]}${parts[parts.length - 1][0]}`;
+  const first = parts[0]?.[0] || 'U';
+  const last = parts.at(-1)?.[0] || first;
+  const initials = parts.length === 1 ? first : `${first}${last}`;
   return initials.toUpperCase();
 };
 
@@ -80,9 +82,10 @@ const Sidebar = () => {
       <div className="flex flex-col justify-between h-[calc(100vh-4rem)] px-3 py-4">
         <nav className="space-y-1">
           {navItems.map((item) => (
-            <Link
+            <button
               key={item.path}
-              to={item.path}
+              type="button"
+              onClick={() => navigate(item.path)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
                 ${isActive(item.path)
                   ? 'bg-blue-50 text-blue-600 shadow-sm'
@@ -91,7 +94,7 @@ const Sidebar = () => {
             >
               <item.icon className={`h-5 w-5 ${isActive(item.path) ? 'text-blue-600' : 'text-slate-400'}`} />
               {item.label}
-            </Link>
+            </button>
           ))}
         </nav>
 

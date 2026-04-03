@@ -93,7 +93,7 @@ const MerchantFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     ? (error as { response?: { data?: { message?: unknown } } }).response?.data?.message
                     : undefined;
             const msg = message || 'Failed to save Merchant.';
-            setError(Array.isArray(msg) ? msg.join(', ') : msg);
+            setError(typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join(', ') : 'Failed to save Merchant.');
         } finally {
             setLoading(false);
         }

@@ -6,12 +6,12 @@ import type { SupportedLanguage } from '@localization-shared';
 export type UserRole = 'admin' | 'shopOwner';
 
 export function useSupportedLanguages(role: UserRole = 'admin') {
-  const { data: languages = [], isLoading, refetch, dataUpdatedAt } = useQuery({
+  const { data: languages = [], isLoading, refetch, dataUpdatedAt } = useQuery<SupportedLanguage[]>({
     queryKey: ['supported-languages', role],
     queryFn: async () => {
       const res = await fetch('/admin-api/supported-languages');
       if (!res.ok) throw new Error('Failed to fetch languages');
-      const json = await res.json();
+      const json = (await res.json()) as SupportedLanguage[];
 
       // Filter based on role
       if (role === 'shopOwner') {

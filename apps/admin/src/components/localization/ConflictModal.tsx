@@ -16,25 +16,27 @@ export function ConflictModal({
   onOverwriteAnyway,
   isLoading = false,
   onClose
-}: ConflictModalProps) {
+}: Readonly<ConflictModalProps>) {
   return (
-    <div
+    <dialog
+      open
+      aria-label="Conflicting Changes Detected"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose?.();
+      }}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        inset: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50
       }}
-      onClick={() => onClose?.()}
     >
       <div
         style={{
+          position: 'relative',
           backgroundColor: 'white',
           borderRadius: '0.75rem',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
@@ -43,7 +45,6 @@ export function ConflictModal({
           maxHeight: '80vh',
           overflow: 'auto'
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -198,6 +199,6 @@ export function ConflictModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

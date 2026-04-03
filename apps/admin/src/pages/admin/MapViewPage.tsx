@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, Marker, Circle, Popup, Polyline } from 'react-leaflet';
 import { Loader2, MapPin, Eye, Pencil, Headphones } from 'lucide-react';
-import { poiService, type POI, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
+import { poiService, type POI, POI_CATEGORY_LABELS, type PoiCategory, type PoiStatus } from '../../services/poi.service';
 import MapControls, { FitBounds } from '../../components/map/MapControls';
 import { HCM_CENTER, CATEGORY_COLORS, STATUS_COLORS, createColoredIcon } from '../../components/map/map-utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,12 +39,13 @@ const MapViewPage = () => {
                         nameEn: (p.nameEn as string) || '',
                         descriptionVi: (p.descriptionVi as string) || '',
                         descriptionEn: (p.descriptionEn as string) || '',
-                        category: (p.category as string) || 'OTHER',
-                        status: (p.status as string) || 'ACTIVE',
+                        category: (p.category as PoiCategory) || 'DINING',
+                        status: (p.status as PoiStatus) || 'ACTIVE',
                         latitude: p.latitude as number,
                         longitude: p.longitude as number,
                         triggerRadius: (p.triggerRadius as number) || 15,
                         media: (p.media as POI['media']) || [],
+                        createdAt: (p.createdAt as string) || new Date().toISOString(),
                     }));
                     setPois(mapped);
                 } else {

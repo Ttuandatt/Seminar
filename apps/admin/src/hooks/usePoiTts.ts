@@ -11,7 +11,7 @@ export interface UsePoiTtsParams {
     getDescriptionFor: (language: string) => string | undefined | null;
     getSourceDescriptionFor?: (language: string) => string | undefined | null;
     refreshMedia?: (poiId?: string) => Promise<void>;
-    onSuccessToast: (language: string) => void;
+    onSuccessToast: (language: string, message?: string) => void;
     onErrorToast: (language: string, message: string) => void;
     getMissingPoiMessage?: (language: string) => string;
     getShortDescriptionMessage?: (language: string) => string;
@@ -40,6 +40,7 @@ async function runAfterGenerate(
     onSuccessToast: UsePoiTtsParams['onSuccessToast'],
     language: string,
     poiId: string,
+    message?: string,
 ) {
     try {
         await afterGenerate?.(language, poiId);
@@ -47,7 +48,7 @@ async function runAfterGenerate(
         console.error('afterGenerate error:', error);
     }
 
-    onSuccessToast(language);
+    onSuccessToast(language, message);
 }
 
 function extractErrorMessage(error: unknown): string {
@@ -133,11 +134,7 @@ async function generateForLanguage(args: {
         await refreshGeneratedMedia(refreshMedia, poiId);
 
         const fallbackMessage = getTranslationFallbackMessage?.(language);
-        if (fallbackMessage) {
-            onErrorToast(language, fallbackMessage);
-        }
-
-        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId);
+        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId, fallbackMessage);
         return;
     }
 
@@ -145,10 +142,7 @@ async function generateForLanguage(args: {
         await poiService.generateTranslatedTts(poiId, sourceText, normalizedLanguage, 'VI');
         await refreshGeneratedMedia(refreshMedia, poiId);
         const fallbackMessage = getTranslationFallbackMessage?.(language);
-        if (fallbackMessage) {
-            onErrorToast(language, fallbackMessage);
-        }
-        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId);
+        await runAfterGenerate(afterGenerate, onSuccessToast, language, poiId, fallbackMessage);
         return;
     }
 

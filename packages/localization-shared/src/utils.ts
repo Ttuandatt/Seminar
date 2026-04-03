@@ -3,7 +3,7 @@
  * NO React dependencies - compatible with Node.js, browser, and React Native
  */
 
-import { BCP47Language, PoiLocalization } from './types';
+import type { BCP47Language, PoiLocalization } from './types';
 
 // ============================================================================
 // Validation Functions

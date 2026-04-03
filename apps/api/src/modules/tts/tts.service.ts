@@ -95,6 +95,7 @@ export class TtsService {
         language: MediaLanguage,
         text: string,
         voice?: string,
+        fileLanguage: string = language,
     ) {
         const poi = await this.prisma.poi.findFirst({
             where: { id: poiId, deletedAt: null },
@@ -115,7 +116,8 @@ export class TtsService {
         );
 
         const fileId = randomUUID();
-        const fileName = `${poiId}_${language.toLowerCase()}_${fileId}`;
+        const fileLanguageCode = fileLanguage.toLowerCase();
+        const fileName = `${poiId}_${fileLanguageCode}_${fileId}`;
         const outputDir = join(UPLOADS_DIR, fileName);
 
         // msedge-tts toFile() expects the path as a directory and writes audio.mp3 inside it
@@ -130,7 +132,7 @@ export class TtsService {
         tts.close();
 
         this.logger.log(
-            `TTS generated: ${audioFilePath} for POI ${poiId} (${language})`,
+            `TTS generated: ${audioFilePath} for POI ${poiId} (${fileLanguage})`,
         );
 
         const stats = statSync(audioFilePath);
@@ -143,8 +145,7 @@ export class TtsService {
             where: {
                 poiId,
                 type: 'AUDIO',
-                language,
-                originalName: { startsWith: 'tts_' },
+                originalName: { startsWith: `tts_${fileLanguageCode}_` },
             },
             data: { orderIndex: -1 }, // Mark as archived
         });
@@ -156,7 +157,7 @@ export class TtsService {
                 type: 'AUDIO',
                 language,
                 url: relativePath,
-                originalName: `tts_${language.toLowerCase()}_${Date.now()}.mp3`,
+                originalName: `tts_${fileLanguageCode}_${Date.now()}.mp3`,
                 sizeBytes: stats.size,
                 orderIndex: 0,
             },
@@ -198,7 +199,13 @@ export class TtsService {
         // For non-VI/EN languages, we store as 'EN' (foreign) with a descriptive name
         const dbLanguage: MediaLanguage = targetLanguage.toUpperCase() === 'VI' ? MediaLanguage.VI : MediaLanguage.EN;
 
-        const result = await this.generateForPoi(poiId, dbLanguage, finalText, voice || VOICE_MAP[targetLanguage.toUpperCase()]?.default);
+        const result = await this.generateForPoi(
+            poiId,
+            dbLanguage,
+            finalText,
+            voice || VOICE_MAP[targetLanguage.toUpperCase()]?.default,
+            targetLanguage.toUpperCase(),
+        );
 
         return {
             ...result,

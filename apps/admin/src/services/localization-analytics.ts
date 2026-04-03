@@ -1,5 +1,5 @@
 // analytics.ts - Localization analytics events
-import { BCP47Language } from '@localization-shared';
+import type { BCP47Language } from '@localization-shared';
 
 export type LocalizationActionType =
   | 'save'
@@ -47,7 +47,7 @@ class LocalizationAnalytics {
   /**
    * Subscribe to analytics events
    */
-  subscribe(listener: (event: LocalizationActionEvent | LocalizationDropdownViewEvent) => void) {
+  subscribe(listener: (event: LocalizationActionEvent | LocalizationDropdownViewEvent | LocalizationPendingStateEvent) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
@@ -105,7 +105,7 @@ class LocalizationAnalytics {
   /**
    * Send analytics to backend (if needed)
    */
-  private sendToBackend(eventName: string, data: any) {
+  private sendToBackend(_eventName: string, _data: any) {
     // TODO: Implement if backend telemetry endpoint is available
     // fetch('/admin-api/analytics/events', {
     //   method: 'POST',

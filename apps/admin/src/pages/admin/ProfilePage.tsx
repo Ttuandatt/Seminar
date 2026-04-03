@@ -646,7 +646,7 @@ const ProfilePage = () => {
                                                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500"
                                             >
                                                 {weekdayOptions.map((day) => (
-                                                    <option key={day} value={day} disabled={dayUsage[day] && day !== hour.day}>
+                                                    <option key={day} value={day} disabled={Boolean(dayUsage[day]) && day !== hour.day}>
                                                         {day}
                                                     </option>
                                                 ))}

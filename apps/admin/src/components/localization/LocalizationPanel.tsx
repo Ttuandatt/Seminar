@@ -1,7 +1,7 @@
 // LocalizationPanel.tsx
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
-import type { BCP47Language, PoiLocalization } from '@localization-shared';
+import type { BCP47Language, PoiLocalization, SupportedLanguage } from '@localization-shared';
 import { usePoiLocalizations } from '@localization-shared';
 import type { LocalizationPanelProps, LocalizationPanelHandle, LocalizationPanelState } from './LocalizationPanel.types';
 import { LocalizationAccordionItem } from './LocalizationPanelAccordion';
@@ -30,7 +30,6 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
       role,
       disabled = false,
       onDirtyChange,
-      onGlobalSaveRequest,
       className,
     },
     ref
@@ -126,15 +125,6 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
       });
     };
 
-    const handleRemoveLanguage = (language: BCP47Language) => {
-      if (language === baseLanguage) return;
-
-      setState((prev) => ({
-        ...prev,
-        selectedLanguages: prev.selectedLanguages.filter((item) => item !== language),
-      }));
-    };
-
     const handleRequestTranslation = (language: BCP47Language) => {
       const key = languageKey(language);
 
@@ -226,7 +216,9 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
 
     const adminLanguages = state.selectedLanguages;
     const shopOwnerLanguages = supportedLanguages.filter((language) => language.enabled);
-    const languagesToRender = isShopOwner ? shopOwnerLanguages : adminLanguages;
+    const languagesToRender: SupportedLanguage[] = isShopOwner
+      ? shopOwnerLanguages
+      : supportedLanguages.filter((language) => adminLanguages.includes(language.code));
 
     return (
       <>
@@ -327,4 +319,4 @@ const LocalizationPanel = forwardRef<LocalizationPanelHandle, LocalizationPanelP
 LocalizationPanel.displayName = 'LocalizationPanel';
 
 export default LocalizationPanel;
-export type { LocalizationPanelHandle, LocalizationPanelProps };
+export type { LocalizationPanelHandle, LocalizationPanelProps } from './LocalizationPanel.types';

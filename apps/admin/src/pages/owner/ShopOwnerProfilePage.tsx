@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, CheckCircle2, User, Store, Phone, MapPin, Shield } from 'lucide-react';
@@ -23,15 +23,18 @@ const ShopOwnerProfilePage = () => {
   const { data: profile, isLoading } = useQuery({
     queryKey: ['shop-owner', 'profile'],
     queryFn: shopOwnerPortalService.getProfile,
-    onSuccess: (data) => {
-      setFormState({
-        businessName: data.businessName,
-        ownerName: data.ownerName,
-        phone: data.phone,
-        address: data.address,
-      });
-    },
   });
+
+  useEffect(() => {
+    if (!profile) return;
+
+    setFormState({
+      businessName: profile.businessName,
+      ownerName: profile.ownerName,
+      phone: profile.phone,
+      address: profile.address,
+    });
+  }, [profile]);
 
   const updateMutation = useMutation({
     mutationFn: shopOwnerPortalService.updateProfile,

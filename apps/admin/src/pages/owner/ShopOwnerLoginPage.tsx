@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { MapPin, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
-import { shopOwnerPortalService } from '../../services/shopOwnerPortal.service';
+import { authService } from '../../services/auth.service';
 
 const ShopOwnerLoginPage = () => {
   const navigate = useNavigate();
@@ -18,9 +18,9 @@ const ShopOwnerLoginPage = () => {
   }, [navigate]);
 
   const loginMutation = useMutation({
-    mutationFn: shopOwnerPortalService.login,
-    onSuccess: ({ token }) => {
-      localStorage.setItem('ownerAccessToken', token);
+    mutationFn: authService.login,
+    onSuccess: ({ accessToken }) => {
+      localStorage.setItem('ownerAccessToken', accessToken);
       navigate('/owner/dashboard');
     },
     onError: (err: unknown) => {

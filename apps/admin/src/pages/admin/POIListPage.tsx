@@ -182,7 +182,7 @@ const POIListPage = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <select
                         value={statusFilter}
-                        onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                        onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }}
                         className="w-full sm:w-44 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
                     >
                         {statusFilterOptions.map((option) => (
@@ -191,7 +191,7 @@ const POIListPage = () => {
                     </select>
                     <select
                         value={categoryFilter}
-                        onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+                        onChange={(e) => { setCategoryFilter(e.target.value as typeof categoryFilter); setPage(1); }}
                         className="w-full sm:w-44 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
                     >
                         {categoryFilterOptions.map((option) => (

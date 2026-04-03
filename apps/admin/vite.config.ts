@@ -14,9 +14,4 @@ export default defineConfig({
     },
   },
   cacheDir: 'node_modules/.vite-admin-cache',
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-    clearMocks: true,
-  },
 })

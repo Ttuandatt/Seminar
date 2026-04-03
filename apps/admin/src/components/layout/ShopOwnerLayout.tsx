@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, BarChart3, User, LogOut, Loader2 } from 'lucide-react';
 import { shopOwnerPortalService } from '../../services/shopOwnerPortal.service';
@@ -12,6 +12,7 @@ const navItems = [
 
 const ShopOwnerLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: profile, isLoading } = useQuery({
     queryKey: ['shop-owner', 'profile'],
     queryFn: shopOwnerPortalService.getProfile,
@@ -58,20 +59,19 @@ const ShopOwnerLayout = () => {
         </div>
         <nav className="mx-auto flex max-w-5xl flex-wrap gap-2 px-4 pb-3">
           {navItems.map((item) => (
-            <NavLink
+            <button
               key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`
-              }
+              type="button"
+              onClick={() => navigate(item.path)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                location.pathname === item.path
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
-            </NavLink>
+            </button>
           ))}
         </nav>
       </div>

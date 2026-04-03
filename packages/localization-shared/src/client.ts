@@ -3,8 +3,9 @@
  * NO React dependencies - compatible with Node.js, browser, and React Native
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import {
+import axios, { AxiosError } from 'axios';
+import type { AxiosInstance } from 'axios';
+import type {
   LocalizationClientConfig,
   BCP47Language,
   ListLocalizationsResponse,
