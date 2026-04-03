@@ -10,7 +10,6 @@ import {
     AlertCircle,
     Globe,
     Eye,
-    PlayCircle,
     Image as ImageIcon,
     Headphones,
     QrCode,
@@ -26,6 +25,7 @@ import POIPreviewModal, { type AudioSource as PreviewAudioSource } from '../../c
 import { useToast } from '../../components/ui/ToastProvider';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { POI_FORM_LABELS } from '../../constants/form-labels';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
@@ -33,6 +33,14 @@ type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 const languageTabs = [
     { code: 'VI' as const, label: 'Vietnamese' },
     { code: 'EN' as const, label: 'English' },
+    { code: 'JA' as const, label: 'Japanese' },
+    { code: 'KO' as const, label: 'Korean' },
+    { code: 'ZH_CN' as const, label: 'Chinese (Simplified)' },
+    { code: 'FR' as const, label: 'French' },
+    { code: 'DE' as const, label: 'German' },
+    { code: 'ES' as const, label: 'Spanish' },
+    { code: 'TH' as const, label: 'Thai' },
+    { code: 'RU' as const, label: 'Russian' },
 ];
 
 type MediaResource = POIMedia & {
@@ -56,10 +64,30 @@ const isAudioMedia = (media: MediaResource) => {
     return /(mp3|wav|m4a|aac)$/i.test(media.url || '');
 };
 
-const getMediaLabel = (media: MediaResource) => media?.language || media?.lang || 'N/A';
+const getMediaLabel = (media: MediaResource) => {
+    const raw = media?.language || media?.lang || 'N/A';
+    return String(raw).toUpperCase().replace('_', '-');
+};
 
-const isActiveMedia = (media?: MediaResource | null) =>
-    Boolean(media) && (media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0);
+const isActiveMedia = (media?: MediaResource | null) => {
+    if (!media) return false;
+    return media.orderIndex === undefined || media.orderIndex === null || media.orderIndex >= 0;
+};
+
+type PoiFormState = {
+    name: string;
+    nameEn: string;
+    description: string;
+    descriptionEn: string;
+    category: SavePOIPayload['category'];
+    address: string;
+    latitude: string;
+    longitude: string;
+    triggerRadius: number;
+    status: WorkflowStatus;
+    ownerId: string;
+    translations: Record<string, { name: string; description: string }>;
+};
 
 const sanitizeMediaList = (media?: MediaResource[] | null) => {
     if (!Array.isArray(media)) return [];
@@ -72,16 +100,17 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [draftPoiId, setDraftPoiId] = useState<string | null>(null);
     const poiId = id ?? draftPoiId ?? undefined;
     const isEditMode = !!poiId;
+    const { user } = useAuth();
     const { showToast } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
-    const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
-    const L = POI_FORM_LABELS[activeLang];
+    const [activeLang, setActiveLang] = useState<string>('VI');
+    const L = POI_FORM_LABELS[activeLang === 'EN' ? 'EN' : 'VI'];
     const defaultCategory = POI_CATEGORY_OPTIONS[0]?.value ?? 'DINING';
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<PoiFormState>({
         name: '',
         nameEn: '',
         description: '',
@@ -93,19 +122,18 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         triggerRadius: 15,
         status: 'ACTIVE' as WorkflowStatus,
         ownerId: '',
+        translations: {} as Record<string, { name: string; description: string }>,
     });
 
     // Media State
     const [existingMedia, setExistingMedia] = useState<MediaResource[]>([]);
     const [imageQueue, setImageQueue] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const [audioQueue, setAudioQueue] = useState<{ file: File; language: 'VI' | 'EN' }[]>([]);
+    const [audioQueue, setAudioQueue] = useState<{ file: File; language: string }[]>([]);
+    const [selectedAudioLanguage, setSelectedAudioLanguage] = useState<string>('VI');
     const [mediaToDelete, setMediaToDelete] = useState<MediaResource | null>(null);
     const [isDeletingMedia, setIsDeletingMedia] = useState(false);
-    const audioInputRefs = {
-        VI: useRef<HTMLInputElement>(null),
-        EN: useRef<HTMLInputElement>(null),
-    } as const;
+    const audioUploadInputRef = useRef<HTMLInputElement>(null);
 
     const [owners, setOwners] = useState<Merchant[]>([]);
     const [ownersLoading, setOwnersLoading] = useState(false);
@@ -116,8 +144,13 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [qrLoading, setQrLoading] = useState(false);
     const [ensuringPoiForTts, setEnsuringPoiForTts] = useState(false);
     const [translating, setTranslating] = useState(false);
-    const [ttsTargetLang, setTtsTargetLang] = useState('VI');
     const [ttsTranslateGenerating, setTtsTranslateGenerating] = useState(false);
+    const [ttsTargetLang, setTtsTargetLang] = useState<string>('VI');
+    const canAssignOwner = user?.role === 'ADMIN';
+
+    useEffect(() => {
+        setTtsTargetLang(activeLang);
+    }, [activeLang]);
 
     useEffect(() => {
         if (id) {
@@ -145,6 +178,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                         triggerRadius: poi.triggerRadius,
                         status: poi.status,
                         ownerId: poi.owner?.id || '',
+                        translations: poi.translations || {},
                     });
 
                     setExistingMedia(sanitizeMediaList(poi.media as MediaResource[]));
@@ -170,6 +204,12 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }, [id]);
 
     useEffect(() => {
+        if (!canAssignOwner) {
+            setOwners([]);
+            setOwnersLoading(false);
+            return;
+        }
+
         let isMounted = true;
         setOwnersLoading(true);
         merchantService.getAll({ page: 1, limit: 100 })
@@ -187,7 +227,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [canAssignOwner]);
 
     useEffect(() => {
         const previews = audioQueue.map(({ file, language }) => ({
@@ -223,17 +263,27 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         setTranslating(true);
         try {
             // Map language code: VI → vi, EN → en
-            const toLang = activeLang.toLowerCase();
+            const toLang = activeLang === 'ZH_CN' ? 'zh-CN' : activeLang.toLowerCase();
             const textsToTranslate = [formData.name || '', formData.description || ''];
 
             const result = await translateService.translateBatch(textsToTranslate, 'vi', toLang);
 
-            // Only update EN fields (or whichever target tab is active)
             if (activeLang === 'EN') {
                 setFormData((prev) => ({
                     ...prev,
                     nameEn: result.translations[0] || prev.nameEn,
                     descriptionEn: result.translations[1] || prev.descriptionEn,
+                }));
+            } else {
+                setFormData((prev) => ({
+                    ...prev,
+                    translations: {
+                        ...prev.translations,
+                        [activeLang]: {
+                            name: result.translations[0] || prev.translations?.[activeLang]?.name || '',
+                            description: result.translations[1] || prev.translations?.[activeLang]?.description || '',
+                        },
+                    },
                 }));
             }
 
@@ -260,7 +310,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         { code: 'EN', label: 'English' },
         { code: 'JA', label: '日本語 (Japanese)' },
         { code: 'KO', label: '한국어 (Korean)' },
-        { code: 'ZH-CN', label: '中文简体 (Chinese)' },
+        { code: 'ZH_CN', label: '中文简体 (Chinese)' },
         { code: 'FR', label: 'Français (French)' },
         { code: 'DE', label: 'Deutsch (German)' },
         { code: 'ES', label: 'Español (Spanish)' },
@@ -268,14 +318,86 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         { code: 'RU', label: 'Русский (Russian)' },
     ];
 
-    // --- Generate TTS with auto-translation ---
+    // --- Generate TTS from currently selected language content ---
     const handleGenerateTranslatedTts = async () => {
-        const viDescription = formData.description?.trim();
-        if (!viDescription || viDescription.length < 10) {
+        let langLabel = TTS_LANGUAGE_OPTIONS.find((l) => l.code === ttsTargetLang)?.label || ttsTargetLang;
+        let targetText = '';
+
+        // Check if we already have content for this language
+        const existingTargetDescription = (
+            ttsTargetLang === 'VI'
+                ? formData.description
+                : ttsTargetLang === 'EN'
+                    ? formData.descriptionEn
+                    : formData.translations?.[ttsTargetLang]?.description
+        )?.trim();
+
+        // If target content is missing or too short, auto-translate from VI
+        if (ttsTargetLang !== 'VI' && (!existingTargetDescription || existingTargetDescription.length < 5)) {
+            // Check for Vietnamese source
+            if (!formData.description?.trim()) {
+                showToast({
+                    variant: 'error',
+                    title: 'Thiếu nội dung nguồn',
+                    description: 'Vui lòng nhập mô tả Tiếng Việt trước khi dịch và tạo audio.',
+                });
+                return;
+            }
+
+            setTtsTranslateGenerating(true);
+            try {
+                // Determine target language code (e.g. ja, ko, zh-cn)
+                const toLang = ttsTargetLang === 'ZH_CN' ? 'zh-CN' : ttsTargetLang.toLowerCase();
+                const textsToTranslate = [formData.name || '', formData.description || ''];
+                const result = await translateService.translateBatch(textsToTranslate, 'vi', toLang);
+
+                const translatedName = result.translations[0] || '';
+                const translatedDesc = result.translations[1] || '';
+
+                // Update Form State for UI visibility
+                if (ttsTargetLang === 'EN') {
+                    setFormData((prev) => ({
+                        ...prev,
+                        nameEn: translatedName || prev.nameEn,
+                        descriptionEn: translatedDesc || prev.descriptionEn,
+                    }));
+                } else {
+                    setFormData((prev) => ({
+                        ...prev,
+                        translations: {
+                            ...prev.translations,
+                            [ttsTargetLang]: {
+                                name: translatedName || prev.translations?.[ttsTargetLang]?.name || '',
+                                description: translatedDesc || prev.translations?.[ttsTargetLang]?.description || '',
+                            },
+                        },
+                    }));
+                }
+                targetText = translatedDesc;
+                showToast({
+                    variant: 'success',
+                    title: `Đã dịch xong ${langLabel}`,
+                    description: 'Nội dung đã được dịch tự động và sẽ được dùng để tạo audio.',
+                });
+            } catch (error) {
+                console.error('Auto-translation for TTS failed:', error);
+                showToast({
+                    variant: 'error',
+                    title: 'Dịch tự động thất bại',
+                    description: 'Không thể dịch tự động. Vui lòng thử nhập thủ công.',
+                });
+                setTtsTranslateGenerating(false);
+                return;
+            }
+        } else {
+            targetText = existingTargetDescription || '';
+        }
+
+        if (!targetText || targetText.length < 10) {
             showToast({
                 variant: 'error',
-                title: 'Thiếu mô tả tiếng Việt',
-                description: 'Vui lòng nhập mô tả tiếng Việt (ít nhất 10 ký tự) trước khi tạo audio.',
+                title: `Thiếu mô tả ${ttsTargetLang}`,
+                description: `Vui lòng nhập mô tả ${ttsTargetLang} (ít nhất 10 ký tự) trước khi tạo audio.`,
             });
             return;
         }
@@ -305,22 +427,20 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
         setTtsTranslateGenerating(true);
         try {
-            const result = await poiService.generateTranslatedTts(
+            await poiService.generateTts(
                 currentPoiId!,
-                viDescription,
+                targetText,
                 ttsTargetLang,
-                'VI',
             );
 
             if (refreshMedia) await refreshMedia(currentPoiId);
 
-            const langLabel = TTS_LANGUAGE_OPTIONS.find(l => l.code === ttsTargetLang)?.label || ttsTargetLang;
             showToast({
                 variant: 'success',
                 title: `Audio ${langLabel} đã tạo!`,
-                description: ttsTargetLang !== 'VI'
-                    ? `Mô tả đã được tự động dịch sang ${langLabel} và tạo audio thành công.`
-                    : 'Audio tiếng Việt đã được tạo thành công.',
+                description: ttsTargetLang === 'VI'
+                    ? 'Audio Tiếng Việt đã được tạo thành công.'
+                    : `Hệ thống dùng nội dung ${langLabel} để tạo audio thành công.`,
             });
         } catch (error: any) {
             console.error('TTS generation error:', error);
@@ -362,10 +482,13 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         });
     };
 
-    const handleAudioSelect = (language: 'VI' | 'EN', e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0]) return;
         const file = e.target.files[0];
-        setAudioQueue((prev) => [...prev, { file, language }]);
+        setAudioQueue((prev) => {
+            const filtered = prev.filter((audio) => audio.language !== selectedAudioLanguage);
+            return [...filtered, { file, language: selectedAudioLanguage }];
+        });
         e.target.value = '';
     };
 
@@ -429,6 +552,30 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
             setFormData((prev) => ({ ...prev, triggerRadius: Number(value) }));
             return;
         }
+
+        if (name === 'name' || name === 'description') {
+            if (activeLang === 'VI') {
+                setFormData((prev) => ({ ...prev, [name]: value }));
+            } else if (activeLang === 'EN') {
+                setFormData((prev) => ({ ...prev, [`${name}En`]: value }));
+            } else {
+                setFormData((prev) => {
+                    const prevTranslation = prev.translations?.[activeLang] || { name: '', description: '' };
+                    return {
+                        ...prev,
+                        translations: {
+                            ...prev.translations,
+                            [activeLang]: {
+                                ...prevTranslation,
+                                [name]: value,
+                            },
+                        },
+                    };
+                });
+            }
+            return;
+        }
+
         const nextValue = type === 'number' ? value : value;
         setFormData((prev) => ({ ...prev, [name]: nextValue }));
     };
@@ -448,6 +595,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         nameEn: formData.nameEn,
         descriptionVi: formData.address ? `[Address: ${formData.address}]\n\n${formData.description}` : formData.description,
         descriptionEn: formData.descriptionEn,
+        translations: formData.translations,
         latitude: lat,
         longitude: lng,
         category: formData.category,
@@ -458,6 +606,15 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
     const handleSave = async (nextStatus: WorkflowStatus) => {
         if (readOnly) return;
+        if (user?.role !== 'ADMIN') {
+            showToast({
+                variant: 'error',
+                title: 'Không đủ quyền',
+                description: 'Tài khoản hiện tại không có quyền tạo/cập nhật POI ở khu Admin.',
+            });
+            navigate('/owner/dashboard');
+            return;
+        }
 
         // Client-side validation to prevent 400 from backend
         const { errors, lat, lng } = collectValidationState();
@@ -612,9 +769,17 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
         };
     })();
 
-    const translationField = activeLang === 'VI'
-        ? { name: 'name', description: 'description' }
-        : { name: 'nameEn', description: 'descriptionEn' };
+    const getCurrentNameValue = () => {
+        if (activeLang === 'VI') return formData.name;
+        if (activeLang === 'EN') return formData.nameEn;
+        return formData.translations?.[activeLang]?.name || '';
+    };
+
+    const getCurrentDescriptionValue = () => {
+        if (activeLang === 'VI') return formData.description;
+        if (activeLang === 'EN') return formData.descriptionEn;
+        return formData.translations?.[activeLang]?.description || '';
+    };
 
     const imageMedia = existingMedia.filter((media) => !isAudioMedia(media));
     const audioMedia = existingMedia.filter(isAudioMedia);
@@ -674,19 +839,20 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 <MapPin className="h-4 w-4 text-blue-600" />
                                 {L.contentHeading}
                             </h2>
-                            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 text-sm font-medium">
-                                {languageTabs.map((tab) => (
-                                    <button
-                                        key={tab.code}
-                                        type="button"
-                                        onClick={() => setActiveLang(tab.code)}
-                                        className={`rounded-full px-3 py-1 transition-all ${
-                                            activeLang === tab.code ? 'bg-white shadow text-blue-600' : 'text-slate-500'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                            <div className="min-w-[240px]">
+                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-sky-700">Ngôn ngữ nội dung</label>
+                                <select
+                                    value={activeLang}
+                                    onChange={(event) => setActiveLang(event.target.value)}
+                                    disabled={readOnly}
+                                    className="w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800 outline-none transition-colors focus:border-sky-400 focus:ring-2 focus:ring-sky-400/25 disabled:opacity-60"
+                                >
+                                    {languageTabs.map((tab) => (
+                                        <option key={tab.code} value={tab.code}>
+                                            {tab.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -694,14 +860,14 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{L.poiName} {activeLang === 'VI' ? L.required : ''}</label>
                                 <input
-                                    name={translationField.name}
-                                    value={formData[translationField.name as keyof typeof formData] as string}
+                                    name="name"
+                                    value={getCurrentNameValue()}
                                     onChange={handleChange}
                                     required={activeLang === 'VI'}
                                     minLength={2}
                                     disabled={readOnly}
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-60"
-                                    placeholder={activeLang === 'VI' ? 'ví dụ Chùa Linh Ứng' : 'e.g. Linh Ung Pagoda'}
+                                    placeholder={activeLang === 'VI' ? 'ví dụ Chùa Linh Ứng' : 'Nội dung tên đã dịch...'}
                                 />
                             </div>
                             {/* Auto-translate button — show when on non-VI tab */}
@@ -725,15 +891,15 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{L.description} {activeLang === 'VI' ? L.required : L.descriptionOptional}</label>
                                 <textarea
-                                    name={translationField.description}
-                                    value={formData[translationField.description as keyof typeof formData] as string}
+                                    name="description"
+                                    value={getCurrentDescriptionValue()}
                                     onChange={handleChange}
                                     required={activeLang === 'VI'}
                                     minLength={activeLang === 'VI' ? 10 : 0}
                                     rows={6}
                                     disabled={readOnly}
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none disabled:opacity-60"
-                                    placeholder={activeLang === 'VI' ? 'Mô tả địa điểm...' : 'Optional English copy...'}
+                                    placeholder={activeLang === 'VI' ? 'Mô tả địa điểm...' : 'Nội dung mô tả đã dịch...'}
                                 />
                                 <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
                                     <span>{L.ttsDescription}</span>
@@ -741,7 +907,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 {/* TTS Generation with Language Selection */}
                                 {!readOnly && (
                                     <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/50 p-3">
-                                        <span className="text-xs font-semibold text-indigo-700 whitespace-nowrap">🎧 Tạo Audio:</span>
+                                        <span className="text-xs font-semibold text-indigo-700 whitespace-nowrap">🎧 Ngôn ngữ Audio:</span>
                                         <select
                                             value={ttsTargetLang}
                                             onChange={(e) => setTtsTargetLang(e.target.value)}
@@ -754,7 +920,7 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                         <button
                                             type="button"
                                             onClick={handleGenerateTranslatedTts}
-                                            disabled={ttsTranslateGenerating || ensuringPoiForTts || !formData.description?.trim()}
+                                            disabled={ttsTranslateGenerating || ensuringPoiForTts || !getCurrentDescriptionValue().trim()}
                                             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {ttsTranslateGenerating || ensuringPoiForTts ? (
@@ -762,11 +928,11 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                             ) : (
                                                 <Headphones className="h-3.5 w-3.5" />
                                             )}
-                                            {ttsTranslateGenerating ? 'Đang tạo...' : (ttsTargetLang === 'VI' ? 'Tạo Audio' : `Dịch & Tạo Audio`)}
+                                            {ttsTranslateGenerating ? 'Đang tạo...' : (ttsTargetLang === 'VI' ? 'Tạo Audio' : 'Dịch & Tạo Audio')}
                                         </button>
                                         {ttsTargetLang !== 'VI' && (
                                             <span className="text-[10px] text-slate-500">
-                                                Mô tả tiếng Việt sẽ tự động dịch sang {TTS_LANGUAGE_OPTIONS.find(l => l.code === ttsTargetLang)?.label || ttsTargetLang}
+                                                Sử dụng chính nội dung trong tab hiện tại làm nguồn để tạo audio.
                                             </span>
                                         )}
                                     </div>
@@ -809,24 +975,26 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                                 <p className="text-xs text-slate-400 mt-1">Được tự động chèn vào phần mở đầu mô tả.</p>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Owner (shop)</label>
-                            <select
-                                name="ownerId"
-                                value={formData.ownerId}
-                                onChange={handleChange}
-                                disabled={readOnly}
-                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500 disabled:opacity-60"
-                            >
-                                <option value="">Admin managed POI</option>
-                                {ownerSelectOptions.map((option) => (
-                                    <option key={option.id} value={option.id}>{option.label}</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-slate-400 mt-1">
-                                {ownersLoading ? 'Đang tải danh sách shop owner...' : 'Chọn shop owner để POI hiển thị trong dashboard của họ.'}
-                            </p>
-                        </div>
+                        {canAssignOwner && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Owner (shop)</label>
+                                <select
+                                    name="ownerId"
+                                    value={formData.ownerId}
+                                    onChange={handleChange}
+                                    disabled={readOnly}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-blue-500 disabled:opacity-60"
+                                >
+                                    <option value="">Admin managed POI</option>
+                                    {ownerSelectOptions.map((option) => (
+                                        <option key={option.id} value={option.id}>{option.label}</option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    {ownersLoading ? 'Đang tải danh sách shop owner...' : 'Chọn shop owner để POI hiển thị trong dashboard của họ.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
@@ -1022,23 +1190,45 @@ const POIFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                             )}
 
                             {!readOnly && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    {(['VI', 'EN'] as const).map((lang) => (
-                                        <label
-                                            key={lang}
-                                            className="flex h-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center text-sm font-medium text-slate-600 hover:bg-slate-100"
+                                <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-4">
+                                    <p className="mb-3 text-sm font-semibold text-sky-800">Khu vực tải file Audio</p>
+                                    <input
+                                        ref={audioUploadInputRef}
+                                        type="file"
+                                        accept="audio/*"
+                                        className="hidden"
+                                        onChange={handleAudioSelect}
+                                    />
+                                    <div className="grid gap-3 sm:grid-cols-[minmax(180px,260px)_1fr] sm:items-end">
+                                        <div>
+                                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-sky-700">
+                                                Ngôn ngữ Audio
+                                            </label>
+                                            <select
+                                                value={selectedAudioLanguage}
+                                                onChange={(event) => setSelectedAudioLanguage(event.target.value)}
+                                                className="w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-colors focus:border-sky-400 focus:ring-2 focus:ring-sky-400/25"
+                                            >
+                                                {languageTabs.map((lang) => (
+                                                    <option key={lang.code} value={lang.code}>
+                                                        {lang.label}
+                                                    </option>
+                                                ))}
+                                                <option value="ALL">International (ALL)</option>
+                                            </select>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => audioUploadInputRef.current?.click()}
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700"
                                         >
-                                            <input
-                                                ref={audioInputRefs[lang]}
-                                                type="file"
-                                                accept="audio/*"
-                                                className="hidden"
-                                                onChange={(event) => handleAudioSelect(lang, event)}
-                                            />
-                                            <PlayCircle className="mb-2 h-6 w-6 text-slate-400" />
-                                            Upload {lang} audio
-                                        </label>
-                                    ))}
+                                            <Upload className="h-4 w-4" />
+                                            Chọn file audio
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Chọn ngôn ngữ trước, sau đó tải lên tệp âm thanh tương ứng.
+                                    </p>
                                 </div>
                             )}
 

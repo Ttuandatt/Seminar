@@ -57,6 +57,15 @@ enum MediaType {
 enum MediaLanguage {
   VI
   EN
+  JA
+  KO
+  ZH_CN
+  ZH_TW
+  FR
+  DE
+  ES
+  TH
+  RU
   ALL
 }
 
@@ -178,6 +187,7 @@ model Poi {
   nameEn        String?
   descriptionVi String
   descriptionEn String?
+  translations  Json?       @default("{}")
   latitude      Float
   longitude     Float
   triggerRadius Int         @default(15)
@@ -233,6 +243,7 @@ model Tour {
   nameEn            String?
   descriptionVi     String?
   descriptionEn     String?
+  translations      Json?      @default("{}")
   thumbnailUrl      String?
   estimatedDuration Int? // minutes
   status            TourStatus @default(DRAFT)

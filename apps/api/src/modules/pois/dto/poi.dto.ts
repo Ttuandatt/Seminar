@@ -8,6 +8,7 @@ import {
     Max,
     MinLength,
     IsUUID,
+    IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PoiCategory, PoiStatus } from '@prisma/client';
@@ -29,6 +30,10 @@ export class CreatePoiDto {
     @IsOptional()
     @IsString()
     descriptionEn?: string;
+
+    @IsOptional()
+    @IsObject()
+    translations?: Record<string, any>;
 
     @Type(() => Number)
     @IsNumber()
@@ -75,6 +80,10 @@ export class UpdatePoiDto {
     @IsOptional()
     @IsString()
     descriptionEn?: string;
+
+    @IsOptional()
+    @IsObject()
+    translations?: Record<string, any>;
 
     @IsOptional()
     @Type(() => Number)

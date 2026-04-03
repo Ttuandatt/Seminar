@@ -4,6 +4,11 @@ import { ArrowLeft, Save, Map, Loader2, AlertCircle, Plus, Trash2, ArrowUp, Arro
 import { tourService, type Tour, type TourPayload } from '../../services/tour.service';
 import { poiService, type POI } from '../../services/poi.service';
 
+const TOUR_LANGUAGE_OPTIONS = [
+    { code: 'VI', label: 'Vietnamese' },
+    { code: 'EN', label: 'English' },
+] as const;
+
 const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -12,6 +17,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
+    const [activeLang, setActiveLang] = useState<'VI' | 'EN'>('VI');
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -70,7 +76,19 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        if (name === 'name' || name === 'description') {
+            if (activeLang === 'VI') {
+                setFormData((prev) => ({ ...prev, [name]: value }));
+            } else {
+                const enField = name === 'name' ? 'nameEn' : 'descriptionEn';
+                setFormData((prev) => ({ ...prev, [enField]: value }));
+            }
+            return;
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleAddPoi = (poi: POI) => {
@@ -155,6 +173,8 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
 
     // Filter available POIs (exclude already selected)
     const availablePois = allPois.filter(p => !selectedPois.find(sp => sp.id === p.id));
+    const currentName = activeLang === 'VI' ? formData.name : formData.nameEn;
+    const currentDescription = activeLang === 'VI' ? formData.description : formData.descriptionEn;
 
     return (
         <div className="space-y-6 max-w-4xl">
@@ -185,34 +205,44 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     {/* Left Column: Basic Info */}
                     <div className="space-y-6">
                         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-                                <Map className="h-4 w-4 text-blue-600" />
-                                Tour Information
-                            </h2>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                                    <Map className="h-4 w-4 text-blue-600" />
+                                    Tour Information
+                                </h2>
+                                <div className="min-w-[220px]">
+                                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-sky-700">Nội dung ngôn ngữ</label>
+                                    <select
+                                        value={activeLang}
+                                        onChange={(event) => setActiveLang(event.target.value as 'VI' | 'EN')}
+                                        disabled={readOnly}
+                                        className="w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800 outline-none transition-colors focus:border-sky-400 focus:ring-2 focus:ring-sky-400/25 disabled:opacity-60"
+                                    >
+                                        {TOUR_LANGUAGE_OPTIONS.map((lang) => (
+                                            <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Tour Name (VI) *</label>
-                                <input name="name" value={formData.name} onChange={handleChange} required minLength={2} disabled={readOnly}
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Tour Name ({activeLang}) {activeLang === 'VI' ? '*' : ''}
+                                </label>
+                                <input name="name" value={currentName} onChange={handleChange} required={activeLang === 'VI'} minLength={activeLang === 'VI' ? 2 : 0} disabled={readOnly}
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Tour Name (EN)</label>
-                                <input name="nameEn" value={formData.nameEn} onChange={handleChange} disabled={readOnly}
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 disabled:opacity-60"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Description (VI)</label>
-                                <textarea name="description" value={formData.description} onChange={handleChange} rows={3} disabled={readOnly}
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Description ({activeLang})</label>
+                                <textarea name="description" value={currentDescription} onChange={handleChange} rows={3} disabled={readOnly}
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 resize-none disabled:opacity-60"
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Description (EN)</label>
-                                <textarea name="descriptionEn" value={formData.descriptionEn} onChange={handleChange} rows={3} disabled={readOnly}
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-blue-500 resize-none disabled:opacity-60"
-                                />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {activeLang === 'VI'
+                                        ? 'Nội dung tiếng Việt là bắt buộc để publish tour.'
+                                        : 'Nội dung tiếng Anh là tùy chọn.'}
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

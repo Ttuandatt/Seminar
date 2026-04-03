@@ -7,7 +7,7 @@ export class GenerateTtsDto {
     @MaxLength(5000, { message: 'Text quá dài, tối đa 5000 ký tự' })
     text: string;
 
-    @IsEnum(MediaLanguage, { message: 'language phải là VI hoặc EN' })
+    @IsEnum(MediaLanguage, { message: 'Ngôn ngữ không hợp lệ hoặc không được hỗ trợ' })
     language: MediaLanguage;
 
     @IsOptional()

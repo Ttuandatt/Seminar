@@ -27,7 +27,7 @@ export interface POIMedia {
     id: string;
     type: 'IMAGE' | 'AUDIO';
     url: string;
-    language?: 'VI' | 'EN' | 'ALL';
+    language?: string;
     thumbnailUrl?: string | null;
 }
 
@@ -44,6 +44,8 @@ export interface POI {
     nameVi: string;
     nameEn?: string;
     descriptionVi?: string;
+    descriptionEn?: string;
+    translations?: Record<string, any>;
     category: PoiCategory;
     status: PoiStatus;
     ownerId?: string | null;
@@ -77,6 +79,7 @@ export interface SavePOIPayload {
     nameEn?: string;
     descriptionVi: string;
     descriptionEn?: string;
+    translations?: Record<string, any>;
     latitude: number;
     longitude: number;
     category: PoiCategory;
@@ -111,7 +114,7 @@ export const poiService = {
         return response.data;
     },
 
-    uploadMedia: async (poiId: string, file: File, type: 'IMAGE' | 'AUDIO', language?: 'VI' | 'EN') => {
+    uploadMedia: async (poiId: string, file: File, type: 'IMAGE' | 'AUDIO', language?: string) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('type', type);
@@ -130,7 +133,7 @@ export const poiService = {
         return response.data;
     },
 
-    generateTts: async (poiId: string, text: string, language: 'VI' | 'EN', voice?: string) => {
+    generateTts: async (poiId: string, text: string, language: string, voice?: string) => {
         const response = await api.post(`/tts/generate/${poiId}`, { text, language, voice });
         return response.data;
     },

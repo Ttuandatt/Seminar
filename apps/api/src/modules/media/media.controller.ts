@@ -45,7 +45,7 @@ export class MediaController {
         @Param('poiId') poiId: string,
         @UploadedFile() file: Express.Multer.File,
         @Body('type') type: MediaType,
-        @Body('language') language?: MediaLanguage,
+        @Body('language') language?: string,
     ) {
         if (!file) throw new BadRequestException('File is required');
         if (!type) throw new BadRequestException('type is required (IMAGE or AUDIO)');
@@ -66,7 +66,7 @@ export class MediaController {
             data: {
                 poiId,
                 type,
-                language: language || 'ALL',
+                language: this.normalizeMediaLanguage(language),
                 url: `/uploads/${file.filename}`,
                 originalName: file.originalname,
                 sizeBytes: file.size,
@@ -93,5 +93,13 @@ export class MediaController {
 
         await this.prisma.poiMedia.delete({ where: { id: mediaId } });
         return { message: 'Media deleted' };
+    }
+
+    private normalizeMediaLanguage(language?: string): MediaLanguage {
+        const raw = (language || MediaLanguage.ALL).toUpperCase().replace('-', '_');
+        if ((Object.values(MediaLanguage) as string[]).includes(raw)) {
+            return raw as MediaLanguage;
+        }
+        throw new BadRequestException(`Unsupported media language: ${language}`);
     }
 }

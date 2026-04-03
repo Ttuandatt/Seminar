@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, User } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { useTranslation } from 'react-i18next';
 import FormFieldError from '../components/FormFieldError';
@@ -44,17 +43,13 @@ export default function RegisterScreen() {
         }
         setLoading(true);
         try {
-            const data = await authService.register({ fullName: fullName.trim(), email: email.trim(), password });
-            // Save token if returned by backend
-            if (data?.accessToken) {
-                await AsyncStorage.setItem('accessToken', data.accessToken);
-            }
+            await authService.register({ fullName: fullName.trim(), email: email.trim(), password });
             setTimeout(() => {
                 setFullName(''); setEmail(''); setPassword('');
                 setErrors({});
                 setBanner(null);
-                // Navigate directly to main tabs (not login) for better iOS UX
-                router.replace('/(tabs)');
+                // Success alert, then route
+                router.replace('/login');
             }, 300);
         } catch (error: any) {
             console.error('Register Error:', error);

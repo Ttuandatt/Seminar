@@ -188,7 +188,7 @@ export class ShopOwnerController {
         @Param('id') poiId: string,
         @UploadedFile() file: Express.Multer.File,
         @Body('type') type: MediaType,
-        @Body('language') language?: MediaLanguage,
+        @Body('language') language?: string,
     ) {
         const poi = await this.prisma.poi.findFirst({
             where: { id: poiId, deletedAt: null },
@@ -201,7 +201,7 @@ export class ShopOwnerController {
             data: {
                 poiId,
                 type: type || 'IMAGE',
-                language: language || 'ALL',
+                language: this.normalizeMediaLanguage(language),
                 url: `/uploads/${file.filename}`,
                 originalName: file.originalname,
                 sizeBytes: file.size,
@@ -263,5 +263,13 @@ export class ShopOwnerController {
         );
 
         return { totalViews, totalAudioPlays, pois };
+    }
+
+    private normalizeMediaLanguage(language?: string): MediaLanguage {
+        const raw = (language || MediaLanguage.ALL).toUpperCase().replace('-', '_');
+        if ((Object.values(MediaLanguage) as string[]).includes(raw)) {
+            return raw as MediaLanguage;
+        }
+        throw new BadRequestException(`Unsupported media language: ${language}`);
     }
 }

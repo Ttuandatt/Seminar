@@ -30,6 +30,13 @@ export const SUPPORTED_LANGUAGES = [
 export class TranslateService {
     private readonly logger = new Logger(TranslateService.name);
 
+    private normalizeLanguageCode(lang: string): string {
+        const lower = lang.toLowerCase().replace('_', '-');
+        if (lower === 'zh-cn') return 'zh-CN';
+        if (lower === 'zh-tw') return 'zh-TW';
+        return lower;
+    }
+
     /**
      * Translate a single text from one language to another.
      * Uses Google Translate (free, no API key required).
@@ -39,19 +46,22 @@ export class TranslateService {
             return { translatedText: '', from, to };
         }
 
+        const fromLang = this.normalizeLanguageCode(from);
+        const toLang = this.normalizeLanguageCode(to);
+
         try {
             const translate = await getTranslator();
-            const result = await translate(text, { from, to });
+            const result = await translate(text, { from: fromLang, to: toLang });
             
-            this.logger.log(`Translated [${from} → ${to}]: "${text.substring(0, 50)}..." → "${result.text.substring(0, 50)}..."`);
+            this.logger.log(`Translated [${fromLang} → ${toLang}]: "${text.substring(0, 50)}..." → "${result.text.substring(0, 50)}..."`);
             
             return {
                 translatedText: result.text,
-                from: result.from?.language?.iso || from,
-                to,
+                from: result.from?.language?.iso || fromLang,
+                to: toLang,
             };
         } catch (error) {
-            this.logger.error(`Translation failed [${from} → ${to}]:`, error);
+            this.logger.error(`Translation failed [${fromLang} → ${toLang}]:`, error);
             throw error;
         }
     }
@@ -65,22 +75,21 @@ export class TranslateService {
         from: string,
         to: string,
     ): Promise<{ translations: string[]; from: string; to: string }> {
-        const translate = await getTranslator();
-        
+        const fromLang = this.normalizeLanguageCode(from);
+        const toLang = this.normalizeLanguageCode(to);
+
+        this.logger.log(`Batch translating ${texts.length} items [${fromLang} → ${toLang}]`);
+
+        // Use Promise.all to translate everything. If one fails, the whole batch fails.
         const results = await Promise.all(
             texts.map(async (text) => {
                 if (!text?.trim()) return '';
-                try {
-                    const result = await translate(text, { from, to });
-                    return result.text;
-                } catch (error) {
-                    this.logger.error(`Batch translation failed for: "${text.substring(0, 30)}..."`, error);
-                    return text; // Return original on failure
-                }
+                const result = await this.translate(text, fromLang, toLang);
+                return result.translatedText;
             }),
         );
 
-        return { translations: results, from, to };
+        return { translations: results, from: fromLang, to: toLang };
     }
 
     /**

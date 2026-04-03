@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Dimensions, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, Globe } from 'lucide-react-native';
@@ -10,7 +10,9 @@ import { touristService } from '../../services/touristService';
 import { getMediaUrl } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
-import { useGlobalAudio } from '../../context/AudioContext';
+import { translateTextRuntime } from '../../services/runtimeLocalizationService';
+import { usePoiLocalization } from '../../hooks/usePoiLocalization';
+import { getFallbackAudioLabel, getFallbackTextNote, getLanguageLabel, getMissingAudioNote, getNoAudioAvailableNote } from '../../services/localizationCopy';
 
 const { width } = Dimensions.get('window');
 
@@ -25,20 +27,65 @@ export default function PoiDetailScreen() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [translatedName, setTranslatedName] = useState<string | null>(null);
+    const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+    const [selectedAudioUrl, setSelectedAudioUrl] = useState<string | null>(null);
 
-    const { stopAndClearAudio } = useGlobalAudio();
+    const shouldUseRuntimeLocalization = lang !== 'vi' && lang !== 'en';
+    const { textState, audioState } = usePoiLocalization(poi, translatedName, translatedDescription);
 
     useEffect(() => {
         fetchData();
         checkAuth();
+    }, [id]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const translatePoiContent = async () => {
+            if (!poi || !shouldUseRuntimeLocalization) {
+                setTranslatedName(null);
+                setTranslatedDescription(null);
+                return;
+            }
+
+            const sourceName = poi.nameEn || poi.nameVi || '';
+            const sourceDescription = poi.descriptionEn || poi.descriptionVi || '';
+
+            try {
+                const [nameResult, descriptionResult] = await Promise.all([
+                    translateTextRuntime(sourceName, 'auto', lang),
+                    translateTextRuntime(sourceDescription, 'auto', lang),
+                ]);
+
+                if (!cancelled) {
+                    setTranslatedName(nameResult);
+                    setTranslatedDescription(descriptionResult);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setTranslatedName(null);
+                    setTranslatedDescription(null);
+                }
+                console.warn('Runtime localization failed:', error);
+            }
+        };
+
+        translatePoiContent();
 
         return () => {
-            // Defer the state update to avoid commitPassiveUnmountOnFiber crash
-            setTimeout(() => {
-                stopAndClearAudio();
-            }, 0);
+            cancelled = true;
         };
-    }, [id]);
+    }, [poi, lang, shouldUseRuntimeLocalization]);
+
+    useEffect(() => {
+        if (!audioState) {
+            setSelectedAudioUrl(null);
+            return;
+        }
+
+        setSelectedAudioUrl(audioState.exactAudioUrl ? getMediaUrl(audioState.exactAudioUrl) : null);
+    }, [audioState?.exactAudioUrl, audioState?.requestedLanguage]);
 
     const checkAuth = async () => {
         const token = await AsyncStorage.getItem('accessToken');
@@ -50,7 +97,9 @@ export default function PoiDetailScreen() {
                 if (favs.some((f: any) => f.poiId === id)) {
                     setIsFavorite(true);
                 }
-            } catch (e) { }
+            } catch (error) {
+                console.warn('Failed to load favorites:', error);
+            }
         }
     };
 
@@ -76,7 +125,7 @@ export default function PoiDetailScreen() {
                 if (isLoggedIn) {
                     touristService.addHistory({ poiId: data.id, triggerType: 'MANUAL' }).catch(() => { });
                 } else {
-                    publicService.logTrigger({ deviceId: 'anonymous', poiId: data.id, triggerType: 'MANUAL', userAction: 'ACCEPTED' }).catch(() => { });
+                    publicService.logTrigger({ deviceId: 'anonymous', poiId: data.id, triggerType: 'MANUAL', userAction: 'VIEW' }).catch(() => { });
                 }
             }
         } catch (error) {
@@ -121,8 +170,13 @@ export default function PoiDetailScreen() {
     }
 
     const images = poi.media?.filter(m => m.type === 'IMAGE') || [];
-    const audio = poi.media?.find(m => m.type === 'AUDIO' && (m.language === lang.toUpperCase() || m.language === 'ALL'))
-        ?? poi.media?.find(m => m.type === 'AUDIO');
+    const displayName = textState?.name || getPoiName(poi);
+    const displayDescription = textState?.description || getPoiDescription(poi);
+    const fallbackTextNote = textState ? getFallbackTextNote(textState.resolvedLanguage, textState.requestedLanguage) : '';
+    const exactAudioUrl = audioState?.exactAudioUrl ? getMediaUrl(audioState.exactAudioUrl) : null;
+    const activeAudioUrl = selectedAudioUrl || exactAudioUrl;
+    const exactAudioMissingNote = audioState ? getMissingAudioNote(audioState.requestedLanguage) : '';
+    const audioUnavailableNote = audioState?.isUnavailable ? getNoAudioAvailableNote() : '';
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -139,9 +193,9 @@ export default function PoiDetailScreen() {
                         }}
                         scrollEventThrottle={16}
                     >
-                        {images.map((img, index) => (
+                        {images.map((img) => (
                             <Image
-                                key={img.id || index}
+                                key={img.id || img.url || img.originalName || img.type}
                                 source={{ uri: getMediaUrl(img.url) }}
                                 style={styles.carouselImage}
                             />
@@ -154,9 +208,9 @@ export default function PoiDetailScreen() {
                 )}
                 {images.length > 1 && (
                     <View style={styles.dotsContainer}>
-                        {images.map((_, i) => (
+                        {images.map((img, i) => (
                             <View
-                                key={i}
+                                key={img.id || img.url || img.originalName || img.type}
                                 style={[
                                     styles.dot,
                                     i === activeImageIndex && styles.dotActive,
@@ -170,7 +224,7 @@ export default function PoiDetailScreen() {
             <View style={styles.content}>
                 <View style={styles.headerRow}>
                     <Text style={styles.title}>
-                        {getPoiName(poi)}
+                        {displayName}
                     </Text>
                     <View style={styles.actionsRow}>
                         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/language')}>
@@ -187,14 +241,69 @@ export default function PoiDetailScreen() {
                     {t(`categories.${poi.category}`, t('categories.DEFAULT'))}
                 </Text>
 
-                {/* Audio Player Component */}
-                {audio && <AudioPlayer audioUrl={getMediaUrl(audio.url)} poiId={poi.id} autoPlay />}
-                {!audio && <Text style={styles.noAudioText}>{t('poi.noAudio')}</Text>}
+                {fallbackTextNote ? (
+                    <View style={styles.fallbackNoteCard}>
+                        <Text style={styles.fallbackNoteText}>{fallbackTextNote}</Text>
+                    </View>
+                ) : null}
+
+                {audioState && (
+                    <View style={styles.audioListCard}>
+                        <Text style={styles.audioListTitle}>{t('poi.availableAudio') || 'Available audio'}</Text>
+
+                        {audioState.availableLanguages.length > 0 && (
+                            <View style={styles.audioLanguageRow}>
+                                {audioState.availableLanguages.map((language) => (
+                                    <View key={language} style={styles.audioLanguageChip}>
+                                        <Text style={styles.audioLanguageChipText}>{getLanguageLabel(language)}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {!audioState.exactLanguageAvailable && (
+                            <View style={styles.audioUnavailableCard}>
+                                <Text style={styles.audioUnavailableText}>
+                                    {audioUnavailableNote || exactAudioMissingNote}
+                                </Text>
+                            </View>
+                        )}
+
+                        {activeAudioUrl && (
+                            <View style={styles.audioPlayerWrap}>
+                                <AudioPlayer
+                                    audioUrl={activeAudioUrl}
+                                    poiId={poi.id}
+                                    autoPlay={Boolean(activeAudioUrl)}
+                                />
+                            </View>
+                        )}
+
+                        <View style={styles.audioListWrap}>
+                            {audioState.fallbackOptions.map((option) => {
+                                const resolvedUrl = getMediaUrl(option.url);
+                                const isActive = activeAudioUrl === resolvedUrl;
+
+                                return (
+                                    <TouchableOpacity
+                                        key={option.language || option.url}
+                                        style={[styles.audioPill, isActive && styles.audioPillActive]}
+                                        onPress={() => setSelectedAudioUrl(resolvedUrl)}
+                                    >
+                                        <Text style={[styles.audioPillText, isActive && styles.audioPillTextActive]}>
+                                            {getFallbackAudioLabel(option.language)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+                )}
 
                 <View style={styles.descriptionCard}>
                     <Text style={styles.descriptionTitle}>{t('poi.about')}</Text>
                     <Text style={styles.description}>
-                        {getPoiDescription(poi)}
+                        {displayDescription}
                     </Text>
                 </View>
             </View>
@@ -290,6 +399,94 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         color: '#94a3b8',
         marginVertical: 16,
+    },
+    fallbackNoteCard: {
+        backgroundColor: '#eff6ff',
+        borderRadius: 12,
+        padding: 12,
+        marginTop: 12,
+    },
+    fallbackNoteText: {
+        fontSize: 13,
+        lineHeight: 20,
+        color: '#1d4ed8',
+        fontWeight: '500',
+    },
+    audioListCard: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        padding: 16,
+        marginTop: 12,
+    },
+    audioListTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#0f172a',
+        marginBottom: 12,
+    },
+    audioLanguageRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 12,
+    },
+    audioLanguageChip: {
+        borderRadius: 999,
+        backgroundColor: '#e2e8f0',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+    },
+    audioLanguageChipText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#334155',
+    },
+    audioPlayerWrap: {
+        marginBottom: 12,
+    },
+    audioUnavailableCard: {
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#f1c40f33',
+        backgroundColor: '#fffbeb',
+        padding: 12,
+        marginBottom: 12,
+    },
+    audioUnavailableText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#92400e',
+        marginBottom: 4,
+    },
+    audioUnavailableHint: {
+        fontSize: 13,
+        color: '#b45309',
+        lineHeight: 18,
+    },
+    audioListWrap: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+    },
+    audioPill: {
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: '#cbd5e1',
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    audioPillActive: {
+        backgroundColor: '#0f172a',
+        borderColor: '#0f172a',
+    },
+    audioPillText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#334155',
+    },
+    audioPillTextActive: {
+        color: '#fff',
     },
     descriptionCard: {
         marginTop: 16,

@@ -28,11 +28,11 @@ const VOICE_MAP: Record<string, { default: string; alternatives: string[] }> = {
         default: 'ko-KR-SunHiNeural',
         alternatives: ['ko-KR-InJoonNeural'],
     },
-    'ZH-CN': {
+    'ZH_CN': {
         default: 'zh-CN-XiaoxiaoNeural',
         alternatives: ['zh-CN-YunxiNeural'],
     },
-    'ZH-TW': {
+    'ZH_TW': {
         default: 'zh-TW-HsiaoChenNeural',
         alternatives: ['zh-TW-YunJheNeural'],
     },
@@ -68,8 +68,8 @@ const LANG_TO_TRANSLATE_CODE: Record<string, string> = {
     EN: 'en',
     JA: 'ja',
     KO: 'ko',
-    'ZH-CN': 'zh-CN',
-    'ZH-TW': 'zh-TW',
+    'ZH_CN': 'zh-CN',
+    'ZH_TW': 'zh-TW',
     FR: 'fr',
     DE: 'de',
     ES: 'es',
@@ -92,7 +92,7 @@ export class TtsService {
 
     async generateForPoi(
         poiId: string,
-        language: MediaLanguage,
+        language: string,
         text: string,
         voice?: string,
     ) {
@@ -101,10 +101,13 @@ export class TtsService {
         });
         if (!poi) throw new NotFoundException('POI not found');
 
-        const voiceName = voice || VOICE_MAP[language]?.default || VOICE_MAP[language.toUpperCase()]?.default;
+        const languageCode = language.toUpperCase().replace('_', '-');
+        const dbLanguage = this.toMediaLanguage(languageCode);
+
+        const voiceName = voice || VOICE_MAP[languageCode]?.default || VOICE_MAP[dbLanguage]?.default;
         if (!voiceName) {
             throw new BadRequestException(
-                `Không hỗ trợ ngôn ngữ: ${language}. Hỗ trợ: ${Object.keys(VOICE_MAP).join(', ')}`,
+                `Không hỗ trợ ngôn ngữ: ${languageCode}. Hỗ trợ: ${Object.keys(VOICE_MAP).join(', ')}`,
             );
         }
 
@@ -115,7 +118,7 @@ export class TtsService {
         );
 
         const fileId = randomUUID();
-        const fileName = `${poiId}_${language.toLowerCase()}_${fileId}`;
+        const fileName = `${poiId}_${dbLanguage.toLowerCase()}_${fileId}`;
         const outputDir = join(UPLOADS_DIR, fileName);
 
         // msedge-tts toFile() expects the path as a directory and writes audio.mp3 inside it
@@ -130,7 +133,7 @@ export class TtsService {
         tts.close();
 
         this.logger.log(
-            `TTS generated: ${audioFilePath} for POI ${poiId} (${language})`,
+            `TTS generated: ${audioFilePath} for POI ${poiId} (${dbLanguage})`,
         );
 
         const stats = statSync(audioFilePath);
@@ -143,7 +146,7 @@ export class TtsService {
             where: {
                 poiId,
                 type: 'AUDIO',
-                language,
+                language: dbLanguage,
                 originalName: { startsWith: 'tts_' },
             },
             data: { orderIndex: -1 }, // Mark as archived
@@ -154,9 +157,9 @@ export class TtsService {
             data: {
                 poiId,
                 type: 'AUDIO',
-                language,
+                language: dbLanguage,
                 url: relativePath,
-                originalName: `tts_${language.toLowerCase()}_${Date.now()}.mp3`,
+                originalName: `tts_${dbLanguage.toLowerCase()}_${Date.now()}.mp3`,
                 sizeBytes: stats.size,
                 orderIndex: 0,
             },
@@ -165,7 +168,7 @@ export class TtsService {
         return {
             id: media.id,
             url: media.url,
-            language: media.language,
+            language: this.toClientLanguage(media.language),
             sizeBytes: media.sizeBytes,
             voice: voiceName,
         };
@@ -194,11 +197,13 @@ export class TtsService {
             this.logger.log(`Translation result: "${finalText.substring(0, 50)}..."`);
         }
 
-        // Map target language to MediaLanguage enum (DB only supports VI, EN, ALL)
-        // For non-VI/EN languages, we store as 'EN' (foreign) with a descriptive name
-        const dbLanguage: MediaLanguage = targetLanguage.toUpperCase() === 'VI' ? MediaLanguage.VI : MediaLanguage.EN;
-
-        const result = await this.generateForPoi(poiId, dbLanguage, finalText, voice || VOICE_MAP[targetLanguage.toUpperCase()]?.default);
+        const targetLangCode = targetLanguage.toUpperCase().replace('_', '-');
+        const result = await this.generateForPoi(
+            poiId,
+            targetLangCode,
+            finalText,
+            voice || VOICE_MAP[targetLangCode]?.default,
+        );
 
         return {
             ...result,
@@ -260,5 +265,17 @@ export class TtsService {
 
         this.logger.log(`Cleaned up ${deleted} archived TTS files`);
         return { deleted };
+    }
+
+    private toMediaLanguage(language: string): MediaLanguage {
+        const normalized = language.toUpperCase().replace('-', '_');
+        if ((Object.values(MediaLanguage) as string[]).includes(normalized)) {
+            return normalized as MediaLanguage;
+        }
+        throw new BadRequestException(`Không hỗ trợ ngôn ngữ media: ${language}`);
+    }
+
+    private toClientLanguage(language: MediaLanguage | string): string {
+        return String(language).toUpperCase().replace('_', '-');
     }
 }

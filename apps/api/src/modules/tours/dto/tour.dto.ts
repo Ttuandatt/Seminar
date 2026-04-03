@@ -3,6 +3,7 @@ import {
     IsOptional,
     IsInt,
     IsArray,
+    IsObject,
     MinLength,
     IsEnum,
 } from 'class-validator';
@@ -28,6 +29,10 @@ export class CreateTourDto {
     descriptionEn?: string;
 
     @IsOptional()
+    @IsObject()
+    translations?: Record<string, any>;
+
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     estimatedDuration?: number;
@@ -50,6 +55,10 @@ export class UpdateTourDto {
     @IsOptional()
     @IsString()
     descriptionEn?: string;
+
+    @IsOptional()
+    @IsObject()
+    translations?: Record<string, any>;
 
     @IsOptional()
     @Type(() => Number)
