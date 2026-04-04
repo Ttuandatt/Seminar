@@ -1,9 +1,9 @@
 # 📊 Non-Functional Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -18,7 +18,9 @@
 | NFR-P005 | Map render time | < 1s | P0 |
 | NFR-P006 | Audio start latency | < 500ms | P0 |
 | NFR-P007 | Image lazy loading | Yes | P1 |
-| NFR-P008 | Concurrent users supported | 1000 | P1 |
+| NFR-P008 | Concurrent users supported (MVP) | 50 | P1 |
+| NFR-P009 | TTS generation latency | < 5s / POI | P1 |
+| NFR-P010 | Translation API latency | < 3s / request | P1 |
 
 ---
 
@@ -43,7 +45,7 @@
 | NFR-S001 | Horizontal scaling | Supported | P1 |
 | NFR-S002 | Max POIs per location | 500 | P1 |
 | NFR-S003 | Max Tours | 100 | P1 |
-| NFR-S004 | Max concurrent audio streams | 500 | P1 |
+| NFR-S004 | Max concurrent audio streams (MVP) | 100 | P1 |
 | NFR-S005 | Database auto-scaling | Cloud-managed | P2 |
 
 ---
@@ -55,7 +57,7 @@
 | NFR-SEC001 | HTTPS enforcement | All traffic | P0 |
 | NFR-SEC002 | Password hashing | bcrypt (cost 12) | P0 |
 | NFR-SEC003 | JWT token expiry | 15 min access, 7 day refresh | P0 |
-| NFR-SEC004 | Rate limiting | 100 req/min/IP (public), 200/min (Shop Owner), 300/min (Admin) | P1 |
+| NFR-SEC004 | Rate limiting | Planned (Phase 2), chưa enforce ở runtime MVP | P1 |
 | NFR-SEC005 | Input validation | Server-side required | P0 |
 | NFR-SEC006 | SQL injection protection | Parameterized queries (Prisma) | P0 |
 | NFR-SEC007 | XSS protection | Sanitized output | P0 |
@@ -64,6 +66,8 @@
 | NFR-SEC010 | Dependency vulnerability scan | CI/CD integrated | P2 |
 | NFR-SEC011 | Shop Owner data isolation | owner_id filter on all queries | P0 |
 | NFR-SEC012 | Role-based access control | Admin / Shop Owner / Tourist JWT claims | P0 |
+| NFR-SEC013 | Revoked token enforcement | Token bị revoke phải bị từ chối ngay | P0 |
+| NFR-SEC014 | Password reset token expiry | Token reset hết hạn sau 1 giờ | P0 |
 
 ---
 
@@ -100,7 +104,7 @@
 | NFR-C001 | Admin browsers | Chrome 90+, Firefox 90+, Safari 14+, Edge 90+ | P0 |
 | NFR-C002 | Mobile OS | iOS 14+, Android 10+ | P0 |
 | NFR-C003 | Screen sizes | 320px - 2560px | P0 |
-| NFR-C004 | Tourist App | React Native (Expo) iOS + Android | P0 |
+| NFR-C004 | Tourist App | React Native (Expo SDK 54) iOS + Android | P0 |
 | NFR-C005 | API backward compatibility | Deprecation notice 3 months | P2 |
 
 ---
@@ -116,6 +120,7 @@
 | NFR-M005 | Modular architecture | Component-based | P0 |
 | NFR-M006 | CI/CD pipeline | Automated build/deploy | P1 |
 | NFR-M007 | Deployment rollback | < 5 minutes | P1 |
+| NFR-M008 | Monorepo shared packages | Shared code qua packages/localization-shared | P1 |
 
 ---
 
@@ -124,7 +129,7 @@
 | ID | Requirement | Target | Priority |
 |----|-------------|--------|----------|
 | NFR-L001 | Default language | Vietnamese | P0 |
-| NFR-L002 | Supported languages (MVP) | VN, EN | P0 |
+| NFR-L002 | Supported languages (MVP) | VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU | P0 |
 | NFR-L003 | Timezone | Asia/Ho_Chi_Minh | P0 |
 | NFR-L004 | Date format | DD/MM/YYYY | P0 |
 | NFR-L005 | Number format | Locale-specific (1.234,56) | P1 |
@@ -154,6 +159,7 @@
 | NFR-E004 | Battery consumption | < 10%/hour | P1 |
 | NFR-E005 | App size | < 50MB | P1 |
 | NFR-E006 | Memory usage | < 200MB | P1 |
+| NFR-E007 | TTS/Translation offline behavior | Cần internet, fallback hiển thị nội dung đã cache | P1 |
 
 ---
 
@@ -166,6 +172,7 @@
 | NFR-O003 | Log aggregation | Centralized logs | P2 |
 | NFR-O004 | Alerting | Critical errors → Slack/Email | P1 |
 | NFR-O005 | Analytics | Google Analytics/Mixpanel | P2 |
+| NFR-O006 | API documentation | Swagger/OpenAPI auto-generated và truy cập được | P0 |
 
 ---
 

@@ -1,9 +1,9 @@
 ﻿# Business Rules
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -257,4 +257,17 @@
 ---
 
 > **Reference:** `PRDs/00_requirements_intake.md`, `05_functional_requirements.md`, `08_data_requirements.md`
+
+---
+
+## 15. Delta Rules v3.1
+
+| ID | Rule Name | Type | Condition | Action | Exception (Khi vi phạm) | FR Ref |
+|----|-----------|------|-----------|--------|--------------------------|--------|
+| BR-1101 | Translation target whitelist | Constraint | Gọi translate API | Chỉ cho phép ngôn ngữ nằm trong supported_languages | 400 nếu target không hợp lệ | FR-807 |
+| BR-1102 | Translation retry | Trigger | Translate lỗi tạm thời | Retry với backoff tối đa 3 lần | Trả lỗi 503 nếu vẫn fail | FR-807 |
+| BR-1103 | Custom tour ownership | Constraint | Tourist update/delete tour | Chỉ thao tác trên tour do chính user tạo | 403 Forbidden | FR-805 |
+| BR-1104 | Custom tour size limit | Constraint | Tạo/sửa custom tour | Tối thiểu 1 POI, tối đa 20 POIs/tour | 422 Validation error | FR-805 |
+| BR-1105 | Password reset token TTL | Constraint | Tạo token reset | Hết hạn sau 1 giờ | Token expired | FR-103 |
+| BR-1106 | Revoked token reject immediately | Trigger | Access/refresh token đã revoke | Từ chối request ngay | 401 Unauthorized | FR-102 |
 

@@ -1,9 +1,9 @@
 # 📐 Sequence Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -1292,3 +1292,53 @@ sequenceDiagram
 ---
 
 > **Reference:** `PRDs/14_usecase_diagram.md`, `PRDs/09_api_specifications.md`, `PRDs/05_functional_requirements.md`
+
+---
+
+## SD-23: Translation Workflow
+
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant UI as Admin Dashboard
+    participant API as NestJS API
+    participant Translate as Translate Service
+    participant DB as PostgreSQL
+
+    Admin->>UI: Chọn POI và target language
+    UI->>API: POST /translate
+    API->>Translate: translate(text, target)
+    Translate-->>API: translatedText
+    API->>DB: UPDATE poi fields (name/description)
+    DB-->>API: updated
+    API-->>UI: 200 translated payload
+    UI-->>Admin: Hiển thị kết quả + toast thành công
+```
+
+## SD-24: Tourist Custom Tour CRUD
+
+```mermaid
+sequenceDiagram
+    actor Tourist
+    participant App as Mobile App
+    participant API as NestJS API
+    participant DB as PostgreSQL
+
+    Tourist->>App: Tạo custom tour từ danh sách POIs
+    App->>API: POST /tourist/me/tours
+    API->>DB: INSERT tour(tourType=CUSTOM) + tour_pois
+    DB-->>API: created
+    API-->>App: 201 custom tour
+
+    Tourist->>App: Chỉnh sửa tour
+    App->>API: PATCH /tourist/me/tours/:tourId
+    API->>DB: UPDATE owned custom tour
+    DB-->>API: updated
+    API-->>App: 200 updated
+
+    Tourist->>App: Xóa tour
+    App->>API: DELETE /tourist/me/tours/:tourId
+    API->>DB: Soft delete custom tour
+    DB-->>API: deleted
+    API-->>App: 204 No Content
+```

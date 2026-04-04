@@ -1,9 +1,9 @@
 # ⚠️ Dependencies & Risks
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-10
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -13,21 +13,23 @@
 
 | ID | Dependency | Owner | Blocks | Status | Due Date |
 |----|------------|-------|--------|--------|----------|
-| D001 | UI/UX Design completion | Design Team | Frontend development | 🟡 In Progress | TBD |
-| D002 | Backend API development | Backend Team | Frontend integration | 🔴 Not Started | TBD |
+| D001 | UI/UX Design completion | Design Team | Frontend development | ✅ Done | 2026-03-22 |
+| D002 | Backend API development | Backend Team | Frontend integration | ✅ Done (14 modules) | 2026-03-22 |
 | D003 | Content creation (POI text) | Content Team | Demo/Testing | 🟡 In Progress | TBD |
-| D004 | Audio recording | Content Team | Audio features | 🔴 Not Started | TBD |
-| D005 | Infrastructure setup | DevOps | Deployment | 🔴 Not Started | TBD |
+| D004 | Audio recording / TTS setup | Content Team + Backend | Audio features | ✅ Done (TTS engine) | 2026-03-15 |
+| D005 | Infrastructure setup | DevOps | Deployment | ✅ Done (Render.com) | 2026-03-20 |
 | D006 | Database design approval | Tech Lead | Backend development | ✅ Done | - |
 
 ### 1.2 External Dependencies
 
 | ID | Dependency | Provider | Impact | Status | Mitigation |
 |----|------------|----------|--------|--------|------------|
-| D101 | Map API Key | Google/Mapbox | Maps won't work | 🔴 Pending | Apply early, have backup provider |
-| D102 | Cloud Storage setup | Azure/AWS | Media upload blocked | 🔴 Pending | Use local storage for dev |
+| D101 | Map tiles | OpenStreetMap | Maps display | ✅ Done | Free, no API key needed |
+| D102 | File storage | Local disk | Media upload | ✅ Done (local) | Cloud migration in Phase 2 |
 | D103 | Domain & SSL | Registrar/CA | Production deployment | 🔴 Pending | Can use staging domain first |
-| D104 | CDN configuration | Cloud provider | Media performance | 🟡 Optional MVP | Direct S3 URLs temporary |
+| D104 | CDN configuration | Cloud provider | Media performance | 🟡 Optional MVP | Direct file serving for MVP |
+| D105 | TTS service | msedge-tts | Audio generation | ✅ Done | Free, unofficial library |
+| D106 | Translation service | google-translate-api-x | Localization | ✅ Done | Free tier, unofficial |
 
 ---
 
@@ -88,7 +90,7 @@
 | R001 | GPS accuracy poor in dense areas | Medium | High | 6 | Fallback QR code; future BLE beacons | Dev Lead |
 | R002 | Audio playback issues on different devices | Medium | Medium | 4 | Test on multiple devices early | Mobile Dev |
 | R003 | Map API rate limits exceeded | Low | High | 3 | Implement caching; monitor usage | Backend |
-| R004 | Database performance with geo queries | Low | Medium | 2 | Proper indexing; PostGIS optimization | DBA |
+| R004 | Nearby query performance with float coordinates | Low | Medium | 2 | Proper indexing; optimize Haversine query | DBA |
 | R005 | Offline mode sync conflicts | Medium | Medium | 4 | Last-write-wins strategy; conflict UI | Frontend |
 | R006 | Battery drain from GPS tracking | Medium | Medium | 4 | Optimize update frequency; user settings | Mobile Dev |
 | R007 | Shop Owner data isolation breach | Low | Critical | 3 | owner_id filter at ORM/service layer; integration tests | Backend |
@@ -98,7 +100,7 @@
 
 | ID | Risk | Probability | Impact | Score | Mitigation | Owner |
 |----|------|-------------|--------|-------|------------|-------|
-| R101 | Backend API delays | High | High | 9 | Mock APIs for frontend; parallel dev | PM |
+| R101 | Backend API delays | Low | Low | 1 | Resolved - Backend modules complete | PM |
 | R102 | Content not ready on time | Medium | Medium | 4 | Use placeholder content; prioritize | Content Lead |
 | R103 | Scope creep | Medium | High | 6 | Strict scope management; change process | PM |
 | R104 | Key team member unavailable | Low | High | 3 | Knowledge sharing; documentation | PM |
@@ -113,6 +115,10 @@
 | R203 | Content quality issues | Medium | Medium | 4 | Content guidelines; review process | Content Lead |
 | R204 | Privacy/legal concerns with GPS | Low | High | 3 | Privacy policy; user consent; legal review | Legal |
 | R205 | Low Shop Owner adoption | Medium | Medium | 4 | Onboarding flow; analytics as incentive; outreach | PM |
+| R206 | msedge-tts unofficial library breaking changes | Medium | High | 6 | Pin version, monitor releases, fallback provider plan | Dev Lead |
+| R207 | Translation API rate limiting/cost changes | Medium | High | 6 | Cache translations, retry/backoff, consider official API | Backend |
+| R208 | Local file storage not scalable | Low | Medium | 2 | Plan S3/Cloudflare R2 migration for Phase 2 | DevOps |
+| R209 | Password reset email delivery missing | Medium | Medium | 4 | Integrate SendGrid/Resend or disable email flow until ready | Backend |
 
 ---
 
@@ -211,12 +217,15 @@
 
 | ID | Question | Owner | Status | Due |
 |----|----------|-------|--------|-----|
-| OQ001 | Which map provider to use? Google or Mapbox? | Tech Lead | ✅ Decided: **Mapbox** | - |
-| OQ002 | Hosting on Azure, AWS, or GCP? | DevOps | Open | Week 1 |
+| OQ001 | Which map provider to use? | Tech Lead | ✅ Decided: **Leaflet/OSM (admin), native maps (mobile)** | - |
+| OQ002 | Hosting platform? | DevOps | ✅ Decided: **Render.com** | - |
 | OQ003 | Audio format: MP3 only or also WAV? | Content | ✅ Decided: Both | - |
 | OQ004 | PWA or React Native for tourist app? | Tech Lead | ✅ Decided: **React Native (Expo)** | - |
 | OQ005 | How to handle multi-tenant in future? | Architect | Deferred | Phase 2 |
 | OQ006 | Backend framework: FastAPI or NestJS? | Tech Lead | ✅ Decided: **NestJS + Prisma** | - |
+| OQ007 | TTS engine? | Tech Lead | ✅ Decided: **msedge-tts** | - |
+| OQ008 | Translation API? | Tech Lead | ✅ Decided: **google-translate-api-x** | - |
+| OQ009 | Email service for reset flow? | Backend | 🔴 Open | Phase 1.5 |
 
 ---
 

@@ -1,9 +1,9 @@
 # 📋 Scope Definition
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -56,10 +56,11 @@
 | AD-012 | Preview POI | P1 | Preview as Tourist before publish |
 | AD-013 | Upload hình ảnh | P0 | Multiple images/POI |
 | AD-014 | Upload audio | P0 | Audio file/POI |
-| AD-015 | Nội dung đa ngôn ngữ | P1 | VI/EN/ZH |
-| AD-016 | TTS Audio Generation | P1 | Tạo audio từ mô tả văn bản (VI/EN/ZH) bằng msedge-tts |
+| AD-015 | Nội dung đa ngôn ngữ | P1 | 11 ngôn ngữ (VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU) |
+| AD-016 | TTS Audio Generation | P1 | Tạo audio từ mô tả văn bản bằng msedge-tts (11 ngôn ngữ) |
 | AD-017 | Criteria Engine (Admin config) | P1 | Xem/cấu hình thuật toán chọn POI khi vùng phát âm thanh trùng nhau |
 | AD-018 | Map View tổng quan | P1 | Leaflet map hiển thị tất cả POIs, filter status, xem route Tour, legend categories |
+| AD-019 | Analytics Dashboard | P1 | User statistics, lượt xem/audio plays, export CSV |
 
 ### 2.2 Shop Owner Dashboard
 
@@ -68,7 +69,7 @@
 | SO-001 | Đăng ký Shop Owner | P1 | Self-registration với thông tin quán |
 | SO-002 | Đăng nhập Shop Owner | P1 | Login với email/password |
 | SO-003 | Quản lý POI của mình | P1 | CRUD POI(s) thuộc sở hữu (Create, Edit, Delete) |
-| SO-004 | Upload media | P1 | Ảnh + audio (VI/EN/ZH) giới thiệu quán |
+| SO-004 | Upload media | P1 | Ảnh + audio (11 ngôn ngữ) giới thiệu quán |
 | SO-005 | Xem analytics | P1 | Lượt xem, audio plays của POI(s) mình |
 | SO-006 | Cập nhật profile | P1 | Thông tin shop owner (tên, địa chỉ, SĐT) |
 | SO-007 | TTS Audio Generation | P1 | Tạo audio TTS từ nội dung mô tả POI (VI/EN) |
@@ -83,7 +84,7 @@
 | TA-004 | Phát audio | P0 | Audio player |
 | TA-005 | Auto-trigger theo GPS | P0 | Geofence enter |
 | TA-006 | Quét QR fallback | P1 | Manual trigger |
-| TA-007 | Chọn ngôn ngữ | P0 | VI/EN/ZH switch — thay đổi cả text và audio |
+| TA-007 | Chọn ngôn ngữ | P0 | 11 ngôn ngữ switch — thay đổi cả text và audio |
 | TA-008 | Điều khiển audio | P0 | Play/Pause/Seek |
 | TA-009 | Onboarding flow | P1 | First-time user guide |
 | TA-010 | Chọn Tour | P1 | Tour selection |
@@ -96,6 +97,8 @@
 | TA-017 | Criteria Engine (Mobile) | P1 | Khi nhiều POI trùng vùng GPS, chọn POI tốt nhất theo thuật toán scoring (priority + distance + not-played + autoPlay) |
 | TA-018 | Audio Queue (Singleton) | P0 | Global AudioContext quản lý 1 audio player duy nhất, auto-stop khi chuyển POI, seek/pause/resume |
 | TA-019 | i18n UI Strings | P1 | Quốc tế hóa giao diện app (i18next) — labels, buttons, messages chuyển ngôn ngữ cùng POI content |
+| TA-020 | Custom Tour CRUD | P1 | Tạo/Xem/Sửa/Xóa tour tùy chỉnh (2-15 POI, auto-duration via Haversine) |
+| TA-021 | Runtime Translation | P1 | Dịch nội dung POI sang ngôn ngữ khác tại thời gian thực trên mobile |
 
 ### 2.4 Backend
 
@@ -113,6 +116,10 @@
 | BE-009 | Password Reset | P1 | Email-based reset flow |
 | BE-010 | Rate limiting | P1 | API protection |
 | BE-011 | TTS Service | P1 | msedge-tts: synthesize audio VI (vi-VN-HoaiMyNeural) / EN (en-US-AriaNeural) / ZH (zh-CN-XiaoxiaoNeural) |
+| BE-012 | Translation Service | P1 | Google Translate API - translate, batch translate, list languages (11 ngôn ngữ) |
+| BE-013 | TTS Auto-Translate | P1 | Sinh audio TTS kèm dịch tự động (text → translate → synthesize) |
+| BE-014 | Merchant Management | P1 | Admin CRUD tài khoản Shop Owner |
+| BE-015 | Custom Tour API | P1 | Tourist CRUD tour tùy chỉnh với tự tính thời gian |
 
 ---
 
@@ -137,7 +144,6 @@
 |---------|----------|-------|
 | Content versioning | P2 | Version history, rollback |
 | Batch operations | P2 | Bulk CRUD |
-| Analytics dashboard | P2 | User statistics, export CSV |
 | Audio speed control | P2 | 0.5x-2x |
 | Pre-download content | P2 | Offline Tour download |
 | Push notifications | P3 | Future |
@@ -160,11 +166,11 @@
 | Priority | Admin | Tourist | Backend | Total |
 |----------|-------|---------|---------|-------|
 | **P0** | 10 | 7 | 5 | **22** |
-| **P1** | 7 | 8 | 6 | **21** |
+| **P1** | 10 | 10 | 8 | **28** |
 | **P2** | 4 | 2 | 3 | **9** |
 | **P3** | 0 | 1 | 0 | **1** |
 
-**MVP Core:** 22 P0 features + 21 P1 features = **43 features**
+**MVP Core (v3.1):** 22 P0 features + 28 P1 features = **50 features**
 
 ---
 
@@ -300,7 +306,7 @@
 |--------|------------|--------------|
 | **POIs** | 20-50 | 500 |
 | **Tours** | 3-5 | 50 |
-| **Audio files** | 60-150 (3 lang × POIs) | 1,500 |
+| **Audio files** | 220-550 (11 lang × POIs) | 5,500 |
 | **Images** | 60-150 (3/POI) | 5,000 |
 
 ### 10.3 User Scope
@@ -310,7 +316,7 @@
 | **Admin users** | 3-5 |
 | **Tourist users** | 100-500 |
 | **Concurrent users** | 50 |
-| **Languages** | 3 (VI, EN, ZH) |
+| **Languages** | 11 ngôn ngữ (VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU) |
 
 ---
 

@@ -1,9 +1,9 @@
 # 📝 User Stories
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.2  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-02-18  
+> **Cập nhật:** 2026-04-04  
 > **Format:** INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 
 ---
@@ -55,10 +55,13 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 | Epic 4 | Tourist App - Core | 9 |
 | Epic 5 | Tourist App - Location | 10 |
 | Epic 6 | Tourist App - Settings | 3 |
-| Epic 7 | Analytics & Reports | 4 |
-| **Epic 8** | **Shop Owner Management** | **6** |
+| Epic 7 | Analytics & Reports | 5 |
+| **Epic 8** | **Shop Owner Management** | **7** |
+| **Epic 9** | **TTS & Translation** | **5** |
+| **Epic 10** | **Custom Tour (Tourist tự tạo tour)** | **4** |
+| **Epic 11** | **Merchant Management** | **4** |
 
-**Tổng:** 57 stories | ~196 Story Points
+**Tổng:** 72 stories | ~245 Story Points
 
 ---
 
@@ -633,7 +636,7 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 | **As a** | Du khách |
 | **I want to** | xem danh sách POI tôi đã tham quan trong ngày |
 | **So that** | tôi có thể review lại nội dung nếu cần |
-| **Priority** | P2 |
+| **Priority** | P1 |
 | **Story Points** | 3 |
 
 ---
@@ -725,6 +728,8 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 
 **Notes:** Shop Owner chỉ thấy và chỉnh sửa POI(s) mà mình sở hữu. Không được xóa POI.
 
+**Updated Note (v3.1):** Shop Owner có thể soft delete POI do mình sở hữu.
+
 ---
 
 ### US-804: Upload media cho quán
@@ -758,12 +763,150 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 | **I want to** | cập nhật thông tin cá nhân và thông tin quán |
 | **So that** | thông tin liên hệ luôn chính xác |
 | **Priority** | P1 |
-| **Story Points** | 2 |
-| **Refs** | SO-006 |
 
 ---
 
-## 9. Story Map Overview
+### US-807: Shop Owner Dashboard overview
+| Field | Value |
+|-------|-------|
+| **As a** | Shop Owner |
+| **I want to** | xem dashboard tổng quan POI, lượt xem, lượt nghe audio của quán |
+| **So that** | tôi theo dõi hiệu quả nội dung và điều chỉnh kịp thời |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+
+---
+
+## 9. Epic 9: TTS & Translation
+
+### US-901: Tạo audio TTS cho POI
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | tạo audio thuyết minh tự động từ mô tả POI |
+| **So that** | không cần thu âm thủ công cho từng POI |
+| **Priority** | P0 |
+| **Story Points** | 5 |
+
+### US-902: Tạo audio TTS đa ngôn ngữ
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | tạo audio TTS theo nhiều ngôn ngữ cho một POI |
+| **So that** | du khách quốc tế nghe được nội dung phù hợp |
+| **Priority** | P0 |
+| **Story Points** | 5 |
+
+### US-903: Chọn giọng đọc TTS
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | chọn giọng đọc từ danh sách voices |
+| **So that** | giọng đọc phù hợp nội dung và ngữ điệu |
+| **Priority** | P1 |
+| **Story Points** | 2 |
+
+### US-904: Dịch nội dung POI
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | dịch tự động tên và mô tả POI sang ngôn ngữ khác |
+| **So that** | mở rộng khả năng phục vụ khách quốc tế |
+| **Priority** | P0 |
+| **Story Points** | 5 |
+
+### US-905: Dịch hàng loạt POI
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | dịch batch nhiều trường nội dung cùng lúc |
+| **So that** | tiết kiệm thời gian khi số lượng POI lớn |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+
+---
+
+## 10. Epic 10: Custom Tour
+
+### US-1001: Tạo Custom Tour
+| Field | Value |
+|-------|-------|
+| **As a** | Tourist (đã đăng nhập) |
+| **I want to** | tạo tour cá nhân từ các POI tự chọn |
+| **So that** | có lộ trình phù hợp sở thích cá nhân |
+| **Priority** | P1 |
+| **Story Points** | 5 |
+
+### US-1002: Chỉnh sửa Custom Tour
+| Field | Value |
+|-------|-------|
+| **As a** | Tourist |
+| **I want to** | chỉnh sửa thông tin và danh sách điểm dừng custom tour |
+| **So that** | tour luôn phù hợp kế hoạch thực tế |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+
+### US-1003: Xóa Custom Tour
+| Field | Value |
+|-------|-------|
+| **As a** | Tourist |
+| **I want to** | xóa custom tour không còn sử dụng |
+| **So that** | danh sách tour cá nhân gọn gàng |
+| **Priority** | P1 |
+| **Story Points** | 2 |
+
+### US-1004: Theo dõi Custom Tour trên bản đồ
+| Field | Value |
+|-------|-------|
+| **As a** | Tourist |
+| **I want to** | xem route custom tour và tiến trình từng điểm |
+| **So that** | dễ theo dõi hành trình đang đi |
+| **Priority** | P1 |
+| **Story Points** | 5 |
+
+---
+
+## 11. Epic 11: Merchant Management
+
+### US-1101: Xem danh sách Merchants
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | xem danh sách merchant có phân trang/tìm kiếm |
+| **So that** | quản lý đối tác nhanh và chính xác |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+
+### US-1102: Tạo Merchant mới
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | tạo merchant mới |
+| **So that** | thêm đối tác mới vào hệ thống |
+| **Priority** | P1 |
+| **Story Points** | 3 |
+
+### US-1103: Chỉnh sửa Merchant
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | cập nhật thông tin merchant |
+| **So that** | dữ liệu đối tác luôn đúng |
+| **Priority** | P1 |
+| **Story Points** | 2 |
+
+### US-1104: Xóa Merchant
+| Field | Value |
+|-------|-------|
+| **As a** | Admin |
+| **I want to** | xóa merchant không còn hoạt động |
+| **So that** | dữ liệu hệ thống sạch và cập nhật |
+| **Priority** | P1 |
+| **Story Points** | 2 |
+
+---
+
+## 12. Story Map Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
@@ -808,7 +951,7 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 
 ---
 
-## 10. Story Points Summary
+## 13. Story Points Summary
 
 | Epic | Description | Stories | Total Points | Priority Mix |
 |------|-------------|---------|--------------|--------------|
@@ -818,26 +961,29 @@ Story Points đo **độ phức tạp + effort**, không phải thời gian.
 | Epic 4 | Tourist Core | 9 | 30 | P0/P1 |
 | Epic 5 | Location Service | 10 | 42 | P0/P1/P2 |
 | Epic 6 | Settings | 3 | 8 | P0/P1/P2 |
-| Epic 7 | Analytics | 4 | 16 | P2 |
-| **Epic 8** | **Shop Owner** | **6** | **21** | **P1** |
-| **Total** | | **57** | **187** | |
+| Epic 7 | Analytics | 5 | 21 | P1/P2 |
+| **Epic 8** | **Shop Owner** | **7** | **24** | **P1** |
+| **Epic 9** | **TTS & Translation** | **5** | **20** | **P0/P1** |
+| **Epic 10** | **Custom Tour** | **4** | **15** | **P1** |
+| **Epic 11** | **Merchant Management** | **4** | **10** | **P1** |
+| **Total** | | **72** | **240** | |
 
 ---
 
-## 10. Priority Breakdown
+## 14. Priority Breakdown
 
 | Priority | Stories | Points | % of Total |
 |----------|---------|--------|------------|
-| **P0** (MVP Core) | 20 | 72 | 53% |
-| **P1** (MVP if time) | 14 | 48 | 35% |
-| **P2** (Post-MVP) | 5 | 16 | 12% |
+| **P0** (MVP Core) | 25 | 92 | 38% |
+| **P1** (MVP if time) | 35 | 118 | 49% |
+| **P2** (Post-MVP) | 12 | 30 | 13% |
 | **P3** (Future) | 0 | 0 | 0% |
 
 **Velocity estimate:** 20-25 points/sprint → ~5-6 sprints for full MVP
 
 ---
 
-## 11. MVP Scope (P0 Stories Only)
+## 15. MVP Scope (P0 Stories Only)
 
 ### Sprint 1-2: Foundation (40 points)
 - Epic 1: US-101, US-102 (Auth)

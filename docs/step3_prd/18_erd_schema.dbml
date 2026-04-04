@@ -1,0 +1,318 @@
+Project "GPS Tours & Pho Am Thuc Vinh Khanh" {
+  database_type: "PostgreSQL"
+  Note: "Generated from apps/api/prisma/schema.prisma on 2026-04-04"
+}
+
+Enum Role {
+  ADMIN
+  SHOP_OWNER
+  TOURIST
+}
+
+Enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+Enum PoiCategory {
+  DINING
+  STREET_FOOD
+  CAFES_DESSERTS
+  BARS_NIGHTLIFE
+  MARKETS_SPECIALTY
+  CULTURAL_LANDMARKS
+  EXPERIENCES_WORKSHOPS
+  OUTDOOR_SCENIC
+}
+
+Enum PoiStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+Enum TourStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+Enum TourType {
+  OFFICIAL
+  CUSTOM
+}
+
+Enum MediaType {
+  IMAGE
+  AUDIO
+}
+
+Enum MediaLanguage {
+  VI
+  EN
+  ALL
+}
+
+Enum TriggerType {
+  GPS
+  QR
+  MANUAL
+}
+
+Enum UserAction {
+  ACCEPTED
+  SKIPPED
+  DISMISSED
+}
+
+Enum TokenType {
+  ACCESS
+  REFRESH
+}
+
+Table users {
+  id varchar [pk, not null, note: "uuid"]
+  email varchar [not null, unique]
+  passwordHash varchar [not null]
+  fullName varchar [not null]
+  role Role [not null]
+  status UserStatus [not null, default: "ACTIVE"]
+  failedLoginCount int [not null, default: 0]
+  lockedUntil timestamp
+  refreshToken varchar
+  refreshTokenId varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+  profile json
+}
+
+Table shop_owners {
+  id varchar [pk, not null, note: "uuid"]
+  userId varchar [not null, unique]
+  shopName varchar [not null]
+  shopAddress varchar
+  phone varchar
+  avatarUrl varchar
+  openingHours json
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table tourist_users {
+  id varchar [pk, not null, note: "uuid"]
+  userId varchar [not null, unique]
+  displayName varchar
+  languagePref varchar [not null, default: "VI"]
+  autoPlayAudio boolean [not null, default: true]
+  pushEnabled boolean [not null, default: false]
+  pushToken varchar
+  deviceId varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+}
+
+Table password_reset_tokens {
+  id varchar [pk, not null, note: "uuid"]
+  userId varchar [not null]
+  token varchar [not null, unique]
+  expiresAt timestamp [not null]
+  usedAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (userId)
+  }
+}
+
+Table revoked_tokens {
+  id varchar [pk, not null, note: "uuid"]
+  tokenId varchar [not null, unique]
+  userId varchar [not null]
+  type TokenType [not null]
+  reason varchar
+  expiresAt timestamp [not null]
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (userId)
+  }
+}
+
+Table pois {
+  id varchar [pk, not null, note: "uuid"]
+  nameVi varchar [not null]
+  nameEn varchar
+  descriptionVi text [not null]
+  descriptionEn text
+  latitude float [not null]
+  longitude float [not null]
+  triggerRadius int [not null, default: 15]
+  category PoiCategory [not null, default: "DINING"]
+  status PoiStatus [not null, default: "DRAFT"]
+  qrCodeUrl varchar
+  createdById varchar [not null]
+  ownerId varchar
+  deletedAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (status, deletedAt)
+    (ownerId)
+    (createdById)
+    (category)
+  }
+}
+
+Table poi_media {
+  id varchar [pk, not null, note: "uuid"]
+  poiId varchar [not null]
+  type MediaType [not null]
+  language MediaLanguage [not null, default: "ALL"]
+  url varchar [not null]
+  thumbnailUrl varchar
+  originalName varchar
+  sizeBytes int
+  durationSeconds int
+  width int
+  height int
+  orderIndex int [not null, default: 0]
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (poiId)
+  }
+}
+
+Table tours {
+  id varchar [pk, not null, note: "uuid"]
+  nameVi varchar [not null]
+  nameEn varchar
+  descriptionVi text
+  descriptionEn text
+  thumbnailUrl varchar
+  estimatedDuration int
+  status TourStatus [not null, default: "DRAFT"]
+  tourType TourType [not null, default: "OFFICIAL"]
+  createdById varchar [not null]
+  deletedAt timestamp
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (status, deletedAt)
+    (createdById)
+    (tourType, createdById, deletedAt)
+  }
+}
+
+Table tour_pois {
+  id varchar [pk, not null, note: "uuid"]
+  tourId varchar [not null]
+  poiId varchar [not null]
+  orderIndex int [not null]
+  titleOverride varchar
+  descriptionOverride text
+  customIntro text
+  estimatedStayMinutes int
+  transitionNote text
+  isRequired boolean [not null, default: true]
+  unlockRule varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (tourId, poiId) [unique]
+    (tourId, orderIndex) [unique]
+    (tourId)
+  }
+}
+
+Table favorites {
+  id varchar [pk, not null, note: "uuid"]
+  touristId varchar [not null]
+  poiId varchar [not null]
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (touristId, poiId) [unique]
+    (touristId)
+  }
+}
+
+Table view_history {
+  id varchar [pk, not null, note: "uuid"]
+  touristId varchar [not null]
+  poiId varchar [not null]
+  viewedAt timestamp [not null, default: `now()`]
+  audioPlayed boolean [not null, default: false]
+  triggerType TriggerType [not null, default: "MANUAL"]
+
+  indexes {
+    (touristId)
+    (poiId)
+  }
+}
+
+Table trigger_logs {
+  id varchar [pk, not null, note: "uuid"]
+  deviceId varchar [not null]
+  poiId varchar [not null]
+  triggerType TriggerType [not null]
+  userAction UserAction [not null]
+  userLat float
+  userLng float
+  distanceMeters float
+  createdAt timestamp [not null, default: `now()`]
+
+  indexes {
+    (poiId)
+    (deviceId)
+    (createdAt)
+  }
+}
+
+Table supported_languages {
+  code varchar [pk, not null]
+  label varchar [not null]
+  enabled boolean [not null, default: true]
+  supportsText boolean [not null, default: true]
+  supportsTts boolean [not null, default: true]
+  requiresPack boolean [not null, default: false]
+  allowOffline boolean [not null, default: false]
+  defaultVoice varchar
+  fallbackVoice varchar
+  priority int [not null, default: 100]
+  description varchar
+  region varchar
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (priority)
+  }
+}
+
+Ref: shop_owners.userId > users.id [delete: cascade]
+Ref: tourist_users.userId > users.id [delete: cascade]
+Ref: password_reset_tokens.userId > users.id [delete: cascade]
+Ref: revoked_tokens.userId > users.id [delete: cascade]
+
+Ref: pois.createdById > users.id
+Ref: pois.ownerId > users.id
+
+Ref: poi_media.poiId > pois.id [delete: cascade]
+
+Ref: tours.createdById > users.id
+
+Ref: tour_pois.tourId > tours.id [delete: cascade]
+Ref: tour_pois.poiId > pois.id
+
+Ref: favorites.touristId > tourist_users.id [delete: cascade]
+Ref: favorites.poiId > pois.id
+
+Ref: view_history.touristId > tourist_users.id [delete: cascade]
+Ref: view_history.poiId > pois.id
+
+Ref: trigger_logs.poiId > pois.id

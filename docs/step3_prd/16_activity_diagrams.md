@@ -1,9 +1,9 @@
 # 📐 Activity Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -720,3 +720,38 @@ flowchart TD
 ---
 
 > **Reference:** `PRDs/14_usecase_diagram.md`, `PRDs/15_sequence_diagrams.md`, `PRDs/05_functional_requirements.md`
+
+---
+
+## AD-15: Translation Workflow
+
+```mermaid
+flowchart TD
+    Start([Admin mở POI]) --> A1[Nhập/chọn target language]
+    A1 --> A2[Nhấn Translate]
+    A2 --> A3[POST /translate hoặc /translate/batch]
+    A3 --> A4{Response OK?}
+    A4 -->|Không| A5[Hiển thị lỗi + cho phép retry]
+    A5 --> End1([Kết thúc lỗi])
+    A4 -->|Có| A6[Update field name/description theo ngôn ngữ]
+    A6 --> A7[Hiển thị preview translated content]
+    A7 --> End2([Kết thúc])
+```
+
+## AD-16: Tourist Custom Tour CRUD
+
+```mermaid
+flowchart TD
+    Start([Tourist đăng nhập]) --> B1[Chọn Create Custom Tour]
+    B1 --> B2[/Nhập tên tour + chọn POIs/]
+    B2 --> B3{Valid >=1 POI?}
+    B3 -->|Không| B4[Hiển thị validation]
+    B4 --> B2
+    B3 -->|Có| B5[POST /tourist/me/tours]
+    B5 --> B6[Hiển thị tour trong danh sách My Tours]
+    B6 --> B7{Edit hoặc Delete?}
+    B7 -->|Edit| B8[PATCH /tourist/me/tours/:tourId]
+    B8 --> B6
+    B7 -->|Delete| B9[DELETE /tourist/me/tours/:tourId]
+    B9 --> End([Kết thúc])
+```

@@ -1,9 +1,9 @@
 # 📋 Executive Summary
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -40,14 +40,15 @@
 - Quản lý Users (Admin, Shop Owner)
 - Đặt POI trên bản đồ (click hoặc nhập tọa độ)
 - Upload hình ảnh và audio
-- **Tạo audio TTS tự động** từ nội dung mô tả (VI/EN/ZH) bằng Microsoft Edge TTS
-- Quản lý nội dung đa ngôn ngữ (VI/EN/ZH)
+- **Tạo audio TTS tự động** từ nội dung mô tả bằng Microsoft Edge TTS (11 ngôn ngữ)
+- **Dịch tự động nội dung** (Google Translate API, 11 ngôn ngữ)
+- Quản lý nội dung đa ngôn ngữ (11 ngôn ngữ: VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU)
 - Duyệt cửa hàng và quản lý tài khoản Shop Owner
 
 ### 3.2 Shop Owner Dashboard
 - Quản lý POI(s) của mình (Create, Edit, Delete)
 - Upload hình ảnh và audio giới thiệu
-- **Tạo audio TTS tự động** cho POI của mình
+- **Tạo audio TTS tự động** cho POI của mình (11 ngôn ngữ)
 - Xem analytics (lượt xem, audio plays)
 
 ### 3.3 Tourist App
@@ -55,7 +56,8 @@
 - Hiển thị POIs trên bản đồ
 - Tự động phát audio khi đến POI (GPS trigger)
 - **Criteria Engine**: chọn POI tốt nhất khi nhiều vùng âm thanh trùng nhau
-- Chọn ngôn ngữ (VI/EN/ZH)
+- Chọn ngôn ngữ (11 ngôn ngữ: VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU)
+- **Tạo Tour tùy chỉnh (Custom Tour)** từ các POI yêu thích
 - Chế độ Offline
 - Optional Login: đăng ký/đăng nhập để lưu favorites + sync history
 - QR Code fallback khi GPS không chính xác
@@ -73,8 +75,10 @@
 | Tourist App (Mobile) | P0 | MVP |
 | Backend API (RESTful) | P0 | MVP |
 | Quản lý nội dung cơ bản | P0 | MVP |
-| Đa ngôn ngữ (VI/EN/ZH) | P1 | MVP |
-| TTS Audio Generation (msedge-tts) | P1 | MVP |
+| Đa ngôn ngữ (11 ngôn ngữ) | P1 | MVP |
+| TTS Audio Generation (msedge-tts) | P0 | MVP |
+| Translation (Google Translate API) | P0 | MVP |
+| Custom Tour (Tourist tạo tour riêng) | P1 | MVP |
 | Criteria Engine (GPS overlap) | P1 | MVP |
 | Device Capability Check | P1 | MVP |
 | Chế độ Offline | P1 | MVP |
@@ -85,13 +89,12 @@
 
 | Component | Priority | Phase |
 |-----------|----------|-------|
-| TTS Engine (Text → Audio tự động) | P0 | Phase 2A |
-| Audio Criteria Engine (priority/distance scoring) | P0 | Phase 2A |
 | Shop Approval Flow (duyệt pháp lý) | P0 | Phase 2A |
-| Translation NER (dịch thông minh) | P1 | Phase 2B |
+| Audio Criteria Engine (priority/distance scoring) | P0 | Phase 2A |
 | Offline Map (PMTiles) | P1 | Phase 2B |
 | Language Package (drawer per lang) | P1 | Phase 2B |
 | WebSocket Real-time Dashboard | P1 | Phase 2B |
+| Heatmap (thống kê vị trí du khách) | P1 | Phase 2B |
 | Payment (MoMo/VNPay) | P2 | Phase 3 |
 | Premium Voices (giọng vùng miền) | P2 | Phase 3 |
 | Load Testing (k6 benchmark) | P2 | Phase 3 |
@@ -173,11 +176,13 @@
 3. ✅ Gate 1 Approval từ Stakeholders
 4. ✅ Chuyển sang Step 2: Low-code (UI + Flow)
 5. ✅ Step 4: POC Implementation — MVP 100% Complete
-6. ☐ Step 5: Refactor & Testing (Unit Test > 70%)
-7. 🔄 **Step 6: Cloud Deployment (Render) + Build APK (EAS Build)**
-8. 🔲 **Phase 2A: TTS Engine, Audio Criteria, Shop Approval Flow**
-9. 🔲 **Phase 2B: Translation NER, Offline Map, Language Package, WebSocket Dashboard**
-10. 🔲 **Phase 3: Payment, Premium Voices, Load Testing**
+6. ✅ **TTS Engine (msedge-tts, 11 ngôn ngữ) — Đã hoàn thành**
+7. ✅ **Translation (Google Translate API, 11 ngôn ngữ) — Đã hoàn thành**
+8. ☐ Step 5: Refactor & Testing (Unit Test > 70%)
+9. 🔄 **Step 6: Cloud Deployment (Render) + Build APK (EAS Build)**
+10. 🔲 **Phase 2A: Shop Approval Flow, Audio Criteria Engine**
+11. 🔲 **Phase 2B: Offline Map, Language Package, WebSocket Dashboard, Heatmap**
+12. 🔲 **Phase 3: Payment, Premium Voices, Load Testing**
 
 ---
 

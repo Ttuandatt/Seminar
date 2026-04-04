@@ -1,9 +1,9 @@
 # 🗃️ Data Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -104,7 +104,7 @@
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | UUID | PK | Primary key |
-| `admin_id` | UUID | FK → Admin.id, NOT NULL | Token owner |
+| `user_id` | UUID | FK → User.id, NOT NULL | Token owner |
 | `token` | VARCHAR(255) | UNIQUE, NOT NULL | Reset token (hashed) |
 | `expires_at` | TIMESTAMP | NOT NULL | Expiry time (1 hour) |
 | `used_at` | TIMESTAMP | NULL | When token was used |
@@ -112,7 +112,7 @@
 
 **Indexes:**
 - `idx_reset_token` on `token`
-- `idx_reset_admin` on `admin_id`
+- `idx_reset_user` on `user_id`
 - `idx_reset_expires` on `expires_at`
 
 **Business Rules:**
@@ -158,12 +158,12 @@
 | `description_zh` | TEXT | NULL | Chinese description (Simplified) |
 | `latitude` | FLOAT | NOT NULL | GPS latitude |
 | `longitude` | FLOAT | NOT NULL | GPS longitude |
-| `trigger_radius` | INTEGER | DEFAULT 50 | Radius in meters (5-100) |
+| `trigger_radius` | INTEGER | DEFAULT 15 | Radius in meters (5-100) |
 | `category` | ENUM | NOT NULL | Values: DINING, STREET_FOOD, CAFES_DESSERTS, BARS_NIGHTLIFE, MARKETS_SPECIALTY, CULTURAL_LANDMARKS, EXPERIENCES_WORKSHOPS, OUTDOOR_SCENIC |
 | `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, ARCHIVED |
 | `qr_code_url` | VARCHAR(500) | NULL | URL to generated QR code PNG (`/uploads/qr/poi_<uuid>.png`) |
-| `created_by` | UUID | FK → Admin.id, NULL | Creator (Admin) |
-| `owner_id` | UUID | FK → Shop_Owner.id, NULL | POI owner (Shop Owner) |
+| `created_by` | UUID | FK → User.id, NOT NULL | Creator user |
+| `owner_id` | UUID | FK → User.id, NULL | POI owner (Shop Owner role) |
 | `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
 | `updated_at` | TIMESTAMP | NOT NULL | Last update timestamp |
 | `deleted_at` | TIMESTAMP | NULL | Soft delete timestamp |
@@ -190,7 +190,7 @@
 | `id` | UUID | PK | Primary key |
 | `poi_id` | UUID | FK → POI.id, NOT NULL | Parent POI |
 | `type` | ENUM | NOT NULL | Values: IMAGE, AUDIO |
-| `language` | ENUM | NOT NULL | Values: VI, EN, ZH, ALL |
+| `language` | ENUM | NOT NULL | Values: VI, EN, ALL |
 | `url` | VARCHAR(500) | NOT NULL | CDN URL |
 | `filename` | VARCHAR(255) | NOT NULL | Original filename |
 | `size_bytes` | BIGINT | NOT NULL | File size |
@@ -218,12 +218,12 @@
 | `id` | UUID | PK | Primary key |
 | `name_vi` | VARCHAR(200) | NOT NULL | Vietnamese name |
 | `name_en` | VARCHAR(200) | NULL | English name |
-| `description_vi` | TEXT | NOT NULL | Vietnamese description |
+| `description_vi` | TEXT | NULL | Vietnamese description |
 | `description_en` | TEXT | NULL | English description |
 | `thumbnail_url` | VARCHAR(500) | NULL | Cover image URL |
 | `estimated_duration` | INTEGER | NULL | Duration in minutes |
-| `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, INACTIVE |
-| `created_by` | UUID | FK → Admin.id | Creator |
+| `status` | ENUM | NOT NULL | Values: DRAFT, ACTIVE, ARCHIVED |
+| `created_by` | UUID | FK → User.id, NOT NULL | Creator user |
 | `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
 | `updated_at` | TIMESTAMP | NOT NULL | Last update timestamp |
 | `deleted_at` | TIMESTAMP | NULL | Soft delete timestamp |
@@ -241,6 +241,13 @@
 | `tour_id` | UUID | FK → Tour.id, NOT NULL | Parent Tour |
 | `poi_id` | UUID | FK → POI.id, NOT NULL | POI in tour |
 | `order_index` | INTEGER | NOT NULL | Position in tour |
+| `title_override` | VARCHAR(255) | NULL | Custom stop title |
+| `description_override` | TEXT | NULL | Custom stop description |
+| `custom_intro` | TEXT | NULL | Intro text before stop |
+| `estimated_stay_minutes` | INTEGER | NULL | Expected stay |
+| `transition_note` | TEXT | NULL | Note to next stop |
+| `is_required` | BOOLEAN | DEFAULT true | Mandatory stop or not |
+| `unlock_rule` | VARCHAR(255) | NULL | Rule for unlocking stop |
 | `created_at` | TIMESTAMP | NOT NULL | Link creation |
 
 **Indexes:**
@@ -260,21 +267,19 @@
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | UUID | PK | Primary key |
-| `device_id` | VARCHAR(255) | NOT NULL | Device identifier (anonymous mode) |
-| `email` | VARCHAR(100) | UNIQUE, NULL | Email (if logged in) |
+| `user_id` | UUID | FK → User.id, UNIQUE, NOT NULL | Link to unified User |
+| `device_id` | VARCHAR(255) | NULL | Device identifier |
 | `display_name` | VARCHAR(100) | NULL | Display name |
-| `auth_provider` | ENUM | NULL | Values: EMAIL, GOOGLE, FACEBOOK, APPLE |
-| `password_hash` | VARCHAR(255) | NULL | For email login |
-| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN, ZH |
+| `language_pref` | ENUM | DEFAULT 'VI' | Values: VI, EN (extensible) |
 | `auto_play_audio` | BOOLEAN | DEFAULT true | Auto-play audio on trigger |
 | `push_token` | VARCHAR(255) | NULL | FCM/APNs token |
 | `push_enabled` | BOOLEAN | DEFAULT false | Push notification enabled |
 | `created_at` | TIMESTAMP | NOT NULL | First app open |
-| `last_active_at` | TIMESTAMP | NOT NULL | Last activity |
+| `updated_at` | TIMESTAMP | NOT NULL | Last update |
 
 **Indexes:**
 - `idx_tourist_device` on `device_id`
-- `idx_tourist_email` on `email`
+- UNIQUE `tourist_users.user_id`
 
 **Notes:**
 - User được tạo ngay khi mở app lần đầu (với device_id)
@@ -404,7 +409,7 @@ interface POI {
     | 'CULTURAL_LANDMARKS'
     | 'EXPERIENCES_WORKSHOPS'
     | 'OUTDOOR_SCENIC';
-  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+  status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
   qrCodeUrl?: string; // Auto-generated QR code PNG URL
   media: POIMedia[];
   createdBy?: string;
@@ -436,7 +441,7 @@ interface Tour {
   descriptionEn?: string;
   thumbnailUrl?: string;
   estimatedDuration?: number;
-  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+  status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
   pois: TourPOI[];
   createdBy: string;
   createdAt: Date;
@@ -449,6 +454,13 @@ interface TourPOI {
   poiId: string;
   poi?: POI;
   orderIndex: number;
+  titleOverride?: string;
+  descriptionOverride?: string;
+  customIntro?: string;
+  estimatedStayMinutes?: number;
+  transitionNote?: string;
+  isRequired: boolean;
+  unlockRule?: string;
 }
 
 // ============================================
@@ -495,10 +507,20 @@ interface UserFavorite {
 
 interface PasswordResetToken {
   id: string;
-  adminId: string;
+  userId: string;
   token: string;
   expiresAt: Date;
   usedAt?: Date;
+  createdAt: Date;
+}
+
+interface RevokedToken {
+  id: string;
+  tokenId: string;
+  userId: string;
+  type: 'ACCESS' | 'REFRESH';
+  reason?: string;
+  expiresAt: Date;
   createdAt: Date;
 }
 
@@ -518,11 +540,26 @@ interface TriggerLog {
   userId?: string;
   poiId: string;
   triggerType: 'GPS' | 'QR' | 'MANUAL';
-  userAction: 'ACCEPTED' | 'SKIPPED' | 'IGNORED' | 'AUTO_DISMISSED';
+  userAction: 'ACCEPTED' | 'SKIPPED' | 'DISMISSED';
   userLat?: number;
   userLng?: number;
   distanceMeters?: number;
   triggeredAt: Date;
+}
+
+interface SupportedLanguage {
+  code: string;
+  label: string;
+  enabled: boolean;
+  supportsText: boolean;
+  supportsTts: boolean;
+  requiresPack: boolean;
+  allowOffline: boolean;
+  defaultVoice?: string;
+  fallbackVoice?: string;
+  priority: number;
+  description?: string;
+  region?: string;
 }
 
 // ============================================
@@ -538,12 +575,13 @@ interface TriggerLog {
 |--------|---------|----------|---------|
 | Admins | 5 | 10 | 20 |
 | **Shop_Owners** | **0** | **50** | **200** |
+| Supported_Languages | 11 | 11 | 15 |
+| Revoked_Tokens | 0 | 200 | 2000 |
 | Password_Reset_Tokens | 0 | 20 | 50 |
 | POIs | 20 | 100 | 300 |
 | Media files | 100 | 500 | 1500 |
 | Tours | 3 | 15 | 50 |
 | Tour_POIs | 30 | 150 | 500 |
-| QR_Codes | 20 | 100 | 300 |
 | Tourist_Users | 0 | 500 | 2000 |
 | View_History | 0 | 5000 | 20000 |
 | User_Favorites | 0 | 200 | 1000 |

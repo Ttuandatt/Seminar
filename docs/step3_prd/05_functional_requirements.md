@@ -1,9 +1,9 @@
 # 📋 Functional Requirements
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -978,12 +978,12 @@ Shop Owner có thể tạo, xem chi tiết, và chỉnh sửa POI(s) thuộc quy
 
 **Restrictions:**
 - Chỉ thấy POI(s) mà mình sở hữu (owner_id = current_user)
-- Không được xóa POI (chỉ Admin có quyền)
+- Được soft delete POI nếu POI thuộc quyền sở hữu
 - Không được tạo/chỉnh sửa Tour
 
 **Business Rules:**
 - BR-1003: Shop Owner chỉ CRUD POI có owner_id = mình
-- BR-1004: Shop Owner không xóa POI
+- BR-1004: Shop Owner có thể soft delete POI của mình
 - BR-1005b: TTS generation cho Shop Owner sử dụng cùng endpoint `POST /tts/generate/:poiId` với Admin (backend check ownership qua JWT)
 
 ---
@@ -1130,3 +1130,23 @@ Màn hình liệt kê các địa điểm du khách đã tham quan, bao gồm th
 ---
 
 > **Reference:** `PRDs/00_requirements_intake.md` Section 6, 7
+
+---
+
+## 9. Delta Update v3.1
+
+### FR-806: Merchant CRUD (Admin)
+
+**APIs:** `POST /merchants`, `GET /merchants`, `GET /merchants/:id`, `PUT /merchants/:id`, `DELETE /merchants/:id`
+
+### FR-807: Translation Service
+
+**APIs:** `POST /translate`, `POST /translate/batch`, `GET /translate/languages`
+
+### FR-808: Public Discovery + Trigger Log
+
+**APIs:** `GET /public/pois`, `GET /public/pois/nearby`, `GET /public/tours`, `POST /public/trigger-log`, `POST /public/qr/validate`
+
+### FR-809: Custom Tour Full CRUD
+
+**APIs:** `POST /tourist/me/tours`, `GET /tourist/me/tours`, `PATCH /tourist/me/tours/:tourId`, `DELETE /tourist/me/tours/:tourId`

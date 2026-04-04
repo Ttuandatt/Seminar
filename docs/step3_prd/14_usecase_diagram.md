@@ -1,9 +1,9 @@
 # 📐 Use Case Diagram & Đặc tả
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -1731,3 +1731,20 @@ graph TB
 | UC-63 Chỉnh sửa tour | ✓ | | |
 
 > ✓* = Yêu cầu Tourist đăng nhập
+
+---
+
+## 6. Delta Use Cases v3.1
+
+| UC | Tên | Actor |
+|----|-----|-------|
+| UC-64 | Dịch nội dung POI (single/batch) | Admin |
+| UC-65 | Quản lý danh sách merchant | Admin |
+| UC-66 | Tạo custom tour cá nhân | Tourist |
+| UC-67 | Chỉnh sửa/xóa custom tour cá nhân | Tourist |
+| UC-68 | Xem lịch sử trigger GPS/QR/MANUAL | Admin |
+
+**Relationship notes:**
+- UC-64 mở rộng UC-13 (Sửa POI) khi thao tác localization.
+- UC-66/67 bao gồm UC-51 (Xem chi tiết POI) để chọn điểm dừng.
+- UC-65 liên kết các endpoint `/merchants/*` trong API spec.

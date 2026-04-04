@@ -1,9 +1,9 @@
 # 📐 Component Diagram
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-10
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -31,6 +31,7 @@ graph TB
         TourModule["🗺️ Tour Module"]
         MediaModule["📁 Media Module"]
         TtsModule["🔊 TTS Module"]
+        TranslateModule["🌐 Translate Module"]
         QrModule["📱 QR Code Module"]
         AnalyticsModule["📊 Analytics Module"]
         UserModule["👤 User Module"]
@@ -39,8 +40,8 @@ graph TB
     end
 
     subgraph Data["💾 DATA LAYER"]
-        DB[("PostgreSQL + PostGIS")]
-        Cache[("Redis Cache")]
+        DB[("PostgreSQL (float lat/lng)")]
+        Cache[("Redis Cache (Planned)")]
     end
 
     subgraph External["☁️ EXTERNAL SERVICES"]
@@ -59,6 +60,7 @@ graph TB
     Gateway --> TourModule
     Gateway --> MediaModule
     Gateway --> TtsModule
+    Gateway --> TranslateModule
     Gateway --> QrModule
     Gateway --> AnalyticsModule
     Gateway --> UserModule
@@ -72,6 +74,7 @@ graph TB
     MediaModule --> S3
     TtsModule --> DB
     TtsModule --> S3
+    TranslateModule --> DB
     QrModule --> DB
     AnalyticsModule --> DB
     UserModule --> DB
@@ -126,7 +129,7 @@ graph TB
             MapPicker["MapPicker (Leaflet + Nominatim)"]
             MediaUpload["MediaUploader (Images + Audio)"]
             DataTable["DataTable (sortable, filterable)"]
-            FormComponents["Form Components (shadcn/ui)"]
+            FormComponents["Form Components (custom Tailwind)"]
             FormLabels["FormLabels (VI/EN bilingual constants)"]
         end
 
@@ -152,15 +155,21 @@ graph TB
 
 | Component | Technology | Version |
 |-----------|-----------|---------|
-| Framework | React | 18.x |
+| Framework | React | 19.2.0 |
 | Build Tool | Vite | 5.x |
 | Language | TypeScript | 5.x |
-| Styling | Tailwind CSS | 3.x |
-| UI Library | shadcn/ui | latest |
+| Styling | Tailwind CSS | 4.1.x |
+| UI Library | Custom Tailwind components | - |
 | Maps | Leaflet 1.9 + react-leaflet 5.x | - |
 | State | React Context + hooks | - |
 | HTTP Client | Axios | 1.x |
 | Router | React Router | 6.x |
+
+### 2.1.1 Shared Monorepo Package
+
+| Package | Responsibility | Used By |
+|---------|----------------|---------|
+| packages/localization-shared | Shared localization client/types/hooks | Admin Web, Mobile App |
 
 ---
 
@@ -371,11 +380,11 @@ graph LR
 
 ## 4. Data Layer
 
-### 4.1 Database Schema (PostgreSQL + PostGIS)
+### 4.1 Database Schema (PostgreSQL)
 
 ```mermaid
 erDiagram
-    ADMIN ||--o{ PASSWORD_RESET : "requests"
+    USER ||--o{ PASSWORD_RESET : "requests"
     USER ||--o| SHOP_OWNER : "has"
     SHOP_OWNER ||--o{ POI : "owns"
     POI ||--o{ POI_IMAGE : "has"
@@ -387,21 +396,12 @@ erDiagram
     USER ||--o{ FAVORITE : "saves"
     POI ||--o{ FAVORITE : "saved by"
 
-    ADMIN {
-        uuid id PK
-        string email UK
-        string password_hash
-        string full_name
-        enum status
-        timestamp created_at
-    }
-
     USER {
         uuid id PK
         string email UK
         string password_hash
         string full_name
-        enum role "tourist|shop_owner"
+        enum role "admin|shop_owner|tourist"
         timestamp created_at
     }
 
@@ -423,10 +423,9 @@ erDiagram
         text description_en
         float latitude
         float longitude
-        geometry geom "PostGIS POINT"
         int trigger_radius "meters"
         enum type "DINING|STREET_FOOD|CAFES_DESSERTS|BARS_NIGHTLIFE|MARKETS_SPECIALTY|CULTURAL_LANDMARKS|EXPERIENCES_WORKSHOPS|OUTDOOR_SCENIC"
-        enum status "draft|published|archived"
+        enum status "draft|active|archived"
         timestamp created_at
         timestamp updated_at
     }
@@ -438,14 +437,14 @@ erDiagram
         text description_vi
         text description_en
         int estimated_duration "minutes"
-        enum status "draft|published"
+        enum status "draft|active|archived"
         timestamp created_at
     }
 
     TOUR_POI {
         uuid tour_id FK
         uuid poi_id FK
-        int sort_order
+        int order_index
     }
 ```
 
@@ -453,7 +452,7 @@ erDiagram
 
 | Table | Index | Type | Purpose |
 |-------|-------|------|---------|
-| pois | `idx_pois_geom` | GiST (PostGIS) | Spatial queries (nearby) |
+| pois | `idx_pois_status_deleted` | B-tree | Filter status + soft delete |
 | pois | `idx_pois_owner_id` | B-tree | Shop Owner data isolation |
 | pois | `idx_pois_status` | B-tree | Filter by status |
 | tour_pois | `idx_tour_pois_tour_id` | B-tree | Tour → POIs lookup |
@@ -484,7 +483,7 @@ graph LR
     end
 
     subgraph Infra["Infrastructure"]
-        PG["PostgreSQL + PostGIS"]
+        PG["PostgreSQL"]
         Redis2["Redis"]
     end
 
@@ -509,8 +508,8 @@ graph LR
 | **Mobile Maps** | Google/Apple native (react-native-maps) | Map rendering + user location trên iOS/Android | Theo quota của thiết bị/API key |
 | **Object Storage** | AWS S3 | Images (JPEG/PNG), Audio (MP3/WAV) | No limit |
 | **CDN** | CloudFront | Phân phối media cho Tourist app | No limit |
-| **Database** | PostgreSQL 16 | Dữ liệu chính + PostGIS geo queries | Self-managed |
-| **Cache** | Redis 7 | JWT blacklist, session, API cache | Self-managed |
+| **Database** | PostgreSQL 15+ | Dữ liệu chính + float coordinates | Self-managed |
+| **Cache** | Redis | Planned Phase 2 (chưa active ở MVP) | Planned |
 
 ---
 
@@ -531,7 +530,7 @@ graph LR
 │         │        │           │                                    │
 │         │   ┌────┴────┐ ┌───┴─────┐   ┌───────────┐            │
 │         │   │PostgreSQL│ │  Redis  │   │  AWS S3   │            │
-│         │   │ +PostGIS │ │  Cache  │   │ +CloudFront│            │
+│         │   │ (no PostGIS)│ │ Planned │   │ +CloudFront│          │
 │         │   └─────────┘ └─────────┘   └───────────┘            │
 │         │                                                        │
 │         └──────────── OpenStreetMap + Nominatim ─────────────    │

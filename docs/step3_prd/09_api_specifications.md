@@ -1,9 +1,9 @@
 # 🔌 API Specifications
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-22
+> **Cập nhật:** 2026-04-04
 > **Base URL (Dev):** `http://localhost:3000/api/v1`
 > **Base URL (Prod):** `https://api.gpstours.vn/v1` *(chưa deploy)*
 
@@ -1469,7 +1469,146 @@ Export analytics data to CSV.
 | **9. Shop Owner** | **9** | **Yes (Shop Owner JWT)** |
 | **10. TTS** | **2** | **Yes (Admin/Shop Owner JWT)** |
 | 11. Analytics | 3 | Mixed |
-| **Total** | **54** | |
+| **Total (v3.0 base)** | **54** | |
+| **Delta v3.1 (new groups)** | **+24** | |
+| **Estimated Total v3.1** | **~78** | |
+
+---
+
+## 13. Delta Endpoints (v3.1)
+
+### 13.1 Translation APIs
+
+### POST /translate
+**Auth:** Bearer Token (Role: ADMIN)
+
+**Request:**
+```json
+{
+  "text": "Mô tả tiếng Việt",
+  "targetLanguage": "EN"
+}
+```
+
+**Response (200):**
+```json
+{
+  "translatedText": "English description",
+  "targetLanguage": "EN"
+}
+```
+
+### POST /translate/batch
+**Auth:** Bearer Token (Role: ADMIN)
+
+### GET /translate/languages
+**Auth:** Bearer Token (Role: ADMIN)
+
+---
+
+### 13.2 TTS APIs (expanded)
+
+### POST /tts/generate/:poiId
+**Auth:** Bearer Token (Role: ADMIN, SHOP_OWNER)
+
+### POST /tts/generate-translated/:poiId
+**Auth:** Bearer Token (Role: ADMIN)
+
+### GET /tts/languages
+**Auth:** Bearer Token (Role: ADMIN, SHOP_OWNER)
+
+### GET /tts/voices
+**Auth:** Bearer Token (Role: ADMIN, SHOP_OWNER)
+
+---
+
+### 13.3 Public APIs (expanded)
+
+### GET /public/pois
+### GET /public/pois/nearby
+### GET /public/pois/:id
+### GET /public/tours
+### GET /public/tours/:id
+### POST /public/trigger-log
+### POST /public/qr/validate
+
+**Auth:** Public
+
+---
+
+### 13.4 Tourist APIs (expanded)
+
+### GET /tourist/me
+### PATCH /tourist/me
+### GET /tourist/me/favorites
+### POST /tourist/me/favorites
+### DELETE /tourist/me/favorites/:poiId
+### GET /tourist/me/history
+### POST /tourist/me/history
+### POST /tourist/me/tours
+### GET /tourist/me/tours
+### GET /tourist/me/tours/:tourId
+### PATCH /tourist/me/tours/:tourId
+### DELETE /tourist/me/tours/:tourId
+
+**Auth:** Bearer Token (Role: TOURIST)
+
+---
+
+### 13.5 Shop Owner APIs (expanded)
+
+### GET /shop-owner/me
+### PATCH /shop-owner/me
+### GET /shop-owner/pois
+### GET /shop-owner/pois/:id
+### POST /shop-owner/pois
+### PUT /shop-owner/pois/:id
+### POST /shop-owner/pois/:id/media
+### GET /shop-owner/analytics
+
+**Auth:** Bearer Token (Role: SHOP_OWNER)
+
+---
+
+### 13.6 Merchants + Analytics + Profile APIs
+
+### POST /merchants
+### GET /merchants
+### GET /merchants/:id
+### PUT /merchants/:id
+### DELETE /merchants/:id
+
+**Auth:** Bearer Token (Role: ADMIN)
+
+### GET /admin/analytics/overview
+**Auth:** Bearer Token (Role: ADMIN)
+
+### GET /me
+### PUT /me
+### POST /me/avatar
+**Auth:** Bearer Token (Role: ADMIN, SHOP_OWNER, TOURIST)
+
+---
+
+### 13.7 Auth APIs (expanded)
+
+### POST /auth/register
+### POST /auth/login
+### POST /auth/refresh
+### POST /auth/forgot-password
+### POST /auth/reset-password
+### POST /auth/logout
+
+---
+
+### 13.8 Tour & QR APIs missing in v3.0 text
+
+### PATCH /tours/:id/publish
+### PATCH /tours/:id/unpublish
+### PATCH /tours/:id/stops/reorder
+### GET /pois/:id/qr
+### POST /pois/:id/qr/regenerate
+### GET /pois/:id/qr/download
 
 ---
 

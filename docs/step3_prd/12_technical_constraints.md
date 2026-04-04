@@ -1,9 +1,9 @@
 # ⚙️ Technical Constraints
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.2  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-07
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -13,14 +13,15 @@
 
 | Layer | Technology | Version | Notes |
 |-------|------------|---------|-------|
-| Framework | React | 19.x | Hooks-based |
+| Framework | React | 19.2.0 | Hooks-based |
 | Language | TypeScript | 5.x | Strict mode |
-| Build Tool | Vite | 7.x | Fast dev server |
-| Styling | Tailwind CSS | 4.x | Utility-first |
-| State | Zustand / TanStack Query | Latest | Server state + client state |
+| Build Tool | Vite | 7.3.x | Fast dev server |
+| Styling | Tailwind CSS | 4.1.x | Utility-first |
+| State | TanStack Query + React Context | 5.90.x | Server state + lightweight client state |
 | Forms | React Hook Form + Zod | Latest | Validation |
-| Maps | Google Maps | Latest | Interactive maps |
-| UI Components | shadcn/ui | Latest | Radix-based |
+| Maps | Leaflet + React Leaflet | 1.9 / 5.0 | OpenStreetMap tiles |
+| UI Components | Custom (Tailwind-based) | - | Không dùng UI library đóng gói |
+| HTTP Client | Axios | 1.13.x | API communication |
 | Auth | JWT (Admin) / JWT (Shop Owner) | - | Role-based routing |
 
 > **Note:** Admin và Shop Owner dùng chung cùng 1 web app với role-based routing. Shop Owner chỉ thấy dashboard và POI management của mình.
@@ -34,6 +35,8 @@
 | Maps | react-native-maps | 1.20+ | GPS integration (default provider) |
 | Audio | expo-audio | 1.x | Global Singleton Context |
 | Offline DB | expo-sqlite | 16.x | QR Offline Fallback (TH1/TH2) |
+| i18n | i18next + react-i18next | 25.x / 16.x | UI localization |
+| Camera | expo-camera | 17.x | QR scanner |
 | Icons | lucide-react-native | Latest | SVG icons |
 | Storage | AsyncStorage | Latest | JWT token storage |
 | Auth | JWT (Optional) | - | Login/Register for Tourist |
@@ -48,10 +51,14 @@
 | Runtime | Node.js | 24 LTS | TypeScript only |
 | Framework | NestJS | 11.x | Modular architecture |
 | Language | TypeScript | 5.x | Strict mode, shared types |
-| Database | PostgreSQL | 15+ | With PostGIS extension |
+| Database | PostgreSQL | 15+ | Float latitude/longitude (không PostGIS) |
 | ORM | Prisma | 5.x | Type-safe queries |
-| Cache | Redis | 7.x | Session, rate limiting |
+| Cache | Redis | - | Chưa implement trong MVP (planned Phase 2) |
 | Auth | Passport.js + JWT | Latest | Role-based (Admin, Shop Owner, Tourist) |
+| TTS Engine | msedge-tts | 2.x | Microsoft Edge Text-to-Speech |
+| Translation | google-translate-api-x | 10.x | Multi-language translation |
+| QR Library | qrcode | 1.5.x | QR generation |
+| Password Hashing | bcrypt | 6.x | cost factor 12 |
 | Storage | Cloud Storage / Local | - | Media files (UPLOAD_DIR or cloud) |
 | API Docs | Swagger (OpenAPI) | 3.0 | Auto-generated from decorators |
 
@@ -66,7 +73,7 @@
 | Containers | Docker | Docker Compose for local |
 | **Cloud Hosting** | **Render.com** | **API + PostgreSQL + Static** |
 | Mobile Build | EAS Build (Expo) | APK/AAB cloud build |
-| Monitoring | Sentry | Error tracking |
+| Monitoring | Sentry | Planned (chưa tích hợp trong codebase hiện tại) |
 | APM | New Relic / Datadog | Performance (P2) |
 
 ---
@@ -139,8 +146,8 @@
 
 | Service | Purpose | Fallback |
 |---------|---------|----------|
-| Google Maps / Mapbox | Maps, geocoding | One or the other |
-| Cloud Storage (S3/Azure) | Media storage | Required |
+| OpenStreetMap + Nominatim | Maps, geocoding | Primary (web dashboard) |
+| Local Disk Storage | Media storage | Current MVP implementation |
 | CDN | Content delivery | Bundled with storage |
 
 ### 4.2 Optional Services
@@ -151,6 +158,12 @@
 | SendGrid | Email notifications | P2 |
 | Google Analytics | Usage tracking | P2 |
 | Sentry | Error tracking | P1 |
+
+### 4.3 Shared Monorepo Package
+
+| Package | Purpose | Dependencies |
+|---------|---------|--------------|
+| packages/localization-shared | Reusable localization client/types/hooks | axios, @tanstack/react-query |
 
 ---
 
@@ -242,7 +255,7 @@
 | Constraint | Value |
 |------------|-------|
 | Default language | Vietnamese |
-| MVP languages | Vietnamese, English |
+| MVP languages | 11 languages via Translation API (VI, EN, JA, KO, ZH-CN, ZH-TW, FR, DE, ES, TH, RU) |
 | Timezone | Asia/Ho_Chi_Minh (UTC+7) |
 | Date format | DD/MM/YYYY |
 | Number format | 1.234,56 (locale) |

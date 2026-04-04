@@ -1,9 +1,9 @@
 # ✅ Acceptance Criteria
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 2.1  
+> **Phiên bản:** 3.1  
 > **Ngày tạo:** 2026-02-08  
-> **Cập nhật:** 2026-03-10  
+> **Cập nhật:** 2026-04-04  
 > **Format:** Given-When-Then (Gherkin)
 
 ---
@@ -796,7 +796,104 @@ Scenario: No access to system-wide analytics
 
 ---
 
-## 8. Summary Checklist
+## 8. TTS, Translation, Custom Tour, Merchant
+
+### AC-901: TTS Generation
+
+```gherkin
+Feature: Generate TTS Audio
+
+Scenario: Generate TTS for POI successfully
+  Given I am logged in as Admin
+  And POI "P001" has Vietnamese description
+  When I click "Generate TTS" for language "VI"
+  Then the system should create an MP3 audio file
+  And a PoiMedia record with type AUDIO and language VI should be saved
+  And I should see a success toast
+
+Scenario: Shop Owner cannot generate TTS for POI not owned by self
+  Given I am logged in as Shop Owner A
+  And POI "P002" belongs to Shop Owner B
+  When I call generate TTS for POI "P002"
+  Then the API should return 403 Forbidden
+```
+
+### AC-904: Translation
+
+```gherkin
+Feature: Translate POI content
+
+Scenario: Translate a POI description to English
+  Given I am logged in as Admin
+  And POI "P001" has Vietnamese description
+  When I request translation to language "EN"
+  Then the translated text should be returned
+  And translated content should be persisted to POI fields
+
+Scenario: Batch translation multiple POIs
+  Given I am logged in as Admin
+  When I submit batch translation request for 10 POIs
+  Then the system should return per-item success/failure status
+  And successful items should be saved
+```
+
+### AC-1001: Custom Tour CRUD
+
+```gherkin
+Feature: Tourist custom tours
+
+Scenario: Create custom tour with selected POIs
+  Given I am logged in as Tourist
+  When I create a custom tour with 3 POIs
+  Then the tour should be saved with tourType CUSTOM
+  And it should appear in my tours list
+
+Scenario: Delete owned custom tour
+  Given I am logged in as Tourist
+  And I have a custom tour "Food Night"
+  When I delete the tour
+  Then the custom tour should be soft-deleted
+  And it should no longer appear in my tours list
+```
+
+### AC-1101: Merchant Management
+
+```gherkin
+Feature: Merchant CRUD by Admin
+
+Scenario: Admin creates a merchant
+  Given I am logged in as Admin
+  When I submit valid merchant information
+  Then a merchant record should be created
+  And it should appear in merchant list
+
+Scenario: Non-admin cannot create merchant
+  Given I am logged in as Shop Owner
+  When I call POST /merchants
+  Then the API should return 403 Forbidden
+```
+
+### AC-705: Admin Map View
+
+```gherkin
+Feature: Admin map overview
+
+Scenario: Admin sees all POIs on map
+  Given I am logged in as Admin
+  When I open /admin/map
+  Then all active/draft/archived POIs should be rendered as markers
+  And I can filter markers by status and category
+
+Scenario: Shop Owner map is isolated by owner
+  Given I am logged in as Shop Owner
+  When I open /owner/map
+  Then only my POIs should be visible
+  And tour dropdown should not be shown
+```
+
+---
+
+## 9. Summary Checklist
 
 | Story | AC ID | Description | Status |
 |-------|-------|-------------|--------|
@@ -813,6 +910,11 @@ Scenario: No access to system-wide analytics
 | **US-801** | **AC-701** | **Shop Owner Registration** | ✅ |
 | **US-803** | **AC-702** | **Shop Owner POI Mgmt** | ✅ |
 | **US-805** | **AC-703** | **Shop Owner Analytics** | ✅ |
+| **US-901** | **AC-901** | **TTS generation** | ✅ |
+| **US-904** | **AC-904** | **Translation single + batch** | ✅ |
+| **US-1001** | **AC-1001** | **Custom Tour CRUD** | ✅ |
+| **US-1101** | **AC-1101** | **Merchant CRUD** | ✅ |
+| **US-705** | **AC-705** | **Admin/Owner map view** | ✅ |
 
 ---
 

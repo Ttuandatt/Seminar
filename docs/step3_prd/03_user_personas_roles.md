@@ -1,9 +1,9 @@
 # User Personas & Roles
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 3.0
+> **Phiên bản:** 3.1
 > **Ngày tạo:** 2026-02-08
-> **Cập nhật:** 2026-03-21
+> **Cập nhật:** 2026-04-04
 
 ---
 
@@ -130,6 +130,7 @@
 **Goals:**
 - Lưu lại những địa điểm yêu thích để quay lại
 - Xem lại lịch sử các nơi đã tham quan
+- Tạo tour tùy chỉnh (Custom Tour) theo sở thích cá nhân
 - Đồng bộ dữ liệu giữa các thiết bị
 
 **Pain Points:**
@@ -179,7 +180,7 @@
 |------|-------------|----------|-------------|
 | **Admin** | Quản trị viên nội dung (cao nhất) | Web | Toàn quyền CRUD POI, Tour, media, duyệt nội dung, xem báo cáo |
 | **Shop Owner** | Chủ quán/cửa hàng | Web | CRUD POI thuộc sở hữu, upload media, xem analytics của quán |
-| **Tourist** | Du khách (guest + đăng nhập) | Mobile App | Xem bản đồ/POI, nghe audio, dùng tour; khi đăng nhập thêm Favorites/History/Sync |
+| **Tourist** | Du khách (guest + đăng nhập) | Mobile App | Xem bản đồ/POI, nghe audio, dùng tour, tạo tour tùy chỉnh (logged-in); khi đăng nhập thêm Favorites/History/Sync |
 
 ### 2.2 Permission Details
 
@@ -190,10 +191,11 @@
 | Login / Logout | ✅ | ✅ |
 | Create POI | ✅ | ✅ (own) |
 | Edit POI | ✅ | ✅ (own) |
-| Delete POI (soft) | ✅ | ✅ (own) |
+| Delete POI (soft) | ✅ | ✅ (own, ownership check) |
 | Change POI status (DRAFT→ACTIVE) | ✅ | ❌ (cần Admin duyệt) |
 | Upload Media (ảnh/audio) | ✅ | ✅ (own POI) |
 | Generate TTS audio | ✅ | ✅ (own POI) |
+| Dịch nội dung POI (Translation) | ✅ | ✅ (own POI) |
 | Create Tour | ✅ | ❌ |
 | Edit Tour | ✅ | ❌ |
 | Delete Tour | ✅ | ❌ |
@@ -210,15 +212,20 @@
 |--------|:---:|:---:|
 | Xem bản đồ POI | ✅ | ✅ |
 | Xem chi tiết POI | ✅ | ✅ |
-| Nghe audio thuyết minh (VI/EN/ZH) | ✅ | ✅ |
+| Nghe audio thuyết minh (11 ngôn ngữ) | ✅ | ✅ |
 | Scan QR | ✅ | ✅ |
-| Chọn ngôn ngữ (VI/EN/ZH) | ✅ | ✅ |
+| Chọn ngôn ngữ (11 ngôn ngữ) | ✅ | ✅ |
 | Xem danh sách / chi tiết Tour | ✅ | ✅ |
 | Device Capability Check | ✅ | ✅ |
 | Chế độ Offline | ✅ | ✅ |
 | Yêu thích POI | ❌ | ✅ |
 | Xem lịch sử tham quan | ❌ | ✅ |
 | Đồng bộ đa thiết bị | ❌ | ✅ |
+| Tạo Tour tùy chỉnh (Custom Tour) | ❌ | ✅ |
+| Sửa/Xóa Tour tùy chỉnh (own) | ❌ | ✅ |
+| Dịch nội dung POI runtime | ✅ | ✅ |
+
+> **Lưu ý:** Tourist (logged-in) có thể tạo/sửa/xóa Custom Tour của riêng mình, nhưng KHÔNG thể tạo/sửa nội dung POI. Việc tạo/sửa POI chỉ dành cho Admin và Shop Owner.
 
 ---
 
