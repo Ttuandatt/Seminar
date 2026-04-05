@@ -1,7 +1,7 @@
 # Sequence Diagrams
 ## Dự án GPS Tours & Phố Ẩm thực Vĩnh Khánh
 
-> **Phiên bản:** 4.1
+> **Phiên bản:** 4.2
 > **Ngày tạo:** 2026-02-10
 > **Cập nhật:** 2026-04-05
 > **Trạng thái:** Synced với codebase (apps/api, apps/admin, apps/mobile)
@@ -294,7 +294,8 @@ sequenceDiagram
     UI->>API: POST /tours {nameVi, nameEn, descriptionVi, descriptionEn, status: DRAFT}
     API->>Guard: Verify JWT + ADMIN
     API->>Tour: create(dto, userId)
-    Tour->>DB: prisma.tour.create({...dto, createdById: userId, tourType: OFFICIAL})
+    Tour->>DB: prisma.tour.create({...dto, status: DRAFT, createdById: userId})
+    Note right of Tour: tourType không được set khi tạo (mặc định từ schema).<br/>Bắt buộc tạo DRAFT trước, rồi thêm stops + publish.
     DB-->>Tour: Tour record (tourId)
     Tour-->>API: Tour đã tạo
     API-->>UI: 201 {tour}
@@ -357,8 +358,7 @@ sequenceDiagram
             Audio->>Audio: Tải + phát audio mới
             Audio-->>Tourist: Tự động phát audio thuyết minh
 
-            App->>API: POST /public/trigger-log {poiId, triggerType: GPS, lat, lng, distance}
-            API->>DB: prisma.triggerLog.create({...})
+            Note right of App: Map screen KHÔNG gọi trigger-log trực tiếp.<br/>Trigger log chỉ được ghi khi Tourist mở POI detail (poi/[id].tsx).<br/>Nếu Tourist đã đăng nhập → POST /tourist/me/history<br/>Nếu chưa đăng nhập → POST /public/trigger-log
         end
     end
 ```
@@ -648,7 +648,7 @@ sequenceDiagram
 
     UI->>API: DELETE /pois/:id
     API->>Guard: Verify JWT
-    API->>POI: remove(id, userId, userRole)
+    API->>POI: remove(id, currentUser: {id, role})
     POI->>DB: prisma.poi.findFirst({where: {id, deletedAt: null}})
     DB-->>POI: POI record
 
@@ -804,7 +804,8 @@ sequenceDiagram
     App->>Lang: setLanguage('en')
     Lang->>i18n: i18n.changeLanguage('en')
     i18n->>i18n: Tải gói dịch English (en.json)
-    Lang->>Storage: AsyncStorage.setItem('language', 'en')
+    Lang->>Storage: AsyncStorage.setItem('app_language', 'en')
+    Lang->>Storage: AsyncStorage.setItem('appLanguage', 'en') [backward-compat]
     Storage-->>Lang: Đã lưu
 
     Lang-->>App: Ngôn ngữ đã cập nhật -> render lại
@@ -925,7 +926,7 @@ sequenceDiagram
     actor Tourist
     participant App as Mobile App (Expo)
     participant Ctx as AudioContext (React Context)
-    participant Player as expo-av Audio.Sound
+    participant Player as expo-audio (useAudioPlayer)
     participant GPS as expo-location
 
     Note over Tourist, GPS: Tourist đang nghe audio POI_A
@@ -936,29 +937,26 @@ sequenceDiagram
     App->>App: Khoảng cách đến POI_B <= triggerRadius
     App->>Ctx: playGlobalAudio(POI_B.id, audioUrl_B)
 
-    Note over Ctx, Player: Dừng audio trước, phát audio mới
+    Note over Ctx, Player: Thay đổi audio source → auto-play
     Ctx->>Ctx: So sánh: POI_B.id !== currentPoiId (POI_A)
-    Ctx->>Player: sound.stopAsync() cho POI_A
-    Ctx->>Player: sound.unloadAsync() cho POI_A
-    Ctx->>Ctx: Cập nhật currentPoiId = POI_B
-    Ctx->>Player: Audio.Sound.createAsync(audioUrl_B)
-    Player-->>Ctx: Sound đã tải
-    Ctx->>Player: sound.playAsync()
+    Ctx->>Ctx: Cập nhật currentAudioUrl = audioUrl_B, currentPoiId = POI_B
+    Ctx->>Player: useAudioPlayer(newSource) — expo-audio tự load + play
+    Note right of Player: expo-audio hook useAudioPlayer<br/>tự động load khi source thay đổi.<br/>useAudioPlayerStatus theo dõi trạng thái.
     Player-->>Tourist: Audio POI_B bắt đầu phát
 
-    Note over Tourist, GPS: Tourist nhấn Pause thủ công
+    Note over Tourist, GPS: Tourist nhấn Pause th��� công
     Tourist->>App: Nhấn Pause trên AudioPlayer widget
-    App->>Ctx: pauseAudio()
-    Ctx->>Player: sound.pauseAsync()
+    App->>Ctx: pauseGlobalAudio()
+    Ctx->>Player: player.pause()
     Player-->>Tourist: Audio đã tạm dừng
 
     Tourist->>App: Nhấn Play
-    App->>Ctx: resumeAudio()
-    Ctx->>Player: sound.playAsync()
+    App->>Ctx: resumeGlobalAudio()
+    Ctx->>Player: player.play() (hoặc seekTo(0) + play nếu đã kết thúc)
     Player-->>Tourist: Audio tiếp tục phát
 
     Note over Tourist, GPS: Audio kết thúc tự nhiên
-    Player-->>Ctx: onPlaybackStatusUpdate({didJustFinish: true})
+    Player-->>Ctx: useAudioPlayerStatus: currentTime >= duration - 0.05
     Ctx->>Ctx: Reset isPlaying = false
     Ctx->>Ctx: Sẵn sàng cho POI trigger tiếp theo
 ```
@@ -993,32 +991,36 @@ sequenceDiagram
     App->>App: Parse regex: gpstours:poi:(.+)
     App->>App: Trích xuất poiId = "abc-123"
 
-    alt Online — có mạng
+    Note over App, SQLite: Bước 2a: Kiểm tra SQLite TRƯỚC (không tốn m��ng)
+    App->>SQLite: getOfflinePoi("abc-123")
+
+    alt Tìm thấy trong SQLite
+        SQLite-->>App: Dữ liệu POI offline {id, nameVi, hasLargeAudio}
+
+        alt hasLargeAudio === 0 (chỉ text)
+            App->>Tourist: Alert "Chế độ offline"
+            App->>App: router.replace("/poi/abc-123?offline=true")
+            App->>Tourist: Hiển thị POI detail (chỉ text)
+        else hasLargeAudio === 1 (cần mạng cho audio/video)
+            App->>Tourist: Alert "Cần WiFi/mạng để tải nội dung lớn"
+            App->>App: router.replace("/poi/abc-123")
+            App->>Tourist: Hiển thị POI detail (cần mạng cho media)
+        end
+
+    else Không tìm thấy trong SQLite → gọi API
+        Note over App, API: Bước 2b: Fallback qua API validate
         App->>API: POST /public/qr/validate {qrData: "gpstours:poi:abc-123"}
         API->>API: Parse định dạng QR
         API->>DB: prisma.poi.findFirst({where: {id: poiId, status: ACTIVE}})
 
         alt POI tồn tại và ACTIVE
-            DB-->>API: POI record + ảnh đầu tiên
-            API-->>App: {valid: true, poi: {id, name, thumbnail}}
-            App->>App: router.push("/poi/abc-123")
+            DB-->>API: POI record
+            API-->>App: {valid: true, poi: {id, name}}
+            App->>App: router.replace("/poi/abc-123")
             App->>Tourist: Hiển thị POI detail screen
-        else POI không tồn tại
-            API-->>App: {valid: false, message: "POI not found"}
-            App->>Tourist: Thông báo "Mã QR không hợp lệ"
-        end
-
-    else Offline — không có mạng
-        App->>SQLite: SELECT * FROM pois WHERE id = 'abc-123'
-
-        alt Tìm thấy trong SQLite
-            SQLite-->>App: Dữ liệu POI (chỉ text, không có media URLs)
-            App->>App: router.push("/poi/abc-123?offline=true")
-            App->>Tourist: Hiển thị POI detail (chỉ text, không có audio/images)
-            App->>Tourist: Banner "Chế độ offline — kết nối mạng để xem đầy đủ"
-        else Không tìm thấy
-            SQLite-->>App: null
-            App->>Tourist: Thông báo "Không thể xác minh QR. Vui lòng kết nối mạng."
+        else POI không tồn tại hoặc lỗi mạng
+            API-->>App: {valid: false} hoặc network error
+            App->>Tourist: Alert "Mã QR không hợp lệ" + nút "Thử lại"
         end
     end
 ```
@@ -1097,12 +1099,12 @@ sequenceDiagram
     actor Tourist
     participant App as Mobile App (Expo)
     participant GPS as expo-location
-    participant Net as NetInfo (@react-native-community/netinfo)
+    participant Net as expo-network (Network)
     participant UI as Device Check Screen
 
     Tourist->>App: Mở ứng dụng
 
-    App->>Net: NetInfo.fetch()
+    App->>Net: Network.getNetworkStateAsync()
     Net-->>App: {isConnected: true/false, isInternetReachable: true/false}
 
     App->>GPS: Location.getForegroundPermissionsAsync()
@@ -1117,7 +1119,7 @@ sequenceDiagram
         UI->>Tourist: "Vui lòng bật WiFi hoặc dữ liệu di động để tiếp tục"
         UI->>Tourist: Nút "Thử lại"
         Tourist->>UI: Nhấn "Thử lại"
-        UI->>Net: NetInfo.fetch() lần nữa
+        UI->>Net: Network.getNetworkStateAsync() lần nữa
         Net-->>UI: {isConnected: true}
         UI->>App: Tiến hành nếu OK
     else GPS chưa cấp quyền
@@ -1739,21 +1741,21 @@ sequenceDiagram
 | SD-02 | Shop Owner | 4 | Medium | Fix: nested create shopOwnerProfile, thêm shopName/phone, conflict handling |
 | SD-03 | Admin | 7 | High | Fix: bỏ S3/Nominatim, dùng disk storage + Multer |
 | SD-04 | Shop Owner | 7 | Medium | Fix: bỏ Nominatim, khớp với /shop-owner/pois endpoint |
-| SD-05 | Admin | 5 | Medium | Fix: dùng /tours và /tours/:id/pois endpoints |
-| SD-06 | Tourist | 6 | High | Fix: dùng react-native-maps, thêm AudioContext + triggerLog |
+| SD-05 | Admin | 5 | Medium | v4.2: Fix tourType không set khi create, bắt buộc DRAFT trước |
+| SD-06 | Tourist | 6 | High | v4.2: Fix trigger-log chỉ từ POI detail, không từ Map screen |
 | SD-07 | Tourist | 6 | High | Fix: bỏ Mapbox, dùng react-native-maps, thêm history tracking |
 | SD-08 | System | 4 | Medium | **Viết lại:** Bỏ Criteria Engine scoring, dùng distance sort |
 | SD-09 | All | 6 | High | **Viết lại:** Web+Mobile, MailService Brevo API, fire-and-forget, _devToken |
 | SD-10 | Admin | 7 | High | Fix: bỏ S3, dùng disk storage, thêm TTS re-generation |
-| SD-11 | Admin | 5 | Medium | **Đơn giản hóa:** Bỏ force delete/cascade, chỉ soft delete |
+| SD-11 | Admin | 5 | Medium | v4.2: Fix remove() signature: currentUser object thay vì userId+role |
 | SD-12 | Tourist | 4 | Medium | Fix: tách add/remove (không toggle), dùng /tourist/me/favorites |
 | SD-13 | Shop Owner | 5 | Medium | Fix: dùng viewHistory.audioPlayed, startDate/endDate params |
-| SD-14 | Tourist | 6 | Medium | **Viết lại:** Chỉ VI/EN (bỏ ZH), thêm localizationResolver |
+| SD-14 | Tourist | 6 | Medium | v4.2: Fix storage key app_language + backward-compat appLanguage |
 | SD-15 | Tourist | 6 | Medium | Fix: nested create touristProfile, validate, conflict handling, AuthService chi tiết |
-| SD-16 | Tourist | 4 | Medium | Fix: dùng expo-av API chính xác |
-| SD-17 | Tourist | 5 | High | Sửa nhỏ, làm rõ offline logic |
+| SD-16 | Tourist | 4 | Medium | v4.2: Fix expo-av → expo-audio (useAudioPlayer hook) |
+| SD-17 | Tourist | 5 | High | v4.2: **Viết lại:** SQLite kiểm tra TRƯỚC → API fallback (đúng thứ tự code) |
 | SD-18 | Admin/SO | 6 | High | Fix: bỏ S3, dùng /uploads/tts/, thêm archive logic |
-| SD-19 | Tourist | 4 | Medium | Sửa nhỏ |
+| SD-19 | Tourist | 4 | Medium | v4.2: Fix @react-native-community/netinfo → expo-network |
 | SD-20 | Admin/SO | 6 | Medium | Sửa nhỏ |
 | SD-21 | Admin | 6 | High | Sửa nhỏ |
 | SD-22 | Shop Owner | 7 | High | Sửa nhỏ |
