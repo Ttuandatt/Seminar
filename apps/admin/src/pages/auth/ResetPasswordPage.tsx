@@ -20,7 +20,6 @@ const ResetPasswordPage = () => {
 
         if (password !== confirmPassword) {
             setError('Mật khẩu xác nhận không khớp.');
-            return;
         }
 
         setLoading(true);

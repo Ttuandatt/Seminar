@@ -251,7 +251,7 @@ export class AuthService {
             where: { token: dto.token },
         });
 
-        if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+        if (!resetToken || resetToken.expiresAt < new Date()) {
             throw new BadRequestException('Invalid or expired reset token');
         }
 

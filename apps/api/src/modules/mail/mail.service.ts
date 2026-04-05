@@ -78,7 +78,7 @@ export class MailService {
                 'content-type': 'application/json',
                 'api-key': this.brevoApiKey!,
             },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ body }),
         });
 
         if (!response.ok) {

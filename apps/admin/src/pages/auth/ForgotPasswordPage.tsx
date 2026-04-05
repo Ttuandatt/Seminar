@@ -26,8 +26,6 @@ const ForgotPasswordPage = () => {
         } catch (err) {
             console.error(err);
             setError('Không thể gửi yêu cầu. Vui lòng thử lại.');
-        } finally {
-            setLoading(false);
         }
     };
 
