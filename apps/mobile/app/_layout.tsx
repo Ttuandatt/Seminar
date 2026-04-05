@@ -19,6 +19,7 @@ function RootNavigator() {
             <Stack.Screen name="login" options={{ title: t('nav.login'), presentation: 'formSheet' }} />
             <Stack.Screen name="register" options={{ title: t('nav.register'), presentation: 'formSheet' }} />
             <Stack.Screen name="forgot-password" options={{ title: t('nav.forgotPassword'), presentation: 'formSheet' }} />
+            <Stack.Screen name="reset-password" options={{ title: t('nav.resetPassword'), presentation: 'formSheet' }} />
             <Stack.Screen name="edit-profile" options={{ title: t('nav.editProfile') }} />
             <Stack.Screen name="language" options={{ title: t('nav.language') }} />
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />

@@ -17,6 +17,7 @@ import { TtsModule } from './modules/tts/tts.module';
 import { QrModule } from './modules/qr/qr.module';
 import { SeedExportModule } from './modules/seed-export/seed-export.module';
 import { TranslateModule } from './modules/translate/translate.module';
+import { MailModule } from './modules/mail';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { TranslateModule } from './modules/translate/translate.module';
       serveRoot: '/uploads',
     }),
     PrismaModule,
+    MailModule,
     SeedExportModule,
     AuthModule,
     PoisModule,

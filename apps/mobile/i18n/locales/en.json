@@ -78,6 +78,7 @@
     "login": "Login",
     "register": "Register",
     "forgotPassword": "Forgot Password",
+    "resetPassword": "Reset Password",
     "editProfile": "Edit Profile",
     "language": "Language",
     "about": "About"
@@ -234,6 +235,24 @@
     "emailSent": "Email sent!",
     "emailSentDesc": "If an account with this email exists, you will receive a password reset link in a few minutes.",
     "backToLogin": "Back to Login"
+  },
+  "resetPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "submitButton": "Reset Password",
+    "errorEmpty": "Please enter both password fields.",
+    "errorPasswordLength": "Password must be at least 8 characters.",
+    "errorMismatch": "Passwords do not match.",
+    "errorExpired": "This link has expired or has already been used. Please request a new one.",
+    "errorGeneric": "Unable to reset password. Please try again.",
+    "errorNoToken": "Invalid link",
+    "errorNoTokenDesc": "The password reset link is invalid or missing. Please request a new one.",
+    "requestNew": "Request new link",
+    "successTitle": "Password reset successful!",
+    "successMessage": "Your password has been updated. You can now log in with your new password.",
+    "goToLogin": "Go to Login"
   },
   "editProfile": {
     "fullName": "Full name",

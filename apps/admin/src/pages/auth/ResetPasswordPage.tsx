@@ -48,7 +48,7 @@ const ResetPasswordPage = () => {
                         Quay lại đăng nhập
                     </Link>
                     <h1 className="mt-4 text-2xl font-bold text-slate-900">Đặt lại mật khẩu</h1>
-                    <p className="text-sm text-slate-500">Nhập token và mật khẩu mới để hoàn tất.</p>
+                    <p className="text-sm text-slate-500">Nhập mật khẩu mới cho tài khoản của bạn.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,17 +65,19 @@ const ResetPasswordPage = () => {
                         </div>
                     )}
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Reset Token</label>
-                        <input
-                            type="text"
-                            required
-                            value={token}
-                            onChange={(event) => setToken(event.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-                            placeholder="Dán token từ email"
-                        />
-                    </div>
+                    {!defaultToken && (
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Reset Token</label>
+                            <input
+                                type="text"
+                                required
+                                value={token}
+                                onChange={(event) => setToken(event.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                                placeholder="Dán token từ email"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-slate-700">Mật khẩu mới</label>

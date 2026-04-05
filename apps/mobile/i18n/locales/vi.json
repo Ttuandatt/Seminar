@@ -78,6 +78,7 @@
     "login": "Đăng nhập",
     "register": "Đăng ký",
     "forgotPassword": "Quên mật khẩu",
+    "resetPassword": "Đặt lại mật khẩu",
     "editProfile": "Chỉnh sửa hồ sơ",
     "language": "Ngôn ngữ",
     "about": "Giới thiệu"
@@ -234,6 +235,24 @@
     "emailSent": "Email đã được gửi!",
     "emailSentDesc": "Nếu tài khoản với email này tồn tại, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút.",
     "backToLogin": "Quay về Đăng nhập"
+  },
+  "resetPassword": {
+    "title": "Đặt lại mật khẩu",
+    "subtitle": "Nhập mật khẩu mới cho tài khoản của bạn.",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "submitButton": "Đặt lại mật khẩu",
+    "errorEmpty": "Vui lòng nhập đầy đủ mật khẩu.",
+    "errorPasswordLength": "Mật khẩu cần ít nhất 8 ký tự.",
+    "errorMismatch": "Mật khẩu xác nhận không khớp.",
+    "errorExpired": "Liên kết đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu liên kết mới.",
+    "errorGeneric": "Không thể đặt lại mật khẩu. Vui lòng thử lại.",
+    "errorNoToken": "Liên kết không hợp lệ",
+    "errorNoTokenDesc": "Liên kết đặt lại mật khẩu không hợp lệ hoặc thiếu token. Vui lòng yêu cầu liên kết mới.",
+    "requestNew": "Yêu cầu liên kết mới",
+    "successTitle": "Đặt lại mật khẩu thành công!",
+    "successMessage": "Mật khẩu của bạn đã được cập nhật. Bạn có thể đăng nhập với mật khẩu mới.",
+    "goToLogin": "Đăng nhập"
   },
   "editProfile": {
     "fullName": "Họ và tên",

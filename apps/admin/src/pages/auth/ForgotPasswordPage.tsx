@@ -48,11 +48,21 @@ const ForgotPasswordPage = () => {
                         <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                             <CheckCircle2 className="mt-0.5 h-4 w-4" />
                             <div>
-                                <p>{message}</p>
+                                <p>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (bao gồm thư rác).</p>
                                 {devToken && (
-                                    <p className="mt-1 text-xs text-emerald-600">
-                                        Dev token: <span className="font-mono">{devToken}</span>
-                                    </p>
+                                    <details className="mt-2">
+                                        <summary className="cursor-pointer text-xs text-emerald-600 hover:text-emerald-700">
+                                            Dev mode: Xem token
+                                        </summary>
+                                        <p className="mt-1 text-xs text-emerald-600">
+                                            <a
+                                                href={`/reset-password?token=${devToken}`}
+                                                className="font-mono underline hover:text-emerald-800"
+                                            >
+                                                /reset-password?token={devToken}
+                                            </a>
+                                        </p>
+                                    </details>
                                 )}
                             </div>
                         </div>

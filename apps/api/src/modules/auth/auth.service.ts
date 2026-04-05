@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma';
+import { MailService } from '../mail';
 import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, RefreshTokenDto } from './dto';
 import { Role, TokenType } from '@prisma/client';
 
@@ -21,6 +22,7 @@ export class AuthService {
         private prisma: PrismaService,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private mailService: MailService,
     ) { }
 
     async register(dto: RegisterDto) {
@@ -228,11 +230,19 @@ export class AuthService {
             },
         });
 
-        // TODO: Send email with reset link
-        // For POC, return token directly
+        // Send password reset email (fire-and-forget — don't block response)
+        this.mailService
+            .sendPasswordResetEmail(user.email, user.fullName, token)
+            .catch((err) => {
+                // Log but don't fail the request
+                console.error('Failed to send password reset email:', err);
+            });
+
+        const isDev = this.configService.get<string>('NODE_ENV') !== 'production';
+
         return {
             message: 'If email exists, reset link has been sent',
-            _devToken: token, // Remove in production
+            ...(isDev ? { _devToken: token } : {}),
         };
     }
 

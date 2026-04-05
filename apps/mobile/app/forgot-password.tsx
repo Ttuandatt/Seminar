@@ -36,9 +36,9 @@ export default function ForgotPasswordScreen() {
                     <View style={styles.successCircle}>
                         <Mail size={48} color="#10b981" />
                     </View>
-                    <Text style={styles.successTitle}>{t('forgotPassword.sentTitle')}</Text>
+                    <Text style={styles.successTitle}>{t('forgotPassword.emailSent')}</Text>
                     <Text style={styles.successText}>
-                        {t('forgotPassword.sentMessage')}
+                        {t('forgotPassword.emailSentDesc')}
                     </Text>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                         <Text style={styles.backButtonText}>{t('forgotPassword.backToLogin')}</Text>
@@ -82,7 +82,7 @@ export default function ForgotPasswordScreen() {
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.resetButtonText}>{t('forgotPassword.sendButton')}</Text>
+                            <Text style={styles.resetButtonText}>{t('forgotPassword.sendLink')}</Text>
                         )}
                     </TouchableOpacity>
                 </View>
