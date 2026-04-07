@@ -111,6 +111,26 @@ export class PublicController {
         });
     }
 
+    // GET /public/tours/:id/narrations — Mobile fetch narration queue
+    @Get('tours/:id/narrations')
+    async getTourNarrations(@Param('id') id: string) {
+        return this.prisma.tourNarration.findMany({
+            where: { tourId: id },
+            orderBy: { orderIndex: 'asc' },
+            select: {
+                id: true,
+                type: true,
+                orderIndex: true,
+                fromPoiId: true,
+                toPoiId: true,
+                scriptVi: true,
+                scriptEn: true,
+                audioViUrl: true,
+                audioEnUrl: true,
+            },
+        });
+    }
+
     @Post('trigger-log')
     async logTrigger(@Body() dto: TriggerLogDto) {
         const log = await this.prisma.triggerLog.create({ data: dto });
