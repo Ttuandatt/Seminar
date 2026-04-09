@@ -9,6 +9,7 @@ import { LocateFixed, Layers, ChevronRight, MapPin } from 'lucide-react-native';
 import { getDistance } from '../../utils/distance';
 import AudioPlayer from '../../components/AudioPlayer';
 import { getMediaUrl } from '../../services/api';
+import { OfflineDataLayer } from '../../services/offlineDataLayer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { organicMapStyle } from '../../utils/mapStyle';
 import { useLanguage } from '../../context/LanguageContext';
@@ -118,7 +119,7 @@ export default function MapScreen() {
 
     const fetchPois = useCallback(async () => {
         try {
-            const data = await publicService.getAllPois();
+            const data = await OfflineDataLayer.getAllPois();
             console.log('[Map] fetched POIs:', data.length);
             data.forEach(p => console.log(`[Map] POI: ${p.nameVi} | radius=${p.triggerRadius}m | media=${p.media?.length}`));
             setPois(data);

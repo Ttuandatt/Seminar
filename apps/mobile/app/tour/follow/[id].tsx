@@ -5,6 +5,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { publicService, Tour } from '../../../services/publicService';
 import { touristService } from '../../../services/touristService';
+import { OfflineDataLayer } from '../../../services/offlineDataLayer';
 import { getDistance } from '../../../utils/distance';
 import AudioPlayer from '../../../components/AudioPlayer';
 import { LocateFixed, XCircle, CheckCircle2 } from 'lucide-react-native';
@@ -37,7 +38,7 @@ export default function TourFollowScreen() {
         if (typeof id === 'string') {
             const data = isCustom
                 ? await touristService.getMyTourDetail(id)
-                : await publicService.getTourDetail(id);
+                : await OfflineDataLayer.getTour(id);
             setTour(data);
         }
     };
