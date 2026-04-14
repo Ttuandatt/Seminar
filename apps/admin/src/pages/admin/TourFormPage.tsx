@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { tourService, type Tour, type TourPayload, type TourStatus } from '../../services/tour.service';
 import { poiService, type POI } from '../../services/poi.service';
+import TourNarrationTab from '../../components/TourNarrationTab';
 
 type EditableStop = {
     stopId?: string;
@@ -34,6 +35,7 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
+    const [activeTab, setActiveTab] = useState<'info' | 'narration'>('info');
 
     const [formData, setFormData] = useState<{
         name: string;
@@ -336,7 +338,33 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex border-b border-slate-200 mb-6 sm:gap-4 overflow-x-auto pb-px">
+                <button
+                    onClick={() => setActiveTab('info')}
+                    className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
+                        activeTab === 'info'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                    }`}
+                >
+                    Thông tin & Điểm dừng
+                </button>
+                {isEditMode && (
+                    <button
+                        onClick={() => setActiveTab('narration')}
+                        className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+                            activeTab === 'narration'
+                                ? 'border-purple-600 text-purple-600'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                        }`}
+                    >
+                        Thuyết minh ✨
+                    </button>
+                )}
+            </div>
+
+            {activeTab === 'info' && (
+                <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
                     <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-sm text-red-600">
                         <AlertCircle className="h-4 w-4 shrink-0" />
@@ -599,6 +627,11 @@ const TourFormPage = ({ readOnly = false }: { readOnly?: boolean }) => {
                     )}
                 </div>
             </form>
+            )}
+
+            {activeTab === 'narration' && id && (
+                <TourNarrationTab tourId={id} />
+            )}
 
             {isPoiModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

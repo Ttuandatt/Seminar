@@ -51,6 +51,10 @@ export const publicService = {
         const { data } = await api.get<Tour>(`/public/tours/${id}`);
         return data;
     },
+    getTourNarrations: async (id: string) => {
+        const { data } = await api.get<any[]>(`/public/tours/${id}/narrations`);
+        return data;
+    },
 
     // Extras
     logTrigger: async (logData: { deviceId: string; poiId: string; triggerType: string; userAction: string, userLat?: number, userLng?: number }) => {

@@ -13,6 +13,20 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { resolveExactAudioTrack } from '../../../utils/audioMedia';
 import { getMediaUrl } from '../../../services/api';
 import { getMissingAudioNote } from '../../../services/localizationCopy';
+import { useGlobalAudio } from '../../../context/AudioContext';
+
+type NarrationType = 'INTRO' | 'TRANSITION' | 'ARRIVAL' | 'OUTRO';
+interface TourNarration {
+    id: string;
+    type: NarrationType;
+    orderIndex: number;
+    fromPoiId: string | null;
+    toPoiId: string | null;
+    scriptVi: string | null;
+    scriptEn: string | null;
+    audioViUrl: string | null;
+    audioEnUrl: string | null;
+}
 
 const { width } = Dimensions.get('window');
 
@@ -23,24 +37,97 @@ export default function TourFollowScreen() {
     const mapRef = useRef<MapView>(null);
 
     const [tour, setTour] = useState<Tour | null>(null);
+    const [narrations, setNarrations] = useState<TourNarration[]>([]);
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [currentStep, setCurrentStep] = useState(0); // Index of the next POI to reach
     const [triggeredStops, setTriggeredStops] = useState<Set<number>>(new Set());
+    const [activeNarration, setActiveNarration] = useState<TourNarration | null>(null);
+    const [poiAudioReadyToPlay, setPoiAudioReadyToPlay] = useState(false);
+    
+    const { playGlobalAudio, stopAndClearAudio, isPlaying, position, duration, currentAudioUrl } = useGlobalAudio();
     const { t } = useTranslation();
     const { lang, getPoiName, getPoiDescription } = useLanguage();
+
+    const narrationHelpers = {
+        find: (list: TourNarration[], type: NarrationType, toPoiId?: string) =>
+            list.find(n => n.type === type && (!toPoiId || n.toPoiId === toPoiId)),
+        play: (n: TourNarration, language: string, playFn: (url: string, id: string) => void, setFn: (n: TourNarration) => void) => {
+            const url = (language === 'en' || language === 'EN') ? n.audioEnUrl : n.audioViUrl;
+            const fallbackUrl = n.audioViUrl || n.audioEnUrl; 
+            const activeUrl = url || fallbackUrl;
+            
+            setFn(n);
+            if (activeUrl) {
+                playFn(activeUrl, `narration-${n.id}`);
+            }
+        }
+    };
+
+    const generateClientNarration = (tourData: Tour | null, pois: any[]): TourNarration[] => {
+        if (!tourData || !pois.length) return [];
+        const generated: TourNarration[] = [];
+        let orderIndex = 0;
+        
+        generated.push({
+            id: 'intro', type: 'INTRO', orderIndex: orderIndex++,
+            fromPoiId: null, toPoiId: pois[0].poiId,
+            scriptVi: `Chào mừng bạn đến với ${tourData.nameVi}! Tour gồm ${pois.length} điểm dừng. Hãy bắt đầu hành trình nào!`,
+            scriptEn: `Welcome to ${tourData.nameEn || tourData.nameVi}! This tour has ${pois.length} stops. Let's begin!`,
+            audioViUrl: null, audioEnUrl: null
+        });
+        
+        for (let i = 0; i < pois.length; i++) {
+            generated.push({
+                id: `trans-${i}`, type: 'TRANSITION', orderIndex: orderIndex++,
+                fromPoiId: i > 0 ? pois[i-1].poiId : null, toPoiId: pois[i].poiId,
+                scriptVi: `Tiếp theo chúng ta sẽ đến ${pois[i].poi.nameVi}.`,
+                scriptEn: `Next we will head to ${pois[i].poi.nameEn || pois[i].poi.nameVi}.`,
+                audioViUrl: null, audioEnUrl: null
+            });
+            
+            generated.push({
+                id: `arr-${i}`, type: 'ARRIVAL', orderIndex: orderIndex++,
+                fromPoiId: null, toPoiId: pois[i].poiId,
+                scriptVi: `Chúng ta đã đến ${pois[i].poi.nameVi}!`,
+                scriptEn: `We've arrived at ${pois[i].poi.nameEn || pois[i].poi.nameVi}!`,
+                audioViUrl: null, audioEnUrl: null
+            });
+        }
+        
+        generated.push({
+            id: 'outro', type: 'OUTRO', orderIndex: orderIndex++,
+            fromPoiId: pois[pois.length-1].poiId, toPoiId: null,
+            scriptVi: `Chúc mừng bạn đã hoàn thành ${tourData.nameVi}!`,
+            scriptEn: `Congratulations! You have completed ${tourData.nameEn || tourData.nameVi}.`,
+            audioViUrl: null, audioEnUrl: null
+        });
+        return generated;
+    };
+
+    const fetchTourData = async () => {
+        if (typeof id === 'string') {
+            try {
+                const [data, narrationData] = await Promise.all([
+                    isCustom
+                        ? touristService.getMyTourDetail(id)
+                        : publicService.getTourDetail(id),
+                    !isCustom ? publicService.getTourNarrations(id).catch(() => []) : Promise.resolve([])
+                ]);
+                setTour(data);
+                if (isCustom && data) {
+                    setNarrations(generateClientNarration(data, data.tourPois || []));
+                } else {
+                    setNarrations(narrationData || []);
+                }
+            } catch (err) {
+                console.error('Failed to fetch tour data:', err);
+            }
+        }
+    };
 
     useEffect(() => {
         fetchTourData();
     }, [id]);
-
-    const fetchTourData = async () => {
-        if (typeof id === 'string') {
-            const data = isCustom
-                ? await touristService.getMyTourDetail(id)
-                : await publicService.getTourDetail(id);
-            setTour(data);
-        }
-    };
 
     const handleLocationUpdate = useCallback((loc: Location.LocationObject) => {
         setLocation(loc);
@@ -54,9 +141,18 @@ export default function TourFollowScreen() {
         );
 
         if (dist <= (targetPoi.triggerRadius || 50) && !triggeredStops.has(currentStep)) {
+            // Play ARRIVAL narration if exists
+            const arrival = narrationHelpers.find(narrations, 'ARRIVAL', targetPoi.id);
+            if (arrival && (arrival.audioViUrl || arrival.audioEnUrl)) {
+                narrationHelpers.play(arrival, lang, playGlobalAudio, setActiveNarration);
+                setPoiAudioReadyToPlay(false);
+            } else {
+                if (arrival) setActiveNarration(arrival);
+                setPoiAudioReadyToPlay(true);
+            }
             setTriggeredStops((prev) => new Set(prev).add(currentStep));
         }
-    }, [currentStep, tour, triggeredStops]);
+    }, [currentStep, tour, triggeredStops, narrations, lang, playGlobalAudio]);
 
     useEffect(() => {
         let locationSub: Location.LocationSubscription | null = null;
@@ -81,7 +177,57 @@ export default function TourFollowScreen() {
         return () => {
             if (locationSub) locationSub.remove();
         };
-    }, [tour, currentStep, handleLocationUpdate]);
+    }, [handleLocationUpdate]);
+
+    // Derived values for UI and effects
+    const currentTourPois = tour?.tourPois || [];
+    const isFinished = tour && currentStep >= currentTourPois.length;
+    const targetPoi = isFinished ? null : currentTourPois[currentStep]?.poi;
+    const hasArrived = triggeredStops.has(currentStep);
+
+    // Handle INTRO narration
+    useEffect(() => {
+        if (tour && narrations.length > 0 && currentStep === 0 && !triggeredStops.has(0)) {
+            const intro = narrationHelpers.find(narrations, 'INTRO');
+            if (intro) {
+                narrationHelpers.play(intro, lang, playGlobalAudio, setActiveNarration);
+            }
+        }
+    }, [tour, narrations, currentStep, triggeredStops]);
+
+    // Handle OUTRO narration
+    useEffect(() => {
+        if (isFinished && narrations.length > 0) {
+            const outro = narrationHelpers.find(narrations, 'OUTRO');
+            if (outro) {
+                narrationHelpers.play(outro, lang, playGlobalAudio, setActiveNarration);
+            }
+        }
+    }, [isFinished, narrations, lang, playGlobalAudio]);
+
+    // Check when ARRIVAL audio ends to trigger POI audio
+    useEffect(() => {
+        if (activeNarration && activeNarration.type === 'ARRIVAL' && !poiAudioReadyToPlay) {
+            const activeUrl = (lang === 'en' || lang === 'EN') ? activeNarration.audioEnUrl : activeNarration.audioViUrl;
+            const fallbackUrl = activeNarration.audioViUrl || activeNarration.audioEnUrl;
+            const url = activeUrl || fallbackUrl;
+            
+            if (!url) {
+                setPoiAudioReadyToPlay(true);
+                return;
+            }
+            
+            const fullUrl = getMediaUrl(url);
+            if (currentAudioUrl === fullUrl) {
+                if (!isPlaying && duration > 0 && position >= duration - 500) {
+                    setPoiAudioReadyToPlay(true);
+                }
+            } else if (currentAudioUrl && currentAudioUrl !== fullUrl) {
+                // Audio changed or overriden
+                setPoiAudioReadyToPlay(true);
+            }
+        }
+    }, [isPlaying, position, duration, currentAudioUrl, activeNarration, poiAudioReadyToPlay, lang]);
 
     const goToUserLocation = async () => {
         if (location) {
@@ -106,17 +252,10 @@ export default function TourFollowScreen() {
 
     if (!tour?.tourPois?.length) return null;
 
-    const currentTourPois = tour.tourPois;
-
     const coordinates = currentTourPois.map(tp => ({
         latitude: Number(tp.poi.latitude),
         longitude: Number(tp.poi.longitude),
     }));
-
-    // Target POI information
-    const isFinished = currentStep >= currentTourPois.length;
-    const targetPoi = isFinished ? null : currentTourPois[currentStep].poi;
-    const hasArrived = triggeredStops.has(currentStep);
 
     // Get Audio conditionally
     const audioMedia = resolveExactAudioTrack(targetPoi?.media, lang);
@@ -163,7 +302,10 @@ export default function TourFollowScreen() {
                 })}
             </MapView>
 
-            <TouchableOpacity style={styles.exitButton} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.exitButton} onPress={() => {
+                stopAndClearAudio();
+                router.back();
+            }}>
                 <XCircle size={32} color="#dc2626" fill="#fff" />
             </TouchableOpacity>
 
@@ -197,9 +339,18 @@ export default function TourFollowScreen() {
                             {targetPoi ? (getPoiDescription(targetPoi) || t('common.noDescription')) : ''}
                         </Text>
 
+                        {/* Narration Text Fallback */}
+                        {activeNarration && (
+                            <View style={styles.narrationBox}>
+                                <Text style={styles.narrationText}>
+                                    💬 {(lang === 'en' || lang === 'EN') ? (activeNarration.scriptEn || activeNarration.scriptVi) : (activeNarration.scriptVi || activeNarration.scriptEn)}
+                                </Text>
+                            </View>
+                        )}
+
                         {hasArrived && audioUrl && (
                             <View style={styles.audioWrapper}>
-                                <AudioPlayer audioUrl={audioUrl} poiId={targetPoi.id} autoPlay={true} />
+                                <AudioPlayer audioUrl={audioUrl} poiId={targetPoi!.id} autoPlay={poiAudioReadyToPlay} />
                             </View>
                         )}
 
@@ -210,7 +361,19 @@ export default function TourFollowScreen() {
                         <View style={styles.navButtons}>
                             <TouchableOpacity
                                 style={[styles.nextButton, !hasArrived && styles.nextButtonDisabled]}
-                                onPress={() => setCurrentStep(prev => prev + 1)}
+                                onPress={() => {
+                                    const nextIndex = currentStep + 1;
+                                    if (nextIndex < currentTourPois.length) {
+                                        const nextPoiId = currentTourPois[nextIndex].poiId;
+                                        const transition = narrationHelpers.find(narrations, 'TRANSITION', nextPoiId);
+                                        if (transition) {
+                                            narrationHelpers.play(transition, lang, playGlobalAudio, setActiveNarration);
+                                        } else {
+                                            setActiveNarration(null);
+                                        }
+                                    }
+                                    setCurrentStep(nextIndex);
+                                }}
                                 disabled={!hasArrived}
                             >
                                 <Text style={styles.nextButtonText}>
@@ -368,5 +531,19 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    narrationBox: {
+        backgroundColor: '#f0f9ff',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#0ea5e9',
+    },
+    narrationText: {
+        fontSize: 14,
+        color: '#0369a1',
+        fontStyle: 'italic',
+        lineHeight: 20,
     }
 });
