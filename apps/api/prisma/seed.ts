@@ -33,6 +33,16 @@ async function seedFromJson() {
     // Import users
     for (const user of data.users) {
         const { shopOwnerProfile, touristProfile, ...userData } = user;
+        
+        if (shopOwnerProfile) {
+            delete shopOwnerProfile.id;
+            delete shopOwnerProfile.userId;
+        }
+        if (touristProfile) {
+            delete touristProfile.id;
+            delete touristProfile.userId;
+        }
+
         await prisma.user.create({
             data: {
                 ...userData,
@@ -50,6 +60,9 @@ async function seedFromJson() {
     // Import POIs
     for (const poi of data.pois) {
         const { media, ...poiData } = poi;
+        if (media && media.length) {
+            media.forEach((m: any) => { delete m.id; delete m.poiId; });
+        }
         await prisma.poi.create({
             data: {
                 ...poiData,
@@ -64,6 +77,9 @@ async function seedFromJson() {
     // Import tours
     for (const tour of data.tours) {
         const { tourPois, ...tourData } = tour;
+        if (tourPois && tourPois.length) {
+            tourPois.forEach((tp: any) => { delete tp.id; delete tp.tourId; });
+        }
         await prisma.tour.create({
             data: {
                 ...tourData,
@@ -246,6 +262,20 @@ async function main() {
         console.warn('⚠️  Seed data import failed, skipping data seed (languages already seeded)');
         console.warn('Error:', error instanceof Error ? error.message : String(error));
     }
+
+    // Force default users to ensure login credentials always work
+    console.log('📝 Ensuring default test credentials exist...');
+    const adminPw = await bcrypt.hash('admin123', 12);
+    await prisma.user.upsert({
+        where: { email: 'admin@gpstours.vn' },
+        update: {},
+        create: {
+            email: 'admin@gpstours.vn',
+            passwordHash: adminPw,
+            fullName: 'Admin GPS Tours (Default)',
+            role: Role.ADMIN,
+        },
+    });
 
     console.log('\n🎉 Seed complete!');
     console.log('─────────────────────────');
