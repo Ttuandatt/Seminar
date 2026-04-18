@@ -19,6 +19,7 @@ import { SeedExportModule } from './modules/seed-export/seed-export.module';
 import { TranslateModule } from './modules/translate/translate.module';
 import { MailModule } from './modules/mail';
 import { SyncModule } from './modules/sync/sync.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SyncModule } from './modules/sync/sync.module';
     TtsModule,
     QrModule,
     TranslateModule,
+    TrackingModule,
   ],
 })
 export class AppModule { }

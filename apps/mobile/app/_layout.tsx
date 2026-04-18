@@ -8,6 +8,7 @@ import '../i18n';
 import OfflineBanner from '../components/OfflineBanner';
 import { SyncManager } from '../services/syncManager';
 import { MediaCleanupService } from '../services/mediaCleanupService';
+import TrackingService from '../services/trackingService';
 
 function RootNavigator() {
     const { t } = useTranslation();
@@ -42,6 +43,7 @@ export default function RootLayout() {
             console.log('[App] Performing startup sync and cleanup...');
             await SyncManager.deltaSync();
             await MediaCleanupService.cleanupExpiredMedia();
+            await TrackingService.init();
         };
         startup();
 
@@ -50,7 +52,10 @@ export default function RootLayout() {
             SyncManager.deltaSync();
         }, 15 * 60 * 1000);
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            TrackingService.disconnect();
+        };
     }, []);
 
     return (

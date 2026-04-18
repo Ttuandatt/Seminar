@@ -25,7 +25,8 @@ export default function ScannerScreen() {
     const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
         setScanned(true);
 
-        const match = data.match(/^gpstours:poi:(.+)$/);
+        // QR data format: "gpstours:poi:<poiId>:<JWT>"
+        const match = data.match(/^gpstours:poi:([^:]+)/); // Match the first part safely
         if (match) {
             const poiId = match[1];
 
@@ -48,6 +49,12 @@ export default function ScannerScreen() {
             if (response && response.valid && response.poi) {
                 // Success, navigate to POI
                 router.replace(`/poi/${response.poi.id}`);
+            } else if (response && response.message === 'EXPIRED') {
+                Alert.alert(
+                    t('scanner.qrExpiredTitle', 'Mã QR đã hết hạn!'),
+                    t('scanner.qrExpiredMessage', 'Vui lòng quay lại quầy vé để lấy mã mới sinh ngay bây giờ nhé! Môi trường bảo mật yêu cầu mã QR phải được cập nhật mỗi 2 giờ.'),
+                    [{ text: 'OK', onPress: () => setScanned(false) }]
+                );
             } else {
                 Alert.alert(t('common.error'), t('scanner.invalidQr'), [
                     { text: t('common.retry'), onPress: () => setScanned(false) }

@@ -1,46 +1,49 @@
-import { 
-  MapPin, 
-  Map, 
-  Users, 
-  TrendingUp, 
+import {
+  MapPin,
+  Map,
+  Users,
+  TrendingUp,
   MoreHorizontal,
   ArrowUpRight,
-  Plus
+  Plus,
+  Activity
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import api from '../../../lib/api';
 
 const stats = [
-  { 
-    label: 'Total POIs', 
-    value: '25', 
-    change: '+3 this week', 
-    icon: MapPin, 
-    color: 'text-blue-600', 
-    bg: 'bg-blue-50' 
+  {
+    label: 'Total POIs',
+    value: '25',
+    change: '+3 this week',
+    icon: MapPin,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
   },
-  { 
-    label: 'Active Tours', 
-    value: '5', 
-    change: 'Stable', 
-    icon: Map, 
-    color: 'text-purple-600', 
-    bg: 'bg-purple-50' 
+  {
+    label: 'Active Tours',
+    value: '5',
+    change: 'Stable',
+    icon: Map,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50'
   },
-  { 
-    label: 'Total Views', 
-    value: '1.2K', 
-    change: '+15% vs last week', 
-    icon: Users, 
-    color: 'text-emerald-600', 
-    bg: 'bg-emerald-50' 
+  {
+    label: 'Total Views',
+    value: '1.2K',
+    change: '+15% vs last week',
+    icon: Users,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
   },
-  { 
-    label: 'Avg. Rating', 
-    value: '4.8', 
-    change: 'Top tier', 
-    icon: TrendingUp, 
-    color: 'text-amber-600', 
-    bg: 'bg-amber-50' 
+  {
+    label: 'Avg. Rating',
+    value: '4.8',
+    change: 'Top tier',
+    icon: TrendingUp,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50'
   },
 ];
 
@@ -52,6 +55,28 @@ const recentActivity = [
 ];
 
 const DashboardPage = () => {
+  const [activeUsers, setActiveUsers] = useState<number>(0);
+
+  useEffect(() => {
+    // Initial fetch
+    const fetchActiveUsers = async () => {
+      try {
+        const res = await api.get('/admin/tracking/active-devices');
+        if (res.data && typeof res.data.count === 'number') {
+          setActiveUsers(res.data.count);
+        }
+      } catch (e) {
+        console.error('Failed to fetch active devices', e);
+      }
+    };
+
+    fetchActiveUsers();
+
+    // Poll every 5 seconds
+    const interval = setInterval(fetchActiveUsers, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -93,6 +118,30 @@ const DashboardPage = () => {
             </div>
           </div>
         ))}
+
+        {/* Real-time Tracking Box */}
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md group">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Live Devices</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 flex items-center gap-3">
+                {activeUsers}
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                </span>
+              </p>
+            </div>
+            <div className="rounded-xl p-3 bg-rose-50 text-rose-600 group-hover:scale-110 transition-transform">
+              <Activity className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-xs">
+            <span className="flex items-center font-medium text-slate-500">
+              Active concurrent connections
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Grid */}

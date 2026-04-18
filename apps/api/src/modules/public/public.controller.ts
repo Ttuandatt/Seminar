@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { IsNumber, IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TriggerType, UserAction } from '@prisma/client';
@@ -26,7 +28,11 @@ class QrValidateDto {
 
 @Controller('public')
 export class PublicController {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private jwtService: JwtService,
+        private configService: ConfigService,
+    ) { }
 
     @Get('pois')
     async findAllPois() {
@@ -139,12 +145,24 @@ export class PublicController {
 
     @Post('qr/validate')
     async validateQr(@Body() dto: QrValidateDto) {
-        // QR data format: "gpstours:poi:<poiId>"
-        const match = dto.qrData.match(/^gpstours:poi:(.+)$/);
+        // QR data format: "gpstours:poi:<poiId>:<JWT_TOKEN>"
+        const match = dto.qrData.match(/^gpstours:poi:([^:]+):(.+)$/);
         if (!match) return { valid: false, message: 'Invalid QR code' };
 
+        const [, poiId, token] = match;
+
+        try {
+            const secret = this.configService.get<string>('JWT_SECRET') || 'defaultSecret';
+            this.jwtService.verify(token, { secret });
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                return { valid: false, message: 'EXPIRED' };
+            }
+            return { valid: false, message: 'INVALID_TOKEN' };
+        }
+
         const poi = await this.prisma.poi.findFirst({
-            where: { id: match[1], status: 'ACTIVE', deletedAt: null },
+            where: { id: poiId, status: 'ACTIVE', deletedAt: null },
             include: { media: { where: { type: 'IMAGE' }, take: 1 } },
         });
 

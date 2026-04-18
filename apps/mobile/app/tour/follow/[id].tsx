@@ -122,7 +122,7 @@ export default function TourFollowScreen() {
                 const [data, narrationData] = await Promise.all([
                     isCustom
                         ? touristService.getMyTourDetail(id)
-                        : publicService.getTourDetail(id),
+                        : OfflineDataLayer.getTour(id),
                     !isCustom ? publicService.getTourNarrations(id).catch(() => []) : Promise.resolve([])
                 ]);
                 setTour(data);
@@ -144,15 +144,6 @@ export default function TourFollowScreen() {
     useEffect(() => {
         fetchTourData();
     }, [id]);
-
-    const fetchTourData = async () => {
-        if (typeof id === 'string') {
-            const data = isCustom
-                ? await touristService.getMyTourDetail(id)
-                : await OfflineDataLayer.getTour(id);
-            setTour(data);
-        }
-    };
 
     const handleLocationUpdate = useCallback((loc: Location.LocationObject) => {
         setLocation(loc);
