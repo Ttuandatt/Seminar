@@ -43,11 +43,21 @@ async function seedFromJson() {
         await prisma.user.create({
             data: {
                 ...userData,
-                ...(cleanShopOwner ? {
-                    shopOwnerProfile: { create: cleanShopOwner },
+                ...(shopOwnerProfile ? {
+                    shopOwnerProfile: {
+                        create: (() => {
+                            const { userId, ...rest } = shopOwnerProfile;
+                            return rest;
+                        })(),
+                    },
                 } : {}),
-                ...(cleanTourist ? {
-                    touristProfile: { create: cleanTourist },
+                ...(touristProfile ? {
+                    touristProfile: {
+                        create: (() => {
+                            const { userId, ...rest } = touristProfile;
+                            return rest;
+                        })(),
+                    },
                 } : {}),
             },
         });
@@ -64,7 +74,12 @@ async function seedFromJson() {
             data: {
                 ...poiData,
                 ...(media?.length ? {
-                    media: { create: media.map(({ poiId, ...m }: any) => m) },
+                    media: {
+                        create: media.map((m: any) => {
+                            const { poiId, ...rest } = m;
+                            return rest;
+                        }),
+                    },
                 } : {}),
             },
         });
@@ -81,7 +96,12 @@ async function seedFromJson() {
             data: {
                 ...tourData,
                 ...(tourPois?.length ? {
-                    tourPois: { create: tourPois.map(({ tourId, ...tp }: any) => tp) },
+                    tourPois: {
+                        create: tourPois.map((tp: any) => {
+                            const { id, tourId, createdAt, updatedAt, ...rest } = tp;
+                            return rest;
+                        }),
+                    },
                 } : {}),
             },
         });

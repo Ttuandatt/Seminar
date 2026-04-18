@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../context/LanguageContext';
 import { publicService, Tour } from '../../services/publicService';
 import { touristService } from '../../services/touristService';
+import { OfflineDataLayer } from '../../services/offlineDataLayer';
+import DownloadTourButton from '../../components/DownloadTourButton';
 
 const { width } = Dimensions.get('window');
 
@@ -29,7 +31,7 @@ export default function TourDetailScreen() {
             if (typeof id === 'string') {
                 const data = isCustom
                     ? await touristService.getMyTourDetail(id)
-                    : await publicService.getTourDetail(id);
+                    : await OfflineDataLayer.getTour(id);
                 setTour(data);
             }
         } catch (error) {
@@ -147,6 +149,11 @@ export default function TourDetailScreen() {
 
             {/* Footer Actions */}
             <View style={styles.footer}>
+                {!isCustom && (
+                    <View style={{ marginBottom: 12 }}>
+                        <DownloadTourButton tourId={tour.id} />
+                    </View>
+                )}
                 {isCustom && (
                     <View style={styles.customActions}>
                         <TouchableOpacity

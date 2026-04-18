@@ -18,6 +18,7 @@ import { QrModule } from './modules/qr/qr.module';
 import { SeedExportModule } from './modules/seed-export/seed-export.module';
 import { TranslateModule } from './modules/translate/translate.module';
 import { MailModule } from './modules/mail';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MailModule } from './modules/mail';
     }),
     PrismaModule,
     MailModule,
+    SyncModule,
     SeedExportModule,
     AuthModule,
     PoisModule,

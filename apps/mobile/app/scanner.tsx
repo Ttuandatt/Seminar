@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { publicService } from '../services/publicService';
-import { getOfflinePoi } from '../services/database';
+import { OfflineDataLayer } from '../services/offlineDataLayer';
 import { XCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -29,30 +29,17 @@ export default function ScannerScreen() {
         if (match) {
             const poiId = match[1];
 
-            // Check SQLite first
-            const offlinePoi = getOfflinePoi(poiId);
+            try {
+                // Check SQLite first via OfflineDataLayer
+                const offlinePoi = await OfflineDataLayer.getPoi(poiId).catch(() => null);
 
-            if (offlinePoi) {
-                if (offlinePoi.hasLargeAudio === 1) {
-                    // TH2: Require WiFi/Network
-                    Alert.alert(
-                        t('scanner.largeData'),
-                        t('scanner.largeDataMsg'),
-                        [
-                            { text: t('common.continue'), onPress: () => router.replace(`/poi/${poiId}`) }
-                        ]
-                    );
-                } else {
-                    // TH1: Use SQLite directly
-                    Alert.alert(
-                        t('scanner.offlineMode'),
-                        t('scanner.offlineMsg'),
-                        [
-                            { text: t('common.continue'), onPress: () => router.replace(`/poi/${poiId}?offline=true`) }
-                        ]
-                    );
+                if (offlinePoi) {
+                    // Always allow navigating to POI detail, which handles its own online/offline states
+                    router.replace(`/poi/${poiId}`);
+                    return;
                 }
-                return;
+            } catch (e) {
+                console.log("Not in offline cache");
             }
         }
 

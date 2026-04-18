@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, Dimensions
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, Globe } from 'lucide-react-native';
 import { publicService, Poi } from '../../services/publicService';
-import { getOfflinePoi } from '../../services/database';
+import { OfflineDataLayer } from '../../services/offlineDataLayer';
 import AudioPlayer from '../../components/AudioPlayer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touristService } from '../../services/touristService';
@@ -106,19 +106,7 @@ export default function PoiDetailScreen() {
     const fetchData = async () => {
         try {
             if (typeof id === 'string') {
-                if (offline === 'true') {
-                    const localData = getOfflinePoi(id);
-                    if (localData) {
-                        setPoi({
-                            ...localData,
-                            media: [] // Offline mode has no media for now
-                        } as any);
-                        setLoading(false);
-                        return;
-                    }
-                }
-
-                const data = await publicService.getPoiDetail(id);
+                const data = await OfflineDataLayer.getPoi(id);
                 setPoi(data);
 
                 // Log view history
