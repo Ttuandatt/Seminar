@@ -1,6 +1,6 @@
 import api, { getMediaUrl } from './api';
 import * as db from './database';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { isOnline } from './networkStatus';
 import { downloadFile } from './mediaDownloader';
 

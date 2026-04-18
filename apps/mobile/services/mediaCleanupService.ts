@@ -1,5 +1,5 @@
 import * as db from './database';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { deleteLocalFile } from './mediaDownloader';
 
 // Expiry in milliseconds

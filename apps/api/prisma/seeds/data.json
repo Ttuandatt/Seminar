@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-04-03T16:13:38.117Z",
+  "exportedAt": "2026-04-16T09:18:05.146Z",
   "users": [
     {
       "id": "8b04a788-23be-4391-89c1-a0c7f1b10fe1",
@@ -38,6 +38,21 @@
       "lockedUntil": null,
       "refreshToken": "$2b$10$6be9BTNiLqsdAU17fZCxWOA3mI49L0lfacXY6suZZK9aM07fNuWRO",
       "refreshTokenId": "146412ad-98c2-4ecc-85b9-e02379708e77",
+      "profile": null,
+      "shopOwnerProfile": null,
+      "touristProfile": null
+    },
+    {
+      "id": "63f11966-1629-49f8-afe9-3ffbc44a3961",
+      "email": "admin3@gmail.com",
+      "passwordHash": "$2b$12$AcKHkFfwHVYJSk0ZYaPxwunvxaTVH4qyNwhurVBOxqaLQc9EIW4bm",
+      "fullName": "Vy vy",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "failedLoginCount": 0,
+      "lockedUntil": null,
+      "refreshToken": "$2b$10$9leE9WjuuesrtAawoftvh.emRBxWfIVJX3NIHeP4rWXmM9nOaif5u",
+      "refreshTokenId": "d8549a9c-a17a-453c-802d-dc138f585e4e",
       "profile": null,
       "shopOwnerProfile": null,
       "touristProfile": null
@@ -399,6 +414,278 @@
           "orderIndex": 0
         }
       ]
+    },
+    {
+      "id": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+      "nameVi": "Bún đậu mắm tôm",
+      "nameEn": "Vermicelli with tofu and shrimp paste",
+      "descriptionVi": "[Address: Kí túc xá Trường đại học Sài Gòn, 99, An Dương Vương, Phường Phú Định, Tân Túc, Thành phố Hồ Chí Minh, 71959, Việt Nam]\n\nHà Nội có rất nhiều món ăn ngon được thực khách ưa thích gắn với “bún” như: bún chả, bún cá, bún ốc nguội… Trong số đó các món ăn đó không thể thiếu bún đậu mắm tôm Hà Nội - món ngon làm \"xiêu lòng\" các tín đồ ẩm thực. Không chỉ là một món ăn, bún đậu còn mang đậm nét văn hóa, gắn liền với lối sống và phong cách ẩm thực rất đỗi bình dị của người Việt nói chung, Hà Nội nói riêng.",
+      "descriptionEn": "Hanoi has many delicious dishes that diners love associated with \"noodles\" such as: bun cha, fish vermicelli, cold snail vermicelli... Among those dishes, Hanoi's noodle soup with tofu and shrimp paste cannot be missing - a delicious dish that \"captivates\" food lovers. Not only is it a dish, vermicelli noodles also have a strong cultural identity, associated with the very simple lifestyle and culinary style of Vietnamese people in general and Hanoi in particular.",
+      "latitude": 10.71588493828618,
+      "longitude": 106.6192231724824,
+      "triggerRadius": 10,
+      "category": "STREET_FOOD",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_113ce4dc-7d8b-4883-ba8e-af9961f2e408.png",
+      "createdById": "63f11966-1629-49f8-afe9-3ffbc44a3961",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "68c81d9e-6223-4e50-9c5e-f55920ae9c42",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_vi_36069454-20d8-47f1-bbdc-9a7bb6e0d288/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776330523555.mp3",
+          "sizeBytes": 281952,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "a31ed2e5-6dee-4abb-b4f9-15fc649c2e92",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_vi_8efa30c6-4090-4f92-99af-c8166303540b/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776330523684.mp3",
+          "sizeBytes": 281952,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "7df3f2bc-c608-4948-8b3e-4b28c76faa32",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_zh-cn_c73d362a-7762-4eea-80cf-869f4ae6769b/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_zh-cn_1776330602660.mp3",
+          "sizeBytes": 293184,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "6776e127-83c2-468c-8d79-086843505ab5",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_ja_344659a9-99e6-4a63-8787-6264853ac11a/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_ja_1776330735471.mp3",
+          "sizeBytes": 412992,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "631a89b4-7700-4fe6-b79e-6b40fe2cfb2a",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_ko_6a8e728b-c9a7-43d8-a8e3-8f65e0a40cc3/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_ko_1776330751254.mp3",
+          "sizeBytes": 391968,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "0024abd1-638f-4c72-8fb6-80ff78eeced3",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/bba3f10f-3879-4124-bc50-7e062efab04e.jpg",
+          "thumbnailUrl": null,
+          "originalName": "bun-dau.jpg",
+          "sizeBytes": 260835,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 1
+        },
+        {
+          "id": "be4a64a6-49da-48f4-aa80-8b5b0d6ca4b2",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/0d41cf5d-6d24-4e0b-b902-886238c7df80.jpg",
+          "thumbnailUrl": null,
+          "originalName": "bun-dau.jpg",
+          "sizeBytes": 260835,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 2
+        },
+        {
+          "id": "3dde9e6e-f231-4fb3-9e71-0a2ece156811",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_en_35d287ef-6f27-4606-802b-34b75917e2d7/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1776330558515.mp3",
+          "sizeBytes": 360576,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "2adb1d5a-39cd-4ff3-9600-88bb2d4fbfbb",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/113ce4dc-7d8b-4883-ba8e-af9961f2e408_en_b2b160a0-3982-4353-adfe-4faa9b62ace4/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1776330755303.mp3",
+          "sizeBytes": 360576,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
+    },
+    {
+      "id": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+      "nameVi": "Xì Phố Cafe",
+      "nameEn": "Xi Pho Cafe",
+      "descriptionVi": "[Address: Kí túc xá Trường đại học Sài Gòn, 99, An Dương Vương, Phường Phú Định, Tân Túc, Thành phố Hồ Chí Minh, 71959, Việt Nam]\n\nChân phương, nhiệt tình và cởi mở, cặp vợ chồng Lê Đức – Hoàng Dung không mất quá nhiều thời gian để mang lại thiện cảm cho đối phương dù có thể chỉ mới lần đầu gặp gỡ. Đi trên những con đường làm nghề vô cùng khác biệt, họ bất ngờ va vào nhau tại một điểm chạm là khát khao tạo ra sản phẩm sạch từ tư duy sạch và hành động sạch. Điều này trở thành tiền đề để hai người đi đến quyết định “về chung nhà”, cùng góp sức hiện thực hóa ước mơ.\n\nĐồng sở hữu hai thương hiệu Xì Phố Cafe tập trung cung ứng cà phê chất lượng cao từ vườn rừng tự nhiên, cùng với Dalanka Forest chuyên canh tác và cung cấp sản phẩm sinh thái vườn rừng, đôi bạn trẻ đang dốc sức tạo ra nhiều giá trị hữu hình, vừa là đầu ra thân thiện môi trường, an toàn sức khỏe cho khách hàng, vừa mang đến cơ hội hợp tác, chuyển đổi mô hình trồng trọt hiệu quả hơn dành cho người nông dân, giúp họ không ngừng cải thiện chất lượng cuộc sống. Điều quan trọng nhất, Lê Đức, Hoàng Dung và những người cộng sự luôn cảm thấy hạnh phúc với mỗi bước đi trên hành trình của chính mình.",
+      "descriptionEn": "Sincere, enthusiastic and open, the couple Le Duc - Hoang Dung did not take too much time to bring sympathy to each other even though they may only have met for the first time. Going on extremely different professional paths, they suddenly collided at one point: the desire to create clean products from clean thinking and clean actions. This became the premise for the two of them to decide to \"go home together\" and contribute to realizing their dream. \n\nCo-owners of two Xi Pho Cafe brands that focus on providing high-quality coffee from natural forest gardens, along with Dalanka Forest, which specializes in cultivating and providing forest garden ecological products, the young couple is working hard to create many tangible values, both as an environmentally friendly and health-safe output for customers, as well as providing opportunities to cooperate and transform more effective farming models for farmers, helping them constantly improve their quality of life. Most importantly, Le Duc, Hoang Dung and their colleagues always feel happy with every step on their journey.",
+      "latitude": 10.71871362496419,
+      "longitude": 106.6194375030639,
+      "triggerRadius": 15,
+      "category": "DINING",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_5d33f23a-4b63-423d-8b94-24027c9e101b.png",
+      "createdById": "63f11966-1629-49f8-afe9-3ffbc44a3961",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "d841f649-8842-4461-b331-a6e3909b7af4",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_vi_e0b32b52-3d93-460a-b60f-c771dad8065a/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776330950482.mp3",
+          "sizeBytes": 648288,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "01a74f15-6209-433d-a05d-b17b9608bc60",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_vi_f99d4f62-8d0f-4fc9-be31-69eaab480568/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776330956374.mp3",
+          "sizeBytes": 648288,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "067c4ac7-7330-4588-bf00-9254a0a9a37c",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_ja_d079dc4e-fa69-4c27-b9de-fe7013d57edf/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_ja_1776330997883.mp3",
+          "sizeBytes": 1009728,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "991573ca-6dc0-4fb8-a675-e9460765e469",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_zh-cn_1d259bc6-7bc8-43a9-9624-f1f411c94ebf/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_zh-cn_1776331038544.mp3",
+          "sizeBytes": 718560,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "d71f35ad-c8bb-4da9-9230-4a7d6033a048",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/203593fa-ff7d-42c0-b2eb-022ccf596e6e.jpeg",
+          "thumbnailUrl": null,
+          "originalName": "ca-phe.jpeg",
+          "sizeBytes": 301431,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 1
+        },
+        {
+          "id": "2c57320c-11ba-461b-af5d-abdbbb9a188a",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_en_fd16fccf-c6fd-43c2-8e15-b526aca461c6/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1776330977004.mp3",
+          "sizeBytes": 787680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "28037e08-abfd-4b0e-bdb8-5a262bc23725",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "AUDIO",
+          "language": "EN",
+          "url": "/uploads/tts/5d33f23a-4b63-423d-8b94-24027c9e101b_en_44d2fe91-c07f-4750-b8cc-f58bde1b6979/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_en_1776331047290.mp3",
+          "sizeBytes": 787680,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        },
+        {
+          "id": "a52f802a-9ccc-497f-9c26-2cdca6c52583",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "type": "IMAGE",
+          "language": "ALL",
+          "url": "/uploads/96bbf959-40da-4d10-ae3d-d291028dc0af.jpeg",
+          "thumbnailUrl": null,
+          "originalName": "ca-phe.jpeg",
+          "sizeBytes": 301431,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 2
+        }
+      ]
     }
   ],
   "tours": [
@@ -411,6 +698,7 @@
       "thumbnailUrl": null,
       "estimatedDuration": 60,
       "status": "ACTIVE",
+      "tourType": "OFFICIAL",
       "createdById": "1656f8e5-2643-44f1-aa2b-d39fe113b36e",
       "tourPois": [
         {
@@ -424,8 +712,8 @@
           "transitionNote": null,
           "isRequired": true,
           "unlockRule": null,
-          "createdAt": "2026-04-03T16:13:38.037Z",
-          "updatedAt": "2026-04-03T16:13:38.037Z"
+          "createdAt": "2026-04-16T09:03:16.354Z",
+          "updatedAt": "2026-04-16T09:18:05.030Z"
         },
         {
           "tourId": "6c29604b-20bc-47a3-969f-6f4bd89c30ab",
@@ -438,8 +726,36 @@
           "transitionNote": null,
           "isRequired": true,
           "unlockRule": null,
-          "createdAt": "2026-04-03T16:13:38.080Z",
-          "updatedAt": "2026-04-03T16:13:38.080Z"
+          "createdAt": "2026-04-16T09:03:16.354Z",
+          "updatedAt": "2026-04-16T09:18:05.054Z"
+        },
+        {
+          "tourId": "6c29604b-20bc-47a3-969f-6f4bd89c30ab",
+          "poiId": "5d33f23a-4b63-423d-8b94-24027c9e101b",
+          "orderIndex": 2,
+          "titleOverride": null,
+          "descriptionOverride": null,
+          "customIntro": null,
+          "estimatedStayMinutes": null,
+          "transitionNote": null,
+          "isRequired": true,
+          "unlockRule": null,
+          "createdAt": "2026-04-16T09:18:05.080Z",
+          "updatedAt": "2026-04-16T09:18:05.080Z"
+        },
+        {
+          "tourId": "6c29604b-20bc-47a3-969f-6f4bd89c30ab",
+          "poiId": "113ce4dc-7d8b-4883-ba8e-af9961f2e408",
+          "orderIndex": 3,
+          "titleOverride": null,
+          "descriptionOverride": null,
+          "customIntro": null,
+          "estimatedStayMinutes": null,
+          "transitionNote": null,
+          "isRequired": true,
+          "unlockRule": null,
+          "createdAt": "2026-04-16T09:18:05.108Z",
+          "updatedAt": "2026-04-16T09:18:05.108Z"
         }
       ]
     }

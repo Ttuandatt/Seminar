@@ -37,10 +37,20 @@ async function seedFromJson() {
             data: {
                 ...userData,
                 ...(shopOwnerProfile ? {
-                    shopOwnerProfile: { create: shopOwnerProfile },
+                    shopOwnerProfile: {
+                        create: (() => {
+                            const { userId, ...rest } = shopOwnerProfile;
+                            return rest;
+                        })(),
+                    },
                 } : {}),
                 ...(touristProfile ? {
-                    touristProfile: { create: touristProfile },
+                    touristProfile: {
+                        create: (() => {
+                            const { userId, ...rest } = touristProfile;
+                            return rest;
+                        })(),
+                    },
                 } : {}),
             },
         });
@@ -54,7 +64,12 @@ async function seedFromJson() {
             data: {
                 ...poiData,
                 ...(media?.length ? {
-                    media: { create: media },
+                    media: {
+                        create: media.map((m: any) => {
+                            const { poiId, ...rest } = m;
+                            return rest;
+                        }),
+                    },
                 } : {}),
             },
         });
@@ -68,7 +83,12 @@ async function seedFromJson() {
             data: {
                 ...tourData,
                 ...(tourPois?.length ? {
-                    tourPois: { create: tourPois },
+                    tourPois: {
+                        create: tourPois.map((tp: any) => {
+                            const { id, tourId, createdAt, updatedAt, ...rest } = tp;
+                            return rest;
+                        }),
+                    },
                 } : {}),
             },
         });
