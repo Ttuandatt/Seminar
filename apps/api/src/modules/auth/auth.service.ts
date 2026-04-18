@@ -26,9 +26,11 @@ export class AuthService {
     ) { }
 
     async register(dto: RegisterDto) {
+        const normalizedEmail = dto.email.toLowerCase();
+
         // Check existing email
         const existing = await this.prisma.user.findUnique({
-            where: { email: dto.email },
+            where: { email: normalizedEmail },
         });
         if (existing) {
             throw new ConflictException('Email already registered');
@@ -48,7 +50,7 @@ export class AuthService {
 
         const user = await this.prisma.user.create({
             data: {
-                email: dto.email,
+                email: normalizedEmail,
                 passwordHash,
                 fullName: dto.fullName,
                 role: dto.role,
@@ -89,8 +91,10 @@ export class AuthService {
     }
 
     async login(dto: LoginDto) {
+        const normalizedEmail = dto.email.toLowerCase();
+
         const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
+            where: { email: normalizedEmail },
         });
 
         if (!user) {
@@ -212,8 +216,10 @@ export class AuthService {
     }
 
     async forgotPassword(dto: ForgotPasswordDto) {
+        const normalizedEmail = dto.email.toLowerCase();
+
         const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
+            where: { email: normalizedEmail },
         });
 
         // Always return success (don't leak email existence)

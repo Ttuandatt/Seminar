@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-04-03T16:13:38.117Z",
+  "exportedAt": "2026-04-18T02:37:56.137Z",
   "users": [
     {
       "id": "8b04a788-23be-4391-89c1-a0c7f1b10fe1",
@@ -36,8 +36,8 @@
       "status": "ACTIVE",
       "failedLoginCount": 0,
       "lockedUntil": null,
-      "refreshToken": "$2b$10$6be9BTNiLqsdAU17fZCxWOA3mI49L0lfacXY6suZZK9aM07fNuWRO",
-      "refreshTokenId": "146412ad-98c2-4ecc-85b9-e02379708e77",
+      "refreshToken": "$2b$10$6t7.gdjXY.GniKK6WAxAn.UhKf/SH/FK92MtdTpAOgnHoifYcaSzu",
+      "refreshTokenId": "4a84d696-ac31-406e-b555-058a82fc9051",
       "profile": null,
       "shopOwnerProfile": null,
       "touristProfile": null
@@ -399,6 +399,79 @@
           "orderIndex": 0
         }
       ]
+    },
+    {
+      "id": "200aea49-f426-42be-b1e3-756e03218010",
+      "nameVi": "POI số 3",
+      "nameEn": "",
+      "descriptionVi": "[Address: An Dương Vương, Khu phố 22, Phường Chợ Quán, Thủ Đức, Ho Chi Minh City, 72760, Vietnam]\n\nTự động tạo audio thuyết minh từ nội dung mô tả POI \nTips\nMô tả tiếng Việt là bắt buộc, bản dịch tiếng Anh có thể bổ sung sau.\nGiữ audio dưới 4 phút để tăng tỉ lệ nghe hết.\nẢnh tiêu đề nên có kích thước tối thiểu 1200px.",
+      "descriptionEn": "",
+      "latitude": 10.7596382,
+      "longitude": 106.6795129,
+      "triggerRadius": 15,
+      "category": "BARS_NIGHTLIFE",
+      "status": "ACTIVE",
+      "qrCodeUrl": "/uploads/qr/poi_200aea49-f426-42be-b1e3-756e03218010.png",
+      "createdById": "1656f8e5-2643-44f1-aa2b-d39fe113b36e",
+      "ownerId": null,
+      "media": [
+        {
+          "id": "828a893e-fbd3-4b8a-8c8a-10c029276a4c",
+          "poiId": "200aea49-f426-42be-b1e3-756e03218010",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/200aea49-f426-42be-b1e3-756e03218010_vi_0bf242b4-469f-49af-bd66-5e7c4116c9e4/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776479762120.mp3",
+          "sizeBytes": 48960,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "11192ba0-ca89-4c8f-b7f0-c7e7315e0307",
+          "poiId": "200aea49-f426-42be-b1e3-756e03218010",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/200aea49-f426-42be-b1e3-756e03218010_vi_0d23277c-4750-4a3a-b651-02b6a8a4f54d/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776479763122.mp3",
+          "sizeBytes": 48960,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "3115497f-681e-4fcc-a606-ee45ed0ab3ac",
+          "poiId": "200aea49-f426-42be-b1e3-756e03218010",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/200aea49-f426-42be-b1e3-756e03218010_vi_c212b99f-7787-45e5-b2af-a011dc0bddeb/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776479803092.mp3",
+          "sizeBytes": 211392,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": -1
+        },
+        {
+          "id": "a1a160f3-26f7-483f-be19-c35dc43f6139",
+          "poiId": "200aea49-f426-42be-b1e3-756e03218010",
+          "type": "AUDIO",
+          "language": "VI",
+          "url": "/uploads/tts/200aea49-f426-42be-b1e3-756e03218010_vi_ae9d3334-1b73-401f-b809-a0b5bf38bab6/audio.mp3",
+          "thumbnailUrl": null,
+          "originalName": "tts_vi_1776479821208.mp3",
+          "sizeBytes": 211392,
+          "durationSeconds": null,
+          "width": null,
+          "height": null,
+          "orderIndex": 0
+        }
+      ]
     }
   ],
   "tours": [
@@ -411,6 +484,7 @@
       "thumbnailUrl": null,
       "estimatedDuration": 60,
       "status": "ACTIVE",
+      "tourType": "OFFICIAL",
       "createdById": "1656f8e5-2643-44f1-aa2b-d39fe113b36e",
       "tourPois": [
         {
@@ -425,7 +499,7 @@
           "isRequired": true,
           "unlockRule": null,
           "createdAt": "2026-04-03T16:13:38.037Z",
-          "updatedAt": "2026-04-03T16:13:38.037Z"
+          "updatedAt": "2026-04-18T02:37:56.024Z"
         },
         {
           "tourId": "6c29604b-20bc-47a3-969f-6f4bd89c30ab",
@@ -439,7 +513,21 @@
           "isRequired": true,
           "unlockRule": null,
           "createdAt": "2026-04-03T16:13:38.080Z",
-          "updatedAt": "2026-04-03T16:13:38.080Z"
+          "updatedAt": "2026-04-18T02:37:56.056Z"
+        },
+        {
+          "tourId": "6c29604b-20bc-47a3-969f-6f4bd89c30ab",
+          "poiId": "200aea49-f426-42be-b1e3-756e03218010",
+          "orderIndex": 2,
+          "titleOverride": null,
+          "descriptionOverride": null,
+          "customIntro": null,
+          "estimatedStayMinutes": null,
+          "transitionNote": null,
+          "isRequired": true,
+          "unlockRule": null,
+          "createdAt": "2026-04-18T02:37:56.088Z",
+          "updatedAt": "2026-04-18T02:37:56.088Z"
         }
       ]
     }

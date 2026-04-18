@@ -33,14 +33,21 @@ async function seedFromJson() {
     // Import users
     for (const user of data.users) {
         const { shopOwnerProfile, touristProfile, ...userData } = user;
+        
+        const cleanShopOwner = shopOwnerProfile ? { ...shopOwnerProfile } : null;
+        if (cleanShopOwner) delete (cleanShopOwner as any).userId;
+        
+        const cleanTourist = touristProfile ? { ...touristProfile } : null;
+        if (cleanTourist) delete (cleanTourist as any).userId;
+
         await prisma.user.create({
             data: {
                 ...userData,
-                ...(shopOwnerProfile ? {
-                    shopOwnerProfile: { create: shopOwnerProfile },
+                ...(cleanShopOwner ? {
+                    shopOwnerProfile: { create: cleanShopOwner },
                 } : {}),
-                ...(touristProfile ? {
-                    touristProfile: { create: touristProfile },
+                ...(cleanTourist ? {
+                    touristProfile: { create: cleanTourist },
                 } : {}),
             },
         });
@@ -54,7 +61,7 @@ async function seedFromJson() {
             data: {
                 ...poiData,
                 ...(media?.length ? {
-                    media: { create: media },
+                    media: { create: media.map(({ poiId, ...m }: any) => m) },
                 } : {}),
             },
         });
@@ -68,7 +75,7 @@ async function seedFromJson() {
             data: {
                 ...tourData,
                 ...(tourPois?.length ? {
-                    tourPois: { create: tourPois },
+                    tourPois: { create: tourPois.map(({ tourId, ...tp }: any) => tp) },
                 } : {}),
             },
         });

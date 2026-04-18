@@ -14,6 +14,7 @@ import { resolveExactAudioTrack } from '../../../utils/audioMedia';
 import { getMediaUrl } from '../../../services/api';
 import { getMissingAudioNote } from '../../../services/localizationCopy';
 import { useGlobalAudio } from '../../../context/AudioContext';
+import { buildGoogleTtsUrl } from '../../../services/runtimeLocalizationService';
 
 type NarrationType = 'INTRO' | 'TRANSITION' | 'ARRIVAL' | 'OUTRO';
 interface TourNarration {
@@ -43,7 +44,7 @@ export default function TourFollowScreen() {
     const [triggeredStops, setTriggeredStops] = useState<Set<number>>(new Set());
     const [activeNarration, setActiveNarration] = useState<TourNarration | null>(null);
     const [poiAudioReadyToPlay, setPoiAudioReadyToPlay] = useState(false);
-    
+
     const { playGlobalAudio, stopAndClearAudio, isPlaying, position, duration, currentAudioUrl } = useGlobalAudio();
     const { t } = useTranslation();
     const { lang, getPoiName, getPoiDescription } = useLanguage();
@@ -52,13 +53,23 @@ export default function TourFollowScreen() {
         find: (list: TourNarration[], type: NarrationType, toPoiId?: string) =>
             list.find(n => n.type === type && (!toPoiId || n.toPoiId === toPoiId)),
         play: (n: TourNarration, language: string, playFn: (url: string, id: string) => void, setFn: (n: TourNarration) => void) => {
-            const url = (language === 'en' || language === 'EN') ? n.audioEnUrl : n.audioViUrl;
-            const fallbackUrl = n.audioViUrl || n.audioEnUrl; 
+            const isEn = language === 'en' || language === 'EN';
+            const url = isEn ? n.audioEnUrl : n.audioViUrl;
+            const fallbackUrl = n.audioViUrl || n.audioEnUrl;
             const activeUrl = url || fallbackUrl;
-            
+
             setFn(n);
             if (activeUrl) {
                 playFn(activeUrl, `narration-${n.id}`);
+            } else {
+                // FALLBACK TO TTS
+                const text = isEn ? (n.scriptEn || n.scriptVi) : (n.scriptVi || n.scriptEn);
+                if (text) {
+                    const ttsUrl = buildGoogleTtsUrl(text, language);
+                    if (ttsUrl) {
+                        playFn(ttsUrl, `narration-${n.id}`);
+                    }
+                }
             }
         }
     };
@@ -67,7 +78,7 @@ export default function TourFollowScreen() {
         if (!tourData || !pois.length) return [];
         const generated: TourNarration[] = [];
         let orderIndex = 0;
-        
+
         generated.push({
             id: 'intro', type: 'INTRO', orderIndex: orderIndex++,
             fromPoiId: null, toPoiId: pois[0].poiId,
@@ -75,16 +86,16 @@ export default function TourFollowScreen() {
             scriptEn: `Welcome to ${tourData.nameEn || tourData.nameVi}! This tour has ${pois.length} stops. Let's begin!`,
             audioViUrl: null, audioEnUrl: null
         });
-        
+
         for (let i = 0; i < pois.length; i++) {
             generated.push({
                 id: `trans-${i}`, type: 'TRANSITION', orderIndex: orderIndex++,
-                fromPoiId: i > 0 ? pois[i-1].poiId : null, toPoiId: pois[i].poiId,
+                fromPoiId: i > 0 ? pois[i - 1].poiId : null, toPoiId: pois[i].poiId,
                 scriptVi: `Tiếp theo chúng ta sẽ đến ${pois[i].poi.nameVi}.`,
                 scriptEn: `Next we will head to ${pois[i].poi.nameEn || pois[i].poi.nameVi}.`,
                 audioViUrl: null, audioEnUrl: null
             });
-            
+
             generated.push({
                 id: `arr-${i}`, type: 'ARRIVAL', orderIndex: orderIndex++,
                 fromPoiId: null, toPoiId: pois[i].poiId,
@@ -93,10 +104,10 @@ export default function TourFollowScreen() {
                 audioViUrl: null, audioEnUrl: null
             });
         }
-        
+
         generated.push({
             id: 'outro', type: 'OUTRO', orderIndex: orderIndex++,
-            fromPoiId: pois[pois.length-1].poiId, toPoiId: null,
+            fromPoiId: pois[pois.length - 1].poiId, toPoiId: null,
             scriptVi: `Chúc mừng bạn đã hoàn thành ${tourData.nameVi}!`,
             scriptEn: `Congratulations! You have completed ${tourData.nameEn || tourData.nameVi}.`,
             audioViUrl: null, audioEnUrl: null
@@ -116,8 +127,12 @@ export default function TourFollowScreen() {
                 setTour(data);
                 if (isCustom && data) {
                     setNarrations(generateClientNarration(data, data.tourPois || []));
-                } else {
-                    setNarrations(narrationData || []);
+                } else if (data) {
+                    if (!narrationData || narrationData.length === 0) {
+                        setNarrations(generateClientNarration(data, data.tourPois || []));
+                    } else {
+                        setNarrations(narrationData);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch tour data:', err);
@@ -208,15 +223,15 @@ export default function TourFollowScreen() {
     // Check when ARRIVAL audio ends to trigger POI audio
     useEffect(() => {
         if (activeNarration && activeNarration.type === 'ARRIVAL' && !poiAudioReadyToPlay) {
-            const activeUrl = (lang === 'en' || lang === 'EN') ? activeNarration.audioEnUrl : activeNarration.audioViUrl;
+            const activeUrl = (lang === 'en') ? activeNarration.audioEnUrl : activeNarration.audioViUrl;
             const fallbackUrl = activeNarration.audioViUrl || activeNarration.audioEnUrl;
             const url = activeUrl || fallbackUrl;
-            
+
             if (!url) {
                 setPoiAudioReadyToPlay(true);
                 return;
             }
-            
+
             const fullUrl = getMediaUrl(url);
             if (currentAudioUrl === fullUrl) {
                 if (!isPlaying && duration > 0 && position >= duration - 500) {
@@ -343,7 +358,7 @@ export default function TourFollowScreen() {
                         {activeNarration && (
                             <View style={styles.narrationBox}>
                                 <Text style={styles.narrationText}>
-                                    💬 {(lang === 'en' || lang === 'EN') ? (activeNarration.scriptEn || activeNarration.scriptVi) : (activeNarration.scriptVi || activeNarration.scriptEn)}
+                                    💬 {(lang === 'en') ? (activeNarration.scriptEn || activeNarration.scriptVi) : (activeNarration.scriptVi || activeNarration.scriptEn)}
                                 </Text>
                             </View>
                         )}

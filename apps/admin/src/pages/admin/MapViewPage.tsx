@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, Marker, Circle, Popup, Polyline } from 'react-leaflet';
-import { Loader2, MapPin, Eye, Pencil, Headphones } from 'lucide-react';
+import { MapContainer, Marker, Circle, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { Loader2, MapPin, Eye, Pencil, Headphones, List } from 'lucide-react';
 import { poiService, type POI, POI_CATEGORY_LABELS, type PoiCategory, type PoiStatus } from '../../services/poi.service';
 import MapControls, { FitBounds } from '../../components/map/MapControls';
 import { HCM_CENTER, CATEGORY_COLORS, STATUS_COLORS, createColoredIcon } from '../../components/map/map-utils';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../lib/api';
+import POIGallery from '../../components/poi/POIGallery';
+import { calculateDistance, calculateAdminPoiScore } from '../../utils/poi-scoring';
 
 interface Tour {
     id: string;
@@ -26,6 +28,7 @@ const MapViewPage = () => {
     const [showRadius, setShowRadius] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [selectedTour, setSelectedTour] = useState<string | null>(null);
+    const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: HCM_CENTER[0], lng: HCM_CENTER[1] });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -81,6 +84,44 @@ const MapViewPage = () => {
         return sorted.map(tp => [Number(tp.poi.latitude), Number(tp.poi.longitude)] as [number, number]);
     }, [selectedTour, tours]);
 
+    const galleryPois = useMemo(() => {
+        if (!filteredPois.length) return [];
+
+        return filteredPois
+            .map((poi) => {
+                const lat = Number(poi.latitude);
+                const lng = Number(poi.longitude);
+                
+                if (isNaN(lat) || isNaN(lng)) {
+                    return { ...poi, distanceM: 0, score: 0 };
+                }
+
+                const distanceM = calculateDistance(
+                    mapCenter.lat,
+                    mapCenter.lng,
+                    lat,
+                    lng
+                );
+                
+                const priority = (poi as any).priority || 1;
+                const score = calculateAdminPoiScore(priority, distanceM, Number(poi.triggerRadius) || 15);
+
+                return { ...poi, distanceM, score };
+            })
+            .sort((a, b) => b.score - a.score);
+    }, [filteredPois, mapCenter]);
+
+    // Update map center on move to refresh gallery order
+    const MapEvents = () => {
+        useMapEvents({
+            moveend: (e) => {
+                const center = e.target.getCenter();
+                setMapCenter({ lat: center.lat, lng: center.lng });
+            },
+        });
+        return null;
+    };
+
     const hasAudio = (poi: POI) => poi.media?.some(m => m.type === 'AUDIO');
 
     const poiBasePath = isShopOwner ? '/owner/pois' : '/admin/pois';
@@ -99,7 +140,7 @@ const MapViewPage = () => {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         <MapPin className="h-6 w-6 text-blue-600" />
-                        Map Overview
+                        Map Overview (Gallery Mode)
                     </h1>
                     <p className="text-sm text-slate-500">
                         {filteredPois.length} POIs {!isShopOwner && tours.length > 0 && `\u2022 ${tours.length} Tours`}
@@ -145,13 +186,14 @@ const MapViewPage = () => {
             </div>
 
             {/* Map */}
-            <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 200px)' }}>
+            <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 400px)', minHeight: '300px' }}>
                 <MapContainer
                     center={HCM_CENTER}
                     zoom={15}
                     style={{ height: '100%', width: '100%' }}
                     scrollWheelZoom
                 >
+                    <MapEvents />
                     <MapControls />
                     <FitBounds positions={filteredPois.map(p => [Number(p.latitude), Number(p.longitude)])} />
 
@@ -230,6 +272,34 @@ const MapViewPage = () => {
                         />
                     )}
                 </MapContainer>
+            </div>
+
+            {/* POI Gallery */}
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <List className="h-4 w-4" />
+                        POI Gallery (Sorted by Priority & Proximity)
+                    </h2>
+                    <span className="text-[11px] text-slate-400 italic">
+                        * Move map to update sorting
+                    </span>
+                </div>
+                <POIGallery
+                    pois={galleryPois}
+                    onSelect={(poi) => navigate(`${poiBasePath}/${poi.id}/edit`)}
+                    onDelete={async (poi) => {
+                        if (window.confirm(`Xoá POI "${poi.nameVi}"?`)) {
+                            try {
+                                await poiService.delete(poi.id);
+                                setPois(prev => prev.filter(p => p.id !== poi.id));
+                            } catch (e) {
+                                alert('Xoá POI thất bại');
+                            }
+                        }
+                    }}
+                    isLoading={false}
+                />
             </div>
 
             {/* Legend */}

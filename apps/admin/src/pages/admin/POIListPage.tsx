@@ -5,12 +5,14 @@ import {
     Plus, Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, AlertCircle, MapPin,
     List, Map as MapIcon, Pencil, Headphones,
 } from 'lucide-react';
-import { MapContainer, Marker, Circle, Popup } from 'react-leaflet';
-import { poiService, POI_CATEGORY_OPTIONS, POI_CATEGORY_LABELS, type PoiCategory } from '../../services/poi.service';
+import { MapContainer, Marker, Circle, Popup, useMapEvents } from 'react-leaflet';
+import { poiService, POI_CATEGORY_OPTIONS, POI_CATEGORY_LABELS, type PoiCategory, type POI } from '../../services/poi.service';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/ToastProvider';
 import MapControls, { FitBounds } from '../../components/map/MapControls';
 import { HCM_CENTER, CATEGORY_COLORS, STATUS_COLORS, createColoredIcon } from '../../components/map/map-utils';
+import { calculateDistance, calculateAdminPoiScore } from '../../utils/poi-scoring';
+import POIGallery from '../../components/poi/POIGallery';
 
 const statusColors: Record<string, string> = {
     ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -49,6 +51,7 @@ const POIListPage = () => {
     const [categoryFilter, setCategoryFilter] = useState<'ALL' | PoiCategory>('ALL');
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: HCM_CENTER[0], lng: HCM_CENTER[1] });
     const { showToast } = useToast();
     const limit = 10;
 
@@ -78,6 +81,38 @@ const POIListPage = () => {
     });
 
     const mapPois = useMemo(() => mapData?.data ?? [], [mapData]);
+
+    const galleryPois = useMemo(() => {
+        if (!mapPois.length) return [];
+
+        return mapPois
+            .map((poi) => {
+                const distanceM = calculateDistance(
+                    mapCenter.lat,
+                    mapCenter.lng,
+                    poi.latitude,
+                    poi.longitude
+                );
+                // Use mobile scoring logic: score = priority*0.3 + distanceScore*0.3
+                // admin app doesn't have priority field yet, so use 1 (as seen in criteriaEngine.ts:19)
+                const priority = (poi as any).priority || 1;
+                const score = calculateAdminPoiScore(priority, distanceM, poi.triggerRadius);
+
+                return { ...poi, distanceM, score };
+            })
+            .sort((a, b) => b.score - a.score);
+    }, [mapPois, mapCenter]);
+
+    // Handle map movement to update gallery sorting
+    const MapEvents = () => {
+        useMapEvents({
+            moveend: (e) => {
+                const center = e.target.getCenter();
+                setMapCenter({ lat: center.lat, lng: center.lng });
+            },
+        });
+        return null;
+    };
 
     // Delete Mutation
     const deleteMutation = useMutation({
@@ -140,18 +175,16 @@ const POIListPage = () => {
                     <div className="flex items-center rounded-lg border border-slate-200 bg-white p-1">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                                viewMode === 'list' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-                            }`}
+                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                                }`}
                         >
                             <List className="h-4 w-4" />
                             List
                         </button>
                         <button
                             onClick={() => setViewMode('map')}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                                viewMode === 'map' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-                            }`}
+                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${viewMode === 'map' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                                }`}
                         >
                             <MapIcon className="h-4 w-4" />
                             Map
@@ -338,14 +371,15 @@ const POIListPage = () => {
                 </div>
             ) : (
                 /* Map View */
-                <div className="space-y-3">
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 280px)' }}>
+                <div className="space-y-4">
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 480px)', minHeight: '300px' }}>
                         <MapContainer
                             center={HCM_CENTER}
                             zoom={15}
                             style={{ height: '100%', width: '100%' }}
                             scrollWheelZoom
                         >
+                            <MapEvents />
                             <MapControls onLocateError={(msg) => showToast({ variant: 'error', title: 'Location error', description: msg })} />
                             <FitBounds positions={mapPois.map(p => [Number(p.latitude), Number(p.longitude)])} />
 
@@ -413,8 +447,27 @@ const POIListPage = () => {
                         </MapContainer>
                     </div>
 
+                    {/* POI Gallery */}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                <List className="h-4 w-4" />
+                                POI Gallery (Sorted by Priority & Proximity)
+                            </h2>
+                            <span className="text-[11px] text-slate-400 italic">
+                                * Move map to update sorting
+                            </span>
+                        </div>
+                        <POIGallery
+                            pois={galleryPois}
+                            onSelect={(poi) => navigate(`/admin/pois/${poi.id}/edit`)}
+                            onDelete={(poi) => setDeleteTarget({ id: poi.id, name: poi.nameVi })}
+                            isLoading={false}
+                        />
+                    </div>
+
                     {/* Map Footer: count + legend */}
-                    <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-100">
                         <span className="text-sm font-medium text-slate-700">
                             {mapPois.length} POI{mapPois.length !== 1 ? 's' : ''} on map
                         </span>
